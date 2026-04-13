@@ -3,141 +3,377 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Hub de Révision - Kalarma</title>
+    <title>Hub de Révision - BTS</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase config (optionnel) -->
+    <script src="firebase-config.js" onerror="console.log('Firebase non configuré.')"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
         body { font-family:'Plus Jakarta Sans',sans-serif; background-color:#020617; color:#f8fafc; margin:0; min-height:100vh; }
         .glass-card { background:rgba(15,23,42,.6); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,.08); transition:all .3s cubic-bezier(.4,0,.2,1); }
         .glass-card:hover { transform:translateY(-4px); border-color:#6366f1; box-shadow:0 10px 30px -10px rgba(99,102,241,.4); }
         @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-        .animate-fade-in { animation:fadeIn .5s ease forwards; }
+        .fade-in { animation:fadeIn .5s ease forwards; }
+        .progress-bar { transition:width 1s ease; }
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
 
-    <div class="max-w-6xl mx-auto p-6 flex-grow w-full">
+    <div class="max-w-6xl mx-auto px-6 flex-grow w-full">
 
-        <header class="text-center py-12 animate-fade-in">
-            <h1 class="text-5xl font-black text-white tracking-tighter uppercase italic">
-                Hub <span class="text-indigo-500">Révision</span>
-            </h1>
-            <p class="text-slate-400 mt-4 font-medium italic">Tes outils de réussite à portée de clic</p>
-            <div class="h-1 w-20 bg-indigo-500 mx-auto mt-6 rounded-full"></div>
+        <!-- ===== HEADER ===== -->
+        <header class="py-10 flex items-center justify-between gap-4 fade-in">
+            <div>
+                <h1 class="text-4xl font-black text-white tracking-tighter uppercase italic">
+                    Hub <span class="text-indigo-500">Révision</span>
+                </h1>
+                <p class="text-slate-500 mt-1 text-sm font-medium italic">Tes outils de réussite à portée de clic</p>
+            </div>
+
+            <!-- Zone utilisateur -->
+            <div id="user-area" class="flex-shrink-0">
+                <!-- État chargement -->
+                <div id="user-loading" class="w-8 h-8 rounded-full border-t-2 border-indigo-500 animate-spin"></div>
+
+                <!-- Non connecté -->
+                <button id="btn-login" onclick="hubLogin()" class="hidden items-center gap-2 px-4 py-2.5 bg-white text-slate-900 font-black text-xs rounded-xl active:scale-95 transition-all hover:bg-slate-100">
+                    <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 48 48">
+                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                    </svg>
+                    Se connecter
+                </button>
+
+                <!-- Connecté -->
+                <div id="user-badge" class="hidden relative">
+                    <button onclick="toggleUserMenu()" class="flex items-center gap-2.5 bg-slate-900 border border-slate-800 px-3 py-2 rounded-2xl hover:border-slate-700 transition-colors">
+                        <div id="user-avatar" class="w-7 h-7 rounded-full bg-indigo-500/20 flex items-center justify-center overflow-hidden flex-shrink-0">
+                            <span id="user-initial" class="text-indigo-400 font-black text-xs"></span>
+                        </div>
+                        <span id="user-name" class="text-white font-bold text-sm max-w-[120px] truncate"></span>
+                        <svg class="w-3 h-3 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <!-- Dropdown -->
+                    <div id="user-menu" class="hidden absolute right-0 top-full mt-2 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl shadow-black/50 p-2 min-w-[180px] z-50">
+                        <div class="px-3 py-2 mb-1 border-b border-slate-800">
+                            <p id="user-email" class="text-[10px] text-slate-600 font-bold truncate"></p>
+                        </div>
+                        <button onclick="hubLogout()" class="w-full text-left px-3 py-2.5 text-rose-400 font-bold text-xs rounded-xl hover:bg-rose-500/10 transition-colors">
+                            Se déconnecter
+                        </button>
+                    </div>
+                </div>
+            </div>
         </header>
 
+        <!-- Séparateur -->
+        <div class="h-px bg-slate-900 mb-8"></div>
+
+        <!-- ===== LOADER ===== -->
         <div id="loader" class="flex flex-col items-center justify-center py-20">
-            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-indigo-500 border-opacity-50"></div>
-            <p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-4">Chargement des modules...</p>
+            <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-indigo-500 border-opacity-50"></div>
+            <p class="text-slate-600 text-[10px] font-bold uppercase tracking-widest mt-4">Chargement des modules...</p>
         </div>
 
-        <div id="app-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 hidden"></div>
+        <!-- ===== GRILLE DES COURS ===== -->
+        <div id="app-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 hidden pb-12"></div>
 
+        <!-- ===== ERREUR ===== -->
         <div id="error-state" class="hidden text-center py-20">
-            <p class="text-rose-400 font-bold">Oups ! Impossible de joindre le serveur GitHub.</p>
-            <p class="text-slate-600 text-xs mt-2">Vérifiez que le dépôt est public et que le dossier <code class="text-indigo-400">cours/</code> existe.</p>
+            <p class="text-rose-400 font-bold">Impossible de charger les modules.</p>
+            <p class="text-slate-600 text-xs mt-2">Vérifiez que le dépôt est public et que <code class="text-indigo-400">courses.json</code> existe.</p>
         </div>
     </div>
 
-    <footer class="mt-auto pt-12 pb-8 text-center flex flex-col items-center gap-6 border-t border-slate-900 bg-slate-950/50">
-        <div>
-            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Créé par Zao Barrez-Girardot</p>
-            <a href="https://fr.tipeee.com/zao" target="_blank" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-rose-500/10 text-rose-400 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-rose-500/20 active:scale-95 transition-all border border-rose-500/20">
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                Me soutenir sur Tipeee
-            </a>
-        </div>
-        <p class="text-[9px] text-slate-700 font-medium">kalarma.github.io/BTS_Revision</p>
+    <!-- ===== FOOTER ===== -->
+    <footer class="mt-auto pt-8 pb-8 text-center flex flex-col items-center gap-4 border-t border-slate-900 bg-slate-950/50">
+        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Créé par Zao Barrez-Girardot</p>
+        <a href="https://fr.tipeee.com/zao" target="_blank"
+           class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-rose-500/10 text-rose-400 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-rose-500/20 active:scale-95 transition-all border border-rose-500/20">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            Me soutenir sur Tipeee
+        </a>
     </footer>
 
-    <script>
-        const USERNAME = "Kalarma";
-        const REPO     = "BTS_Revision";
-        // API GitHub pour lister le dossier cours/
-        const API_COURS = `https://api.github.com/repos/${USERNAME}/${REPO}/contents/cours`;
-        // URL de base GitHub Pages
-        const BASE_URL  = `https://${USERNAME}.github.io/${REPO}`;
+<script>
+// =====================================================================
+// CONFIG
+// =====================================================================
+const USERNAME  = "Kalarma";
+const REPO      = "BTS_Revision";
+const API_COURS = `https://api.github.com/repos/${USERNAME}/${REPO}/contents/cours`;
+const BASE_URL  = `https://${USERNAME}.github.io/${REPO}`;
+const MASTERY_THRESHOLD = { correct: 3, rate: 0.70 };
 
-        async function fetchModules() {
-            const grid   = document.getElementById('app-grid');
-            const loader = document.getElementById('loader');
-            const error  = document.getElementById('error-state');
+let fbAuth = null, fbDb = null, hubUser = null, useFirebase = false;
 
-            let courses = [];
+// =====================================================================
+// FIREBASE
+// =====================================================================
+async function loadScript(src) {
+    return new Promise((resolve, reject) => {
+        if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+        const s = document.createElement('script');
+        s.src = src; s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+    });
+}
 
-            // 1) Essai via l'API GitHub (liste dynamique du dossier cours/)
-            try {
-                const r = await fetch(API_COURS);
-                if (r.ok) {
-                    const files = await r.json();
-                    const txts  = files.filter(f => f.type === 'file' && f.name.endsWith('.txt'));
-                    if (txts.length) {
-                        courses = txts.map(f => ({
-                            id:    f.name.replace('.txt', ''),
-                            title: cleanName(f.name.replace('.txt', ''))
-                        }));
-                    }
-                }
-            } catch(_) {}
+async function initFirebase() {
+    const cfg = window.FIREBASE_CONFIG;
+    if (!cfg || cfg.apiKey === 'VOTRE_API_KEY') return;
+    try {
+        const v = '10.12.0';
+        await loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-app-compat.js`);
+        await loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-auth-compat.js`);
+        await loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-firestore-compat.js`);
+        if (!firebase.apps.length) firebase.initializeApp(cfg);
+        fbAuth = firebase.auth();
+        fbDb   = firebase.firestore();
+        useFirebase = true;
+    } catch(e) { console.warn('Firebase init failed:', e); }
+}
 
-            // 2) Fallback : courses.json local (toujours à jour même sans API)
-            if (!courses.length) {
-                try {
-                    const r = await fetch('courses.json');
-                    if (r.ok) {
-                        const data = await r.json();
-                        courses = data.map(c => ({
-                            id:    c.id,
-                            title: c.title || cleanName(c.id)
-                        }));
-                    }
-                } catch(_) {}
-            }
+async function hubLogin() {
+    if (!useFirebase) return;
+    try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        await fbAuth.signInWithPopup(provider);
+    } catch(e) { console.error(e); }
+}
 
-            if (!courses.length) {
-                loader.classList.add('hidden');
-                error.classList.remove('hidden');
-                return;
-            }
+async function hubLogout() {
+    closeUserMenu();
+    if (fbAuth) await fbAuth.signOut();
+    hubUser = null;
+    showLoggedOut();
+    renderGrid(window._courses, {});
+}
 
-            grid.innerHTML = courses.map((c, idx) => {
-                const appUrl = `${BASE_URL}/app/?course=${c.id}`;
-                return `
-                <a href="${appUrl}"
-                   class="glass-card p-8 rounded-[2.5rem] flex flex-col items-start group animate-fade-in"
-                   style="animation-delay:${idx * 80}ms">
+function toggleUserMenu() {
+    document.getElementById('user-menu').classList.toggle('hidden');
+}
+function closeUserMenu() {
+    document.getElementById('user-menu').classList.add('hidden');
+}
+document.addEventListener('click', e => {
+    const badge = document.getElementById('user-badge');
+    if (badge && !badge.contains(e.target)) closeUserMenu();
+});
 
-                    <div class="w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-400 mb-6
-                                group-hover:bg-indigo-500 group-hover:text-white group-hover:rotate-6 transition-all duration-300">
-                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                        </svg>
-                    </div>
+// =====================================================================
+// AUTH UI
+// =====================================================================
+function showLoggedOut() {
+    document.getElementById('user-loading').classList.add('hidden');
+    document.getElementById('user-badge').classList.add('hidden');
+    const btn = document.getElementById('btn-login');
+    if (useFirebase) btn.classList.remove('hidden'), btn.classList.add('flex');
+    else btn.classList.add('hidden');
+}
 
-                    <h3 class="text-xl font-extrabold text-white mb-2">${c.title}</h3>
-                    <p class="text-slate-500 text-xs leading-relaxed font-medium flex-grow">
-                        Flashcards · Quiz QCM · Mode Multi
-                    </p>
+function showLoggedIn(user) {
+    document.getElementById('user-loading').classList.add('hidden');
+    document.getElementById('btn-login').classList.add('hidden');
+    const badge = document.getElementById('user-badge');
+    badge.classList.remove('hidden');
 
-                    <div class="mt-8 flex items-center text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em]">
-                        Lancer
-                        <svg class="w-4 h-4 ml-2 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                        </svg>
-                    </div>
-                </a>`;
-            }).join('');
+    const name = user.displayName || user.email || 'Utilisateur';
+    document.getElementById('user-name').textContent  = name;
+    document.getElementById('user-email').textContent = user.email || '';
 
-            loader.classList.add('hidden');
-            grid.classList.remove('hidden');
+    const avatar = document.getElementById('user-avatar');
+    if (user.photoURL) {
+        avatar.innerHTML = `<img src="${user.photoURL}" class="w-full h-full object-cover" referrerpolicy="no-referrer">`;
+    } else {
+        document.getElementById('user-initial').textContent = name[0].toUpperCase();
+    }
+}
+
+// =====================================================================
+// PROGRESS
+// =====================================================================
+function getMasteryFromProgress(progress, total) {
+    if (!progress || total === 0) return { pct: 0, mastered: 0, total };
+    let mastered = 0;
+    for (const key of Object.keys(progress)) {
+        const p = progress[key];
+        const t = (p.c || 0) + (p.w || 0);
+        if (t > 0 && (p.c || 0) >= MASTERY_THRESHOLD.correct && (p.c / t) >= MASTERY_THRESHOLD.rate) mastered++;
+    }
+    return { pct: Math.round(mastered / total * 100), mastered, total };
+}
+
+function getLocalProgress(courseId) {
+    try { return JSON.parse(localStorage.getItem('prog_' + courseId) || '{}'); }
+    catch { return {}; }
+}
+
+function getLocalTotal(courseId) {
+    return parseInt(localStorage.getItem('total_' + courseId) || '0');
+}
+
+async function getFirestoreProgress(courseId) {
+    if (!useFirebase || !hubUser || !fbDb) return null;
+    try {
+        const snap = await fbDb.collection('users').doc(hubUser.uid)
+            .collection('progress').doc(courseId).get();
+        return snap.exists ? snap.data() : {};
+    } catch { return null; }
+}
+
+async function loadAllProgress(courses) {
+    const result = {};
+    for (const c of courses) {
+        let prog = getLocalProgress(c.id);
+        const fsData = await getFirestoreProgress(c.id);
+        if (fsData !== null && Object.keys(fsData).length > 0) prog = fsData;
+        result[c.id] = prog;
+    }
+    return result;
+}
+
+// =====================================================================
+// GRID RENDER
+// =====================================================================
+function progressColor(pct) {
+    if (pct >= 80) return '#10b981'; // emerald
+    if (pct >= 40) return '#f59e0b'; // amber
+    if (pct > 0)   return '#6366f1'; // indigo
+    return '#1e293b'; // slate (empty)
+}
+
+function renderGrid(courses, allProgress) {
+    const grid = document.getElementById('app-grid');
+    grid.innerHTML = courses.map((c, idx) => {
+        const prog    = allProgress[c.id] || {};
+        const total   = getLocalTotal(c.id);
+        const mastery = getMasteryFromProgress(prog, total);
+        const color   = progressColor(mastery.pct);
+        const appUrl  = `${BASE_URL}/app/?course=${c.id}`;
+        const seen    = Object.keys(prog).length;
+
+        const progressBar = mastery.total > 0
+            ? `<div class="mt-5 mb-1">
+                  <div class="flex justify-between items-center mb-1.5">
+                      <span class="text-[10px] font-black uppercase tracking-wider" style="color:${color}">${mastery.pct}% maîtrisé</span>
+                      <span class="text-[10px] text-slate-600 font-bold">${mastery.mastered}/${mastery.total}</span>
+                  </div>
+                  <div class="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                      <div class="h-full rounded-full progress-bar" style="width:${mastery.pct}%;background:${color}"></div>
+                  </div>
+               </div>`
+            : seen > 0
+            ? `<div class="mt-5 mb-1">
+                  <div class="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                      <div class="h-full rounded-full bg-indigo-500/40 progress-bar" style="width:${Math.min(seen*10,90)}%"></div>
+                  </div>
+                  <span class="text-[10px] text-slate-600 font-bold block mt-1">${seen} carte(s) vues</span>
+               </div>`
+            : `<p class="text-[10px] text-slate-700 font-bold uppercase tracking-wider mt-5">Pas encore commencé</p>`;
+
+        return `
+        <a href="${appUrl}"
+           class="glass-card p-7 rounded-[2.5rem] flex flex-col items-start group fade-in"
+           style="animation-delay:${idx * 80}ms">
+
+            <div class="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-400 mb-5
+                        group-hover:bg-indigo-500 group-hover:text-white group-hover:rotate-6 transition-all duration-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                </svg>
+            </div>
+
+            <h3 class="text-xl font-extrabold text-white">${c.title}</h3>
+            <p class="text-slate-600 text-xs font-medium mt-1">Flashcards · Quiz QCM · Mode Multi</p>
+
+            ${progressBar}
+
+            <div class="mt-5 flex items-center text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em]">
+                Lancer
+                <svg class="w-3.5 h-3.5 ml-2 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                </svg>
+            </div>
+        </a>`;
+    }).join('');
+
+    document.getElementById('loader').classList.add('hidden');
+    grid.classList.remove('hidden');
+}
+
+// =====================================================================
+// LOAD COURSES
+// =====================================================================
+async function fetchCourses() {
+    let courses = [];
+    // 1) API GitHub
+    try {
+        const r = await fetch(API_COURS);
+        if (r.ok) {
+            const files = await r.json();
+            const txts  = files.filter(f => f.type === 'file' && f.name.endsWith('.txt'));
+            if (txts.length) courses = txts.map(f => ({ id: f.name.replace('.txt',''), title: cleanName(f.name.replace('.txt','')) }));
         }
+    } catch {}
+    // 2) Fallback courses.json
+    if (!courses.length) {
+        try {
+            const r = await fetch('courses.json');
+            if (r.ok) {
+                const data = await r.json();
+                courses = data.map(c => ({ id: c.id, title: c.title || cleanName(c.id) }));
+            }
+        } catch {}
+    }
+    return courses;
+}
 
-        function cleanName(name) {
-            return name.replace(/_/g, ' ').replace(/-/g, ' ');
-        }
+function cleanName(name) {
+    return name.replace(/_/g,' ').replace(/-/g,' ');
+}
 
-        window.onload = fetchModules;
-    </script>
+// =====================================================================
+// INIT
+// =====================================================================
+async function init() {
+    await initFirebase();
+
+    const courses = await fetchCourses();
+    if (!courses.length) {
+        document.getElementById('loader').classList.add('hidden');
+        document.getElementById('error-state').classList.remove('hidden');
+        return;
+    }
+    window._courses = courses;
+
+    if (useFirebase) {
+        // Attendre l'état d'auth avant d'afficher
+        fbAuth.onAuthStateChanged(async user => {
+            hubUser = user;
+            if (user) {
+                showLoggedIn(user);
+            } else {
+                showLoggedOut();
+            }
+            const allProgress = await loadAllProgress(courses);
+            renderGrid(courses, allProgress);
+        });
+    } else {
+        // Pas de Firebase — affichage local direct
+        document.getElementById('user-loading').classList.add('hidden');
+        const allProgress = {};
+        for (const c of courses) allProgress[c.id] = getLocalProgress(c.id);
+        renderGrid(courses, allProgress);
+    }
+}
+
+window.onload = init;
+</script>
 </body>
 </html>
