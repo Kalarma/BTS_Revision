@@ -47,12 +47,12 @@
                 Me soutenir sur Tipeee
             </a>
         </div>
-        <p class="text-[9px] text-slate-700 font-medium">Source : github.com/Kalarma/Revision_BTS</p>
+        <p class="text-[9px] text-slate-700 font-medium">kalarma.github.io/BTS_Revision</p>
     </footer>
 
     <script>
         const USERNAME = "Kalarma";
-        const REPO     = "Revision_BTS";
+        const REPO     = "BTS_Revision";
         // API GitHub pour lister le dossier cours/
         const API_COURS = `https://api.github.com/repos/${USERNAME}/${REPO}/contents/cours`;
         // URL de base GitHub Pages
@@ -63,56 +63,74 @@
             const loader = document.getElementById('loader');
             const error  = document.getElementById('error-state');
 
+            let courses = [];
+
+            // 1) Essai via l'API GitHub (liste dynamique du dossier cours/)
             try {
                 const r = await fetch(API_COURS);
-                if (!r.ok) throw new Error('API error');
-                const files = await r.json();
+                if (r.ok) {
+                    const files = await r.json();
+                    const txts  = files.filter(f => f.type === 'file' && f.name.endsWith('.txt'));
+                    if (txts.length) {
+                        courses = txts.map(f => ({
+                            id:    f.name.replace('.txt', ''),
+                            title: cleanName(f.name.replace('.txt', ''))
+                        }));
+                    }
+                }
+            } catch(_) {}
 
-                // Ne garder que les fichiers .txt
-                const courses = files.filter(f => f.type === 'file' && f.name.endsWith('.txt'));
+            // 2) Fallback : courses.json local (toujours à jour même sans API)
+            if (!courses.length) {
+                try {
+                    const r = await fetch('courses.json');
+                    if (r.ok) {
+                        const data = await r.json();
+                        courses = data.map(c => ({
+                            id:    c.id,
+                            title: c.title || cleanName(c.id)
+                        }));
+                    }
+                } catch(_) {}
+            }
 
-                if (!courses.length) throw new Error('Aucun cours trouvé');
-
-                grid.innerHTML = courses.map((f, idx) => {
-                    const name    = f.name.replace('.txt', '');
-                    const label   = cleanName(name);
-                    const appUrl  = `${BASE_URL}/app/?course=${name}`;
-
-                    return `
-                    <a href="${appUrl}"
-                       class="glass-card p-8 rounded-[2.5rem] flex flex-col items-start group animate-fade-in"
-                       style="animation-delay:${idx * 80}ms">
-
-                        <div class="w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-400 mb-6
-                                    group-hover:bg-indigo-500 group-hover:text-white group-hover:rotate-6 transition-all duration-300">
-                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                            </svg>
-                        </div>
-
-                        <h3 class="text-xl font-extrabold text-white mb-2">${label}</h3>
-                        <p class="text-slate-500 text-xs leading-relaxed font-medium flex-grow">
-                            Flashcards · Quiz QCM · Mode Multi
-                        </p>
-
-                        <div class="mt-8 flex items-center text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em]">
-                            Lancer
-                            <svg class="w-4 h-4 ml-2 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                            </svg>
-                        </div>
-                    </a>`;
-                }).join('');
-
-                loader.classList.add('hidden');
-                grid.classList.remove('hidden');
-
-            } catch(e) {
-                console.error(e);
+            if (!courses.length) {
                 loader.classList.add('hidden');
                 error.classList.remove('hidden');
+                return;
             }
+
+            grid.innerHTML = courses.map((c, idx) => {
+                const appUrl = `${BASE_URL}/app/?course=${c.id}`;
+                return `
+                <a href="${appUrl}"
+                   class="glass-card p-8 rounded-[2.5rem] flex flex-col items-start group animate-fade-in"
+                   style="animation-delay:${idx * 80}ms">
+
+                    <div class="w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-400 mb-6
+                                group-hover:bg-indigo-500 group-hover:text-white group-hover:rotate-6 transition-all duration-300">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                        </svg>
+                    </div>
+
+                    <h3 class="text-xl font-extrabold text-white mb-2">${c.title}</h3>
+                    <p class="text-slate-500 text-xs leading-relaxed font-medium flex-grow">
+                        Flashcards · Quiz QCM · Mode Multi
+                    </p>
+
+                    <div class="mt-8 flex items-center text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em]">
+                        Lancer
+                        <svg class="w-4 h-4 ml-2 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                        </svg>
+                    </div>
+                </a>`;
+            }).join('');
+
+            loader.classList.add('hidden');
+            grid.classList.remove('hidden');
         }
 
         function cleanName(name) {
