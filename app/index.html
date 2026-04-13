@@ -222,26 +222,26 @@
 </div>
 
 <!-- ==================== FLASHCARD END ==================== -->
-<div id="screen-fc-end" class="screen items-center justify-center p-6">
-    <div class="w-full max-w-sm fade-up">
-        <div class="text-center mb-8">
-            <p class="text-5xl mb-4" id="fc-end-emoji">🎉</p>
-            <h2 class="text-3xl font-black text-white uppercase italic">Session terminée</h2>
+<div id="screen-fc-end" class="screen">
+    <div class="px-6 pt-6 pb-3 flex items-center justify-between flex-shrink-0">
+        <h2 class="text-xl font-black text-white">Session terminée</h2>
+        <span id="fc-end-emoji" class="text-3xl">🎉</span>
+    </div>
+    <div class="px-6 grid grid-cols-2 gap-3 mb-4 flex-shrink-0">
+        <div class="bg-slate-900 rounded-2xl p-4 text-center border border-slate-800">
+            <span id="fc-end-correct" class="text-3xl font-black text-emerald-400">0</span>
+            <p class="text-[9px] text-slate-500 font-black uppercase mt-1">Réussi</p>
         </div>
-        <div class="grid grid-cols-2 gap-4 mb-8">
-            <div class="bg-slate-900 rounded-2xl p-4 text-center border border-slate-800">
-                <span id="fc-end-correct" class="text-3xl font-black text-emerald-400">0</span>
-                <p class="text-[9px] text-slate-500 font-black uppercase mt-1">Réussi</p>
-            </div>
-            <div class="bg-slate-900 rounded-2xl p-4 text-center border border-slate-800">
-                <span id="fc-end-wrong" class="text-3xl font-black text-rose-400">0</span>
-                <p class="text-[9px] text-slate-500 font-black uppercase mt-1">À revoir</p>
-            </div>
+        <div class="bg-slate-900 rounded-2xl p-4 text-center border border-slate-800">
+            <span id="fc-end-wrong" class="text-3xl font-black text-rose-400">0</span>
+            <p class="text-[9px] text-slate-500 font-black uppercase mt-1">À revoir</p>
         </div>
-        <div class="space-y-3">
-            <button onclick="startFlashcards()" class="w-full py-5 bg-indigo-600 text-white font-black uppercase rounded-2xl active:scale-95 transition-all">Rejouer</button>
-            <button onclick="exitToHome()" class="w-full py-4 text-slate-500 font-black uppercase text-xs tracking-widest">Retour accueil</button>
-        </div>
+    </div>
+    <!-- Récap scrollable -->
+    <div id="fc-recap-list" class="scroll-area px-6 pb-4 space-y-2 flex-shrink-0" style="max-height:35vh;overflow-y:auto"></div>
+    <div class="px-6 pb-8 pt-2 space-y-3 flex-shrink-0">
+        <button onclick="startFlashcards()" class="w-full py-5 bg-indigo-600 text-white font-black uppercase rounded-2xl active:scale-95 transition-all">Rejouer</button>
+        <button onclick="exitToHome()" class="w-full py-4 text-slate-500 font-black uppercase text-xs tracking-widest">Retour accueil</button>
     </div>
 </div>
 
@@ -460,6 +460,7 @@
 <!-- ==================== KAHOOT GAME (HOST) ==================== -->
 <div id="screen-kahoot-game" class="screen">
     <div class="px-6 pt-6 pb-3 flex items-center justify-between flex-shrink-0">
+        <button onclick="confirmQuitKahoot()" class="text-slate-700 hover:text-rose-400 transition-colors text-xs font-bold uppercase">✕ Quitter</button>
         <span id="kh-round" class="text-slate-600 text-[10px] font-black uppercase">Q 1/10</span>
         <span id="kh-answer-count" class="text-[10px] font-black text-indigo-400">0 réponses</span>
     </div>
@@ -471,8 +472,9 @@
     <div class="flex-grow flex items-center px-6 py-2 overflow-hidden">
         <div class="w-full bg-slate-900 border-2 border-slate-800 rounded-[2.5rem] p-8 text-center">
             <span class="text-[9px] font-black text-slate-700 uppercase tracking-widest block mb-4">Terme</span>
-            <h2 id="kh-term" class="text-2xl font-bold text-white leading-snug mb-6"></h2>
-            <div id="kh-choices-display" class="grid grid-cols-2 gap-3 text-left">
+            <h2 id="kh-term" class="text-2xl font-bold text-white leading-snug mb-4"></h2>
+            <div id="kh-countdown" class="text-slate-600 text-xs font-black uppercase text-center mb-4"></div>
+            <div id="kh-choices-display" class="grid grid-cols-2 gap-3 text-left hidden">
                 <!-- Filled by JS -->
             </div>
         </div>
@@ -488,8 +490,10 @@
 <!-- ==================== KAHOOT REVEAL (HOST) ==================== -->
 <div id="screen-kahoot-reveal" class="screen overflow-y-auto">
     <div class="flex flex-col max-w-md mx-auto w-full px-6 pb-8">
-        <div class="pt-6 pb-4">
+        <div class="pt-6 pb-4 flex items-center justify-between">
+            <button onclick="confirmQuitKahoot()" class="text-slate-700 hover:text-rose-400 transition-colors text-xs font-bold uppercase">✕ Quitter</button>
             <h3 class="text-[10px] font-black text-slate-600 uppercase tracking-widest text-center">Résultats de la question</h3>
+            <div></div>
         </div>
 
         <!-- Bonne réponse -->
@@ -510,6 +514,9 @@
             </div>
         </div>
 
+        <!-- Choices breakdown -->
+        <div id="kh-choices-reveal" class="mb-4 space-y-2"></div>
+
         <!-- Classement partiel -->
         <div class="mb-6">
             <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-3">Classement</p>
@@ -528,12 +535,12 @@
 // =====================================================================
 // CONFIG & STATE
 // =====================================================================
-const MASTERY     = { correct: 3, rate: 0.70 };
 const TEAM_COLORS = ['#6366f1','#f43f5e','#10b981','#f59e0b','#a855f7','#06b6d4'];
 const QUIZ_TIME   = 15;
 
 let C = null, courseName = '', progress = {};
 let fcDeck = [], fcIdx = 0, fcFlipped = false, fcSessionCorrect = 0, fcSessionWrong = 0;
+let fcSessionResults = [];
 let quizDeck = [], quizIdx = 0, quizScore = 0, quizCorrect = 0, quizWrong = 0, quizTimer = null;
 let teams = [], multiPool = [], multiRound = 0, multiTeamIdx = 0, multiSettings = {}, multiTimerTimeout = null;
 
@@ -541,7 +548,6 @@ let teams = [], multiPool = [], multiRound = 0, multiTeamIdx = 0, multiSettings 
 // FIREBASE AUTH
 // =====================================================================
 let fbAuth = null, fbDb = null, currentUser = null, useFirebase = false;
-let authMode = 'login';
 
 async function loadScript(src) {
     return new Promise((resolve, reject) => {
@@ -582,7 +588,6 @@ async function signInWithGoogle() {
         const provider = new firebase.auth.GoogleAuthProvider();
         const cred = await fbAuth.signInWithPopup(provider);
         currentUser = cred.user;
-        // Sauvegarde du profil à la première connexion
         await fbDb.collection('users').doc(currentUser.uid).set({
             username:  currentUser.displayName,
             email:     currentUser.email,
@@ -707,11 +712,52 @@ function saveProgress() {
     }
 }
 
-function getP(idx)         { return progress[idx] || { c:0, w:0 }; }
-function setP(idx, correct) { const p=getP(idx); if(correct) p.c++; else p.w++; progress[idx]=p; saveProgress(); }
-function isMastered(idx)   { const p=getP(idx), t=p.c+p.w; return t>0 && p.c>=MASTERY.correct && (p.c/t)>=MASTERY.rate; }
-function isSeen(idx)       { const p=getP(idx); return (p.c+p.w)>0; }
+function getP(idx) { return progress[idx] || { c:0, w:0, pct:0 }; }
+
+// Nouveau setP : incrémente un pourcentage
+// mode: 'flash' (+30% correct, -10% wrong) ou 'quiz' (+15% correct, -5% wrong)
+function setP(idx, correct, mode = 'flash') {
+    const p = getP(idx);
+    p.c = (p.c || 0) + (correct ? 1 : 0);
+    p.w = (p.w || 0) + (correct ? 0 : 1);
+    const gain  = correct ? (mode === 'flash' ? 30 : 15) : 0;
+    const loss  = correct ? 0 : (mode === 'flash' ? 10 : 5);
+    p.pct = Math.min(100, Math.max(0, (p.pct || 0) + gain - loss));
+    progress[idx] = p;
+    saveProgress();
+}
+
+// isMastered : pct >= 80
+function isMastered(idx) { return (getP(idx).pct || 0) >= 80; }
+function isSeen(idx)     { const p = getP(idx); return (p.c || 0) + (p.w || 0) > 0; }
+function getProgressPct(idx) { return getP(idx).pct || 0; }
 function getMasteryPct()   { return C ? Math.round(C.cards.filter((_,i)=>isMastered(i)).length/C.cards.length*100) : 0; }
+
+// =====================================================================
+// BOOKMARKS
+// =====================================================================
+function getBookmarks() {
+    try { return JSON.parse(localStorage.getItem('bm_' + courseName) || '[]'); } catch { return []; }
+}
+function saveBookmarks(bms) {
+    localStorage.setItem('bm_' + courseName, JSON.stringify(bms));
+    if (useFirebase && currentUser && fbDb) {
+        fbDb.collection('users').doc(currentUser.uid).collection('bookmarks').doc(courseName)
+            .set({ ids: bms }).catch(() => {});
+    }
+}
+function isBookmarked(idx) { return getBookmarks().includes(idx); }
+function toggleBookmark(idx, btnEl) {
+    let bms = getBookmarks();
+    if (bms.includes(idx)) {
+        bms = bms.filter(i => i !== idx);
+        if (btnEl) btnEl.style.opacity = '0.3';
+    } else {
+        bms.push(idx);
+        if (btnEl) btnEl.style.opacity = '1';
+    }
+    saveBookmarks(bms);
+}
 
 // =====================================================================
 // NAVIGATION
@@ -791,7 +837,10 @@ function startFlashcards() {
         if(ma!==mb) return ma?1:-1;
         return Math.random()-.5;
     });
-    fcDeck=[...order]; fcIdx=0; fcSessionCorrect=0; fcSessionWrong=0;
+    // Limiter à 25 questions max
+    fcDeck = order.slice(0, 25);
+    fcIdx=0; fcSessionCorrect=0; fcSessionWrong=0;
+    fcSessionResults = [];
     showScreen('screen-flashcard');
     showFlashcard();
     initSwipe();
@@ -827,7 +876,8 @@ function flipFlashcard() {
 
 function answerCard(correct) {
     const idx = fcDeck[fcIdx];
-    setP(idx, correct);
+    setP(idx, correct, 'flash');
+    fcSessionResults.push({ idx, correct });
     if (correct) fcSessionCorrect++; else fcSessionWrong++;
     if (!correct) fcDeck.splice(Math.min(fcIdx+3, fcDeck.length), 0, idx);
     const el = document.getElementById('fc-card');
@@ -838,9 +888,26 @@ function answerCard(correct) {
 function endFlashcards() {
     document.getElementById('fc-end-correct').textContent = fcSessionCorrect;
     document.getElementById('fc-end-wrong').textContent   = fcSessionWrong;
-    const rate = fcSessionCorrect/(fcSessionCorrect+fcSessionWrong||1);
-    document.getElementById('fc-end-emoji').textContent   = rate>=.8?'🔥':rate>=.5?'💪':'📖';
-    updateHome(); showScreen('screen-fc-end');
+    const rate = fcSessionCorrect / (fcSessionCorrect + fcSessionWrong || 1);
+    document.getElementById('fc-end-emoji').textContent   = rate >= .8 ? '🔥' : rate >= .5 ? '💪' : '📖';
+
+    // Récap par carte
+    const recap = document.getElementById('fc-recap-list');
+    recap.innerHTML = fcSessionResults.map(r => {
+        const card = C.cards[r.idx];
+        const bm = isBookmarked(r.idx);
+        return `<div class="flex items-start gap-3 bg-slate-900 rounded-2xl px-4 py-3 border border-slate-800">
+            <div class="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${r.correct ? 'bg-emerald-500' : 'bg-rose-500'}"></div>
+            <div class="flex-grow min-w-0">
+                <p class="text-sm font-bold text-white truncate">${card.term}</p>
+                <p class="text-[10px] text-slate-600 truncate">${card.def}</p>
+            </div>
+            <button onclick="toggleBookmark(${r.idx}, this)" class="flex-shrink-0 text-lg transition-all ${bm ? 'opacity-100' : 'opacity-30'}" title="Enregistrer">🔖</button>
+        </div>`;
+    }).join('');
+
+    updateHome();
+    showScreen('screen-fc-end');
 }
 
 // =====================================================================
@@ -883,7 +950,9 @@ function initSwipe() {
 // QUIZ QCM
 // =====================================================================
 function startQuiz() {
-    quizDeck=[...C.cards.map((_,i)=>i)].sort(()=>Math.random()-.5);
+    const allIdx = [...C.cards.map((_,i)=>i)].sort(()=>Math.random()-.5);
+    // Limiter à 25 questions max
+    quizDeck = allIdx.slice(0, 25);
     quizIdx=0; quizScore=0; quizCorrect=0; quizWrong=0;
     showScreen('screen-quiz'); showQuizQuestion();
 }
@@ -923,7 +992,7 @@ function selectAnswer(btn, isCorrect) {
     });
     if(!isCorrect) document.querySelectorAll('.choice-btn').forEach(b=>{ if(b.getAttribute('onclick')?.includes('true')) b.classList.add('correct'); });
     const idx=quizDeck[quizIdx];
-    setP(idx, isCorrect);
+    setP(idx, isCorrect, 'quiz');
     if(isCorrect){ quizCorrect++; quizScore+=100; } else quizWrong++;
     document.getElementById('quiz-score-display').innerHTML=`${quizScore} <span class="text-slate-600 text-sm font-bold">pts</span>`;
     setTimeout(()=>{ quizIdx++; showQuizQuestion(); }, 1200);
@@ -942,39 +1011,76 @@ function endQuiz() {
 // =====================================================================
 // PROGRESS SCREEN
 // =====================================================================
+let progFilter = 'all'; // 'all' | 'new' | 'learning' | 'mastered' | 'bookmarked'
+
 function showProgressScreen() {
-    const mastered=C.cards.filter((_,i)=>isMastered(i)).length;
-    const learning=C.cards.filter((_,i)=>isSeen(i)&&!isMastered(i)).length;
-    const newCards=C.cards.length-mastered-learning;
-    document.getElementById('prog-summary').innerHTML=`
-        <div class="bg-slate-900 rounded-2xl p-3 text-center border border-slate-800">
+    updateProgStats();
+    renderProgList();
+    showScreen('screen-progress');
+}
+
+function updateProgStats() {
+    const mastered = C.cards.filter((_,i) => isMastered(i)).length;
+    const learning = C.cards.filter((_,i) => isSeen(i) && !isMastered(i)).length;
+    const newCards  = C.cards.length - mastered - learning;
+    const bookmarks = getBookmarks().length;
+    document.getElementById('prog-summary').innerHTML = `
+        <button onclick="setProgFilter('new')"      class="prog-filter-btn bg-slate-900 rounded-2xl p-3 text-center border transition-all ${progFilter==='new'      ?'border-indigo-500':'border-slate-800'}">
             <span class="text-xl font-black text-slate-400">${newCards}</span>
             <p class="text-[8px] text-slate-600 font-black uppercase mt-1">Nouvelles</p>
-        </div>
-        <div class="bg-slate-900 rounded-2xl p-3 text-center border border-slate-800">
+        </button>
+        <button onclick="setProgFilter('learning')" class="prog-filter-btn bg-slate-900 rounded-2xl p-3 text-center border transition-all ${progFilter==='learning' ?'border-amber-500':'border-slate-800'}">
             <span class="text-xl font-black text-amber-400">${learning}</span>
             <p class="text-[8px] text-slate-600 font-black uppercase mt-1">En cours</p>
-        </div>
-        <div class="bg-slate-900 rounded-2xl p-3 text-center border border-slate-800">
+        </button>
+        <button onclick="setProgFilter('mastered')" class="prog-filter-btn bg-slate-900 rounded-2xl p-3 text-center border transition-all ${progFilter==='mastered' ?'border-emerald-500':'border-slate-800'}">
             <span class="text-xl font-black text-emerald-400">${mastered}</span>
             <p class="text-[8px] text-slate-600 font-black uppercase mt-1">Maîtrisées</p>
-        </div>`;
-    document.getElementById('prog-list').innerHTML=C.cards.map((card,i)=>{
-        const p=getP(i), total=p.c+p.w, pct=total?Math.round(p.c/total*100):0;
-        const status=isMastered(i)?{dot:'bg-emerald-500'}:isSeen(i)?{dot:'bg-amber-500'}:{dot:'bg-slate-700'};
-        return `<div class="bg-slate-900 rounded-2xl px-4 py-3 border border-slate-800 flex items-center gap-3">
-            <div class="w-2 h-2 rounded-full flex-shrink-0 ${status.dot}"></div>
-            <div class="flex-grow min-w-0">
-                <p class="text-sm font-bold text-white truncate">${card.term}</p>
-                <p class="text-[10px] text-slate-600 truncate">${card.def}</p>
-            </div>
-            <div class="text-right flex-shrink-0 ml-2">
-                ${total>0?`<span class="text-[10px] font-black ${pct>=70?'text-emerald-400':'text-slate-500'}">${pct}%</span>
-                <p class="text-[9px] text-slate-700">${p.c}✓ ${p.w}✗</p>`:'<span class="text-[10px] text-slate-700">—</span>'}
-            </div>
-        </div>`;
-    }).join('');
-    showScreen('screen-progress');
+        </button>
+        <button onclick="setProgFilter('bookmarked')" class="prog-filter-btn bg-slate-900 rounded-2xl p-3 text-center border transition-all col-span-3 ${progFilter==='bookmarked'?'border-yellow-500':'border-slate-800'}">
+            <span class="text-xl font-black text-yellow-400">🔖 ${bookmarks} signet${bookmarks>1?'s':''}</span>
+            <p class="text-[8px] text-slate-600 font-black uppercase mt-1">Mes signets</p>
+        </button>`;
+}
+
+function setProgFilter(f) {
+    progFilter = (progFilter === f) ? 'all' : f;
+    updateProgStats();
+    renderProgList();
+}
+
+function renderProgList() {
+    const bms = getBookmarks();
+    const cards = C.cards.map((card, i) => ({ card, i })).filter(({ card, i }) => {
+        if (progFilter === 'new')        return !isSeen(i);
+        if (progFilter === 'learning')   return isSeen(i) && !isMastered(i);
+        if (progFilter === 'mastered')   return isMastered(i);
+        if (progFilter === 'bookmarked') return bms.includes(i);
+        return true;
+    });
+
+    document.getElementById('prog-list').innerHTML = cards.length === 0
+        ? '<p class="text-center text-slate-700 text-sm font-bold py-8">Aucune carte dans cette catégorie</p>'
+        : cards.map(({ card, i }) => {
+            const p = getP(i), total = (p.c||0) + (p.w||0), pct = p.pct || 0;
+            const bm = bms.includes(i);
+            const dot = isMastered(i) ? 'bg-emerald-500' : isSeen(i) ? 'bg-amber-500' : 'bg-slate-700';
+            return `<div class="bg-slate-900 rounded-2xl px-4 py-3 border border-slate-800 flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full flex-shrink-0 ${dot}"></div>
+                <div class="flex-grow min-w-0">
+                    <p class="text-sm font-bold text-white truncate">${card.term}</p>
+                    <p class="text-[10px] text-slate-600 truncate">${card.def}</p>
+                    ${total > 0 ? `<div class="mt-1.5 h-1 bg-slate-800 rounded-full overflow-hidden w-full">
+                        <div class="h-full rounded-full transition-all" style="width:${pct}%;background:${pct>=80?'#10b981':pct>=40?'#f59e0b':'#6366f1'}"></div>
+                    </div>` : ''}
+                </div>
+                <div class="text-right flex-shrink-0 ml-2 flex flex-col items-end gap-1">
+                    ${total > 0 ? `<span class="text-[10px] font-black ${pct>=80?'text-emerald-400':'text-slate-500'}">${pct}%</span>
+                    <p class="text-[9px] text-slate-700">${p.c||0}✓ ${p.w||0}✗</p>` : '<span class="text-[10px] text-slate-700">—</span>'}
+                    <button onclick="toggleBookmark(${i}, this)" class="text-base transition-all ${bm?'opacity-100':'opacity-20'}">🔖</button>
+                </div>
+            </div>`;
+        }).join('');
 }
 
 // =====================================================================
@@ -1087,12 +1193,13 @@ function showPodium() {
 // =====================================================================
 // KAHOOT HOST MODE
 // =====================================================================
-let kahootRoom = null;       // room code
-let kahootListener = null;  // Firestore listener
-let kahootQuestions = [];   // generated questions
+let kahootRoom = null;
+let kahootListener = null;
+let kahootQuestions = [];
 let kahootCurrentQ = 0;
 let kahootSettings = {};
 let kahootTimerTimeout = null;
+let kahootCountdownInterval = null;
 
 function generateRoomCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -1106,7 +1213,6 @@ async function startKahoot() {
     }
     showScreen('screen-kahoot-lobby');
 
-    // Générer code unique
     let code;
     let attempts = 0;
     do {
@@ -1122,7 +1228,6 @@ async function startKahoot() {
     const roomUrl = `https://kalarma.github.io/BTS_Revision/room/?code=${code}`;
     document.getElementById('kahoot-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(roomUrl)}&bgcolor=ffffff&color=020617&qzone=1`;
 
-    // Créer la salle dans Firestore
     await fbDb.collection('rooms').doc(code).set({
         host: currentUser?.uid || 'host',
         course: courseName,
@@ -1133,7 +1238,6 @@ async function startKahoot() {
         createdAt: Date.now()
     });
 
-    // Écouter les changements
     kahootListener = fbDb.collection('rooms').doc(code).onSnapshot(snap => {
         if (!snap.exists) return;
         const room = snap.data();
@@ -1165,7 +1269,6 @@ function launchKahootGame() {
     const time = parseInt(document.getElementById('kahoot-time').value) || 20;
     kahootSettings = { time, totalQ: Math.min(nbQ, C.cards.length) };
 
-    // Générer les questions QCM
     const shuffled = C.cards.map((_,i)=>i).sort(()=>Math.random()-.5).slice(0, kahootSettings.totalQ);
     kahootQuestions = shuffled.map(idx => ({
         term: C.cards[idx].term,
@@ -1173,7 +1276,6 @@ function launchKahootGame() {
     }));
     kahootCurrentQ = 0;
 
-    // Sauvegarder les questions dans Firestore
     fbDb.collection('rooms').doc(kahootRoom).update({
         questions: kahootQuestions,
         settings: kahootSettings
@@ -1188,11 +1290,32 @@ function showKahootQuestion() {
 
     const colors = ['#e74c3c','#3498db','#f39c12','#27ae60'];
     const labels = ['A','B','C','D'];
-    document.getElementById('kh-choices-display').innerHTML = q.choices.map((ch,i) => `
+
+    // Cacher les réponses pendant 5s
+    const choicesEl = document.getElementById('kh-choices-display');
+    const countdownEl = document.getElementById('kh-countdown');
+    choicesEl.classList.add('hidden');
+    choicesEl.innerHTML = q.choices.map((ch,i) => `
         <div class="rounded-2xl p-3 flex items-center gap-2" style="background:${colors[i]}20;border:1px solid ${colors[i]}40">
             <span class="font-black text-xs" style="color:${colors[i]}">${labels[i]}</span>
             <span class="text-white text-xs font-medium leading-snug">${ch.text}</span>
         </div>`).join('');
+
+    let countdown = 5;
+    countdownEl.textContent = `Réponses dans ${countdown}s...`;
+    clearInterval(kahootCountdownInterval);
+    kahootCountdownInterval = setInterval(() => {
+        countdown--;
+        if (countdown <= 0) {
+            clearInterval(kahootCountdownInterval);
+            choicesEl.classList.remove('hidden');
+            countdownEl.textContent = '';
+            // Démarrer le timer seulement maintenant
+            startKahootTimer();
+        } else {
+            countdownEl.textContent = `Réponses dans ${countdown}s...`;
+        }
+    }, 1000);
 
     // Mettre à jour Firestore → tous les joueurs voient la question
     fbDb.collection('rooms').doc(kahootRoom).update({
@@ -1201,7 +1324,10 @@ function showKahootQuestion() {
         questionStartTime: Date.now()
     });
 
-    // Timer
+    showScreen('screen-kahoot-game');
+}
+
+function startKahootTimer() {
     clearTimeout(kahootTimerTimeout);
     const bar = document.getElementById('kh-timer-bar');
     bar.style.transition = 'none'; bar.style.width = '100%';
@@ -1210,17 +1336,19 @@ function showKahootQuestion() {
         bar.style.width = '0%';
     }));
     kahootTimerTimeout = setTimeout(revealKahootAnswer, kahootSettings.time * 1000);
-
-    showScreen('screen-kahoot-game');
 }
 
 function revealKahootAnswer() {
     clearTimeout(kahootTimerTimeout);
+    clearInterval(kahootCountdownInterval);
     document.getElementById('kh-timer-bar').style.cssText = 'transition:none;width:0%';
 
     const q = kahootQuestions[kahootCurrentQ];
     const correctChoice = q.choices.find(c => c.correct);
     document.getElementById('kh-correct-answer').textContent = correctChoice?.text || '';
+
+    const colors = ['#e74c3c','#3498db','#f39c12','#27ae60'];
+    const labels = ['A','B','C','D'];
 
     // Lire les réponses de Firestore
     fbDb.collection('rooms').doc(kahootRoom).get().then(snap => {
@@ -1228,14 +1356,34 @@ function revealKahootAnswer() {
         const answers = room.answers || {};
         const players = room.players || {};
         let nbCorrect = 0, nbWrong = 0;
+        const answerCounts = [0, 0, 0, 0];
 
         Object.entries(answers).forEach(([pid, pAnswers]) => {
-            if (pAnswers[kahootCurrentQ] === true) nbCorrect++;
-            else if (pAnswers[kahootCurrentQ] === false) nbWrong++;
+            const ans = pAnswers[kahootCurrentQ];
+            if (ans !== undefined) {
+                // Support both old format (bool) and new format ({correct, idx})
+                const isCorrect = typeof ans === 'object' ? ans.correct : ans;
+                const ansIdx    = typeof ans === 'object' ? ans.idx    : null;
+                if (isCorrect === true) nbCorrect++;
+                else if (isCorrect === false) nbWrong++;
+                if (ansIdx !== null && ansIdx >= 0 && ansIdx < 4) answerCounts[ansIdx]++;
+            }
         });
 
         document.getElementById('kh-nb-correct').textContent = nbCorrect;
         document.getElementById('kh-nb-wrong').textContent = nbWrong;
+
+        // Affichage choix avec comptage
+        document.getElementById('kh-choices-reveal').innerHTML = q.choices.map((ch, i) => {
+            const count = answerCounts[i] || 0;
+            return `<div class="rounded-2xl p-3 flex items-center justify-between gap-2 border-2 ${ch.correct ? 'border-emerald-500 bg-emerald-500/20' : 'border-slate-700 bg-slate-900/50'}">
+                <div class="flex items-center gap-2">
+                    <span class="font-black text-xs" style="color:${colors[i]}">${labels[i]}</span>
+                    <span class="text-white text-xs font-medium leading-snug">${ch.text}</span>
+                </div>
+                <span class="font-black text-sm ${ch.correct ? 'text-emerald-400' : 'text-slate-500'} flex-shrink-0">${count}</span>
+            </div>`;
+        }).join('');
 
         // Classement
         const sorted = Object.entries(players).sort((a,b) => (b[1].score||0) - (a[1].score||0));
@@ -1272,11 +1420,9 @@ function showKahootFinalPodium() {
         const players = room.players || {};
         const sorted = Object.values(players).sort((a,b)=>(b.score||0)-(a.score||0));
 
-        // Réutiliser l'écran podium existant
         fbDb.collection('rooms').doc(kahootRoom).update({ status: 'finished' });
         if (kahootListener) { kahootListener(); kahootListener = null; }
 
-        // Adapter teams pour le podium
         teams = sorted.map((p,i) => ({
             name: p.name,
             score: p.score || 0,
@@ -1287,6 +1433,7 @@ function showKahootFinalPodium() {
 }
 
 function cancelKahoot() {
+    clearInterval(kahootCountdownInterval);
     if (kahootListener) { kahootListener(); kahootListener = null; }
     if (kahootRoom && fbDb) fbDb.collection('rooms').doc(kahootRoom).update({ status: 'cancelled' }).catch(()=>{});
     kahootRoom = null;
@@ -1294,11 +1441,16 @@ function cancelKahoot() {
     showScreen('screen-home');
 }
 
+function confirmQuitKahoot() {
+    if (confirm('Quitter la partie en cours ? Les joueurs seront déconnectés.')) {
+        cancelKahoot();
+    }
+}
+
 // =====================================================================
 // STARTUP
 // =====================================================================
 document.addEventListener('DOMContentLoaded', () => {
-    // Pre-add 2 teams
     const list=document.getElementById('teams-list');
     if(list.children.length===0){ addTeam(); addTeam(); }
     init();
