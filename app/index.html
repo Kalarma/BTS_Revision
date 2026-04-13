@@ -128,8 +128,7 @@
         <!-- User badge -->
         <div id="home-user-badge" class="hidden mb-2 flex items-center justify-between bg-indigo-500/10 border border-indigo-500/20 rounded-2xl px-4 py-2.5">
             <div class="flex items-center gap-2.5">
-                <div class="w-7 h-7 bg-indigo-500/20 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span id="home-user-initial" class="text-indigo-400 font-black text-xs"></span>
+                <div id="user-avatar-hub" class="w-7 h-7 bg-indigo-500/20 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
                 </div>
                 <span id="home-user-name" class="text-sm font-bold text-white"></span>
             </div>
@@ -177,6 +176,9 @@
                     📊 Stats
                 </button>
             </div>
+            <button onclick="startKahoot()" class="w-full py-5 bg-gradient-to-r from-rose-600 to-orange-500 rounded-3xl font-black uppercase text-white text-sm tracking-wider active:scale-95 transition-all shadow-lg shadow-rose-500/20">
+                🎮 Mode Kahoot — Multijoueur
+            </button>
         </div>
 
         <button onclick="confirmReset()" class="mt-6 text-[10px] font-bold text-slate-800 uppercase tracking-widest hover:text-slate-600 transition-colors">
@@ -198,8 +200,8 @@
         <span id="hint-left" class="text-[10px] font-black text-rose-500/40 uppercase tracking-widest transition-opacity">✗ À revoir</span>
         <span id="hint-right" class="text-[10px] font-black text-emerald-500/40 uppercase tracking-widest transition-opacity">✓ Je savais</span>
     </div>
-    <div class="flex-grow flex items-center justify-center px-6 py-2 overflow-hidden">
-        <div id="fc-card" class="swipe-card w-full max-w-sm bg-slate-900 border-2 border-slate-800 rounded-[2.5rem] p-8 flex flex-col items-center justify-center text-center min-h-[260px]">
+    <div class="flex-grow flex items-stretch px-6 py-2 overflow-hidden">
+        <div id="fc-card" class="swipe-card w-full bg-slate-900 border-2 border-slate-800 rounded-[2.5rem] p-8 flex flex-col items-center justify-center text-center flex-grow">
             <span class="text-[9px] font-black text-slate-700 uppercase tracking-widest mb-4">Terme</span>
             <h2 id="fc-term" class="text-2xl font-bold text-white leading-snug"></h2>
             <div id="fc-def-area" class="hidden w-full mt-5 pt-5 border-t border-slate-800 fade-up">
@@ -397,6 +399,127 @@
         <div id="podium-bars" class="flex items-end justify-center gap-3 h-52 w-full mb-6"></div>
         <div id="podium-list" class="w-full space-y-2 mb-8"></div>
         <button onclick="exitToHome()" class="w-full py-5 bg-slate-800 text-white font-black uppercase rounded-2xl active:scale-95 transition-all">Retour à l'accueil</button>
+    </div>
+</div>
+
+<!-- ==================== KAHOOT LOBBY (HOST) ==================== -->
+<div id="screen-kahoot-lobby" class="screen overflow-y-auto">
+    <div class="flex flex-col max-w-md mx-auto w-full px-6 pb-8">
+        <div class="pt-6 pb-4 flex items-center justify-between">
+            <button onclick="cancelKahoot()" class="text-slate-600 font-black text-lg leading-none">←</button>
+            <span class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Salle en attente</span>
+            <div></div>
+        </div>
+
+        <!-- Room code -->
+        <div class="bg-gradient-to-br from-indigo-600 to-violet-600 rounded-3xl p-6 mb-4 text-center">
+            <p class="text-[10px] font-black text-indigo-200 uppercase tracking-widest mb-2">Code de la salle</p>
+            <div id="kahoot-room-code" class="text-5xl font-black text-white tracking-[0.3em] mb-4">------</div>
+            <p class="text-indigo-200 text-xs font-bold">kalarma.github.io/BTS_Revision/room/</p>
+        </div>
+
+        <!-- QR Code -->
+        <div class="bg-white rounded-3xl p-4 mb-4 flex flex-col items-center">
+            <img id="kahoot-qr" src="" alt="QR Code" class="w-48 h-48 rounded-xl">
+            <p class="text-slate-500 text-[10px] font-bold uppercase mt-2">Scanner pour rejoindre</p>
+        </div>
+
+        <!-- Settings -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-4">
+            <label class="text-[9px] font-black text-slate-500 uppercase block mb-3">Paramètres</label>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <span class="text-[9px] text-slate-400 block mb-1">QUESTIONS</span>
+                    <input id="kahoot-nb-q" type="number" value="10" min="3" max="30" class="w-full bg-slate-950 p-2 rounded-lg text-white font-bold border border-slate-800 text-center">
+                </div>
+                <div>
+                    <span class="text-[9px] text-slate-400 block mb-1">TEMPS (SEC)</span>
+                    <input id="kahoot-time" type="number" value="20" min="5" max="60" class="w-full bg-slate-950 p-2 rounded-lg text-white font-bold border border-slate-800 text-center">
+                </div>
+            </div>
+        </div>
+
+        <!-- Players list -->
+        <div class="mb-4">
+            <div class="flex items-center justify-between mb-2">
+                <label class="text-[9px] font-black text-slate-500 uppercase">Joueurs connectés</label>
+                <span id="kahoot-player-count" class="text-indigo-400 font-black text-sm">0</span>
+            </div>
+            <div id="kahoot-players-list" class="grid grid-cols-2 gap-2 min-h-[60px]">
+                <div class="col-span-2 text-center text-slate-700 text-xs font-bold py-4">En attente des joueurs...</div>
+            </div>
+        </div>
+
+        <button id="kahoot-start-btn" onclick="launchKahootGame()" disabled
+                class="w-full py-5 bg-indigo-600 text-white font-black uppercase rounded-3xl active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+            Lancer la partie
+        </button>
+    </div>
+</div>
+
+<!-- ==================== KAHOOT GAME (HOST) ==================== -->
+<div id="screen-kahoot-game" class="screen">
+    <div class="px-6 pt-6 pb-3 flex items-center justify-between flex-shrink-0">
+        <span id="kh-round" class="text-slate-600 text-[10px] font-black uppercase">Q 1/10</span>
+        <span id="kh-answer-count" class="text-[10px] font-black text-indigo-400">0 réponses</span>
+    </div>
+    <div class="px-6 mb-3 flex-shrink-0">
+        <div class="bg-slate-900 h-2 rounded-full overflow-hidden">
+            <div id="kh-timer-bar" class="bg-indigo-500 h-full w-full"></div>
+        </div>
+    </div>
+    <div class="flex-grow flex items-center px-6 py-2 overflow-hidden">
+        <div class="w-full bg-slate-900 border-2 border-slate-800 rounded-[2.5rem] p-8 text-center">
+            <span class="text-[9px] font-black text-slate-700 uppercase tracking-widest block mb-4">Terme</span>
+            <h2 id="kh-term" class="text-2xl font-bold text-white leading-snug mb-6"></h2>
+            <div id="kh-choices-display" class="grid grid-cols-2 gap-3 text-left">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+    </div>
+    <div class="px-6 pb-8 flex-shrink-0">
+        <button id="kh-reveal-btn" onclick="revealKahootAnswer()"
+                class="w-full py-5 bg-white text-slate-950 font-black uppercase rounded-2xl active:scale-95 transition-all">
+            Révéler la réponse
+        </button>
+    </div>
+</div>
+
+<!-- ==================== KAHOOT REVEAL (HOST) ==================== -->
+<div id="screen-kahoot-reveal" class="screen overflow-y-auto">
+    <div class="flex flex-col max-w-md mx-auto w-full px-6 pb-8">
+        <div class="pt-6 pb-4">
+            <h3 class="text-[10px] font-black text-slate-600 uppercase tracking-widest text-center">Résultats de la question</h3>
+        </div>
+
+        <!-- Bonne réponse -->
+        <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-3xl p-5 mb-4 text-center">
+            <p class="text-[9px] font-black text-emerald-400 uppercase mb-2">Bonne réponse</p>
+            <p id="kh-correct-answer" class="text-white font-bold text-base leading-snug"></p>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="bg-slate-900 rounded-2xl p-4 text-center border border-slate-800">
+                <span id="kh-nb-correct" class="text-3xl font-black text-emerald-400">0</span>
+                <p class="text-[9px] text-slate-500 font-black uppercase mt-1">Correct</p>
+            </div>
+            <div class="bg-slate-900 rounded-2xl p-4 text-center border border-slate-800">
+                <span id="kh-nb-wrong" class="text-3xl font-black text-rose-400">0</span>
+                <p class="text-[9px] text-slate-500 font-black uppercase mt-1">Faux</p>
+            </div>
+        </div>
+
+        <!-- Classement partiel -->
+        <div class="mb-6">
+            <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-3">Classement</p>
+            <div id="kh-partial-leaderboard" class="space-y-2"></div>
+        </div>
+
+        <button id="kh-next-btn" onclick="nextKahootQuestion()"
+                class="w-full py-5 bg-indigo-600 text-white font-black uppercase rounded-2xl active:scale-95 transition-all">
+            Question suivante →
+        </button>
     </div>
 </div>
 
@@ -633,14 +756,12 @@ function updateHome() {
     const guestBadge = document.getElementById('home-guest-badge');
     if (currentUser) {
         const uname = currentUser.displayName || currentUser.email || 'Utilisateur';
-        const initial = uname[0].toUpperCase();
         document.getElementById('home-user-name').textContent = uname;
-        // Photo Google ou initiale
-        const photoEl = document.getElementById('home-user-initial');
-        if (currentUser.photoURL) {
-            photoEl.parentElement.innerHTML = `<img src="${currentUser.photoURL}" class="w-7 h-7 rounded-full" referrerpolicy="no-referrer">`;
-        } else {
-            photoEl.textContent = initial;
+        const avatarEl = document.getElementById('user-avatar-hub');
+        if (avatarEl) {
+            avatarEl.innerHTML = currentUser.photoURL
+                ? `<img src="${currentUser.photoURL}" class="w-full h-full object-cover rounded-full" referrerpolicy="no-referrer">`
+                : `<span class="text-indigo-400 font-black text-xs">${uname[0].toUpperCase()}</span>`;
         }
         userBadge.classList.remove('hidden');
         guestBadge.classList.add('hidden');
@@ -961,6 +1082,216 @@ function showPodium() {
             <span class="font-black text-indigo-400">${t.score} pts</span>
         </div>`).join('');
     showScreen('screen-podium');
+}
+
+// =====================================================================
+// KAHOOT HOST MODE
+// =====================================================================
+let kahootRoom = null;       // room code
+let kahootListener = null;  // Firestore listener
+let kahootQuestions = [];   // generated questions
+let kahootCurrentQ = 0;
+let kahootSettings = {};
+let kahootTimerTimeout = null;
+
+function generateRoomCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    return Array.from({length:6}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+}
+
+async function startKahoot() {
+    if (!useFirebase || !fbDb) {
+        alert('Le mode Kahoot nécessite une connexion Firebase.\nConnecte-toi avec Google pour y accéder.');
+        return;
+    }
+    showScreen('screen-kahoot-lobby');
+
+    // Générer code unique
+    let code;
+    let attempts = 0;
+    do {
+        code = generateRoomCode();
+        const snap = await fbDb.collection('rooms').doc(code).get();
+        if (!snap.exists || (Date.now() - (snap.data().createdAt || 0)) > 3600000) break;
+        attempts++;
+    } while(attempts < 5);
+
+    kahootRoom = code;
+    document.getElementById('kahoot-room-code').textContent = code;
+
+    const roomUrl = `https://kalarma.github.io/BTS_Revision/room/?code=${code}`;
+    document.getElementById('kahoot-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(roomUrl)}&bgcolor=ffffff&color=020617&qzone=1`;
+
+    // Créer la salle dans Firestore
+    await fbDb.collection('rooms').doc(code).set({
+        host: currentUser?.uid || 'host',
+        course: courseName,
+        status: 'waiting',
+        currentQ: -1,
+        players: {},
+        answers: {},
+        createdAt: Date.now()
+    });
+
+    // Écouter les changements
+    kahootListener = fbDb.collection('rooms').doc(code).onSnapshot(snap => {
+        if (!snap.exists) return;
+        const room = snap.data();
+        const players = room.players || {};
+        const count = Object.keys(players).length;
+
+        document.getElementById('kahoot-player-count').textContent = count;
+        document.getElementById('kahoot-start-btn').disabled = count < 1;
+
+        if (document.getElementById('screen-kahoot-lobby').classList.contains('active')) {
+            document.getElementById('kahoot-players-list').innerHTML = count === 0
+                ? '<div class="col-span-2 text-center text-slate-700 text-xs font-bold py-4">En attente des joueurs...</div>'
+                : Object.values(players).map(p => `
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0"></div>
+                        <span class="text-white font-bold text-sm truncate">${p.name}</span>
+                    </div>`).join('');
+        }
+
+        if (document.getElementById('screen-kahoot-game').classList.contains('active')) {
+            const answered = Object.values(room.answers || {}).filter(a => a[kahootCurrentQ] !== undefined).length;
+            document.getElementById('kh-answer-count').textContent = `${answered}/${count} réponses`;
+        }
+    });
+}
+
+function launchKahootGame() {
+    const nbQ = parseInt(document.getElementById('kahoot-nb-q').value) || 10;
+    const time = parseInt(document.getElementById('kahoot-time').value) || 20;
+    kahootSettings = { time, totalQ: Math.min(nbQ, C.cards.length) };
+
+    // Générer les questions QCM
+    const shuffled = C.cards.map((_,i)=>i).sort(()=>Math.random()-.5).slice(0, kahootSettings.totalQ);
+    kahootQuestions = shuffled.map(idx => ({
+        term: C.cards[idx].term,
+        choices: generateChoices(idx)
+    }));
+    kahootCurrentQ = 0;
+
+    // Sauvegarder les questions dans Firestore
+    fbDb.collection('rooms').doc(kahootRoom).update({
+        questions: kahootQuestions,
+        settings: kahootSettings
+    }).then(() => showKahootQuestion());
+}
+
+function showKahootQuestion() {
+    const q = kahootQuestions[kahootCurrentQ];
+    document.getElementById('kh-round').textContent = `Q ${kahootCurrentQ+1}/${kahootSettings.totalQ}`;
+    document.getElementById('kh-term').textContent = q.term;
+    document.getElementById('kh-answer-count').textContent = '0 réponses';
+
+    const colors = ['#e74c3c','#3498db','#f39c12','#27ae60'];
+    const labels = ['A','B','C','D'];
+    document.getElementById('kh-choices-display').innerHTML = q.choices.map((ch,i) => `
+        <div class="rounded-2xl p-3 flex items-center gap-2" style="background:${colors[i]}20;border:1px solid ${colors[i]}40">
+            <span class="font-black text-xs" style="color:${colors[i]}">${labels[i]}</span>
+            <span class="text-white text-xs font-medium leading-snug">${ch.text}</span>
+        </div>`).join('');
+
+    // Mettre à jour Firestore → tous les joueurs voient la question
+    fbDb.collection('rooms').doc(kahootRoom).update({
+        status: 'question',
+        currentQ: kahootCurrentQ,
+        questionStartTime: Date.now()
+    });
+
+    // Timer
+    clearTimeout(kahootTimerTimeout);
+    const bar = document.getElementById('kh-timer-bar');
+    bar.style.transition = 'none'; bar.style.width = '100%';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        bar.style.transition = `width ${kahootSettings.time}s linear`;
+        bar.style.width = '0%';
+    }));
+    kahootTimerTimeout = setTimeout(revealKahootAnswer, kahootSettings.time * 1000);
+
+    showScreen('screen-kahoot-game');
+}
+
+function revealKahootAnswer() {
+    clearTimeout(kahootTimerTimeout);
+    document.getElementById('kh-timer-bar').style.cssText = 'transition:none;width:0%';
+
+    const q = kahootQuestions[kahootCurrentQ];
+    const correctChoice = q.choices.find(c => c.correct);
+    document.getElementById('kh-correct-answer').textContent = correctChoice?.text || '';
+
+    // Lire les réponses de Firestore
+    fbDb.collection('rooms').doc(kahootRoom).get().then(snap => {
+        const room = snap.data();
+        const answers = room.answers || {};
+        const players = room.players || {};
+        let nbCorrect = 0, nbWrong = 0;
+
+        Object.entries(answers).forEach(([pid, pAnswers]) => {
+            if (pAnswers[kahootCurrentQ] === true) nbCorrect++;
+            else if (pAnswers[kahootCurrentQ] === false) nbWrong++;
+        });
+
+        document.getElementById('kh-nb-correct').textContent = nbCorrect;
+        document.getElementById('kh-nb-wrong').textContent = nbWrong;
+
+        // Classement
+        const sorted = Object.entries(players).sort((a,b) => (b[1].score||0) - (a[1].score||0));
+        document.getElementById('kh-partial-leaderboard').innerHTML = sorted.slice(0,5).map(([pid, p], i) => `
+            <div class="flex items-center justify-between bg-slate-900 p-3 rounded-xl border border-slate-800">
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-600 font-black text-xs w-4">${i+1}</span>
+                    <span class="text-white font-bold text-sm">${p.name}</span>
+                </div>
+                <span class="font-black text-indigo-400 text-sm">${p.score||0} pts</span>
+            </div>`).join('');
+
+        // Changer bouton si dernière question
+        const isLast = kahootCurrentQ >= kahootSettings.totalQ - 1;
+        document.getElementById('kh-next-btn').textContent = isLast ? 'Voir le podium 🏆' : 'Question suivante →';
+
+        fbDb.collection('rooms').doc(kahootRoom).update({ status: 'reveal' });
+        showScreen('screen-kahoot-reveal');
+    });
+}
+
+function nextKahootQuestion() {
+    kahootCurrentQ++;
+    if (kahootCurrentQ >= kahootSettings.totalQ) {
+        showKahootFinalPodium();
+    } else {
+        showKahootQuestion();
+    }
+}
+
+function showKahootFinalPodium() {
+    fbDb.collection('rooms').doc(kahootRoom).get().then(snap => {
+        const room = snap.data();
+        const players = room.players || {};
+        const sorted = Object.values(players).sort((a,b)=>(b.score||0)-(a.score||0));
+
+        // Réutiliser l'écran podium existant
+        fbDb.collection('rooms').doc(kahootRoom).update({ status: 'finished' });
+        if (kahootListener) { kahootListener(); kahootListener = null; }
+
+        // Adapter teams pour le podium
+        teams = sorted.map((p,i) => ({
+            name: p.name,
+            score: p.score || 0,
+            color: ['#6366f1','#f43f5e','#10b981','#f59e0b','#a855f7','#06b6d4'][i % 6]
+        }));
+        showPodium();
+    });
+}
+
+function cancelKahoot() {
+    if (kahootListener) { kahootListener(); kahootListener = null; }
+    if (kahootRoom && fbDb) fbDb.collection('rooms').doc(kahootRoom).update({ status: 'cancelled' }).catch(()=>{});
+    kahootRoom = null;
+    clearTimeout(kahootTimerTimeout);
+    showScreen('screen-home');
 }
 
 // =====================================================================
