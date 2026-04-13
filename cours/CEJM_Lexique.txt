@@ -1,0 +1,31 @@
+Agent économique | Personne ou organisation prenant des décisions économiques (consommer, produire, épargner, investir) et interagissant avec d’autres agents.
+Ménage | Ensemble de personnes vivant sous le même toit, consommant des biens et services et offrant leur travail contre un revenu.
+Entreprise (éco) | Organisation produisant des biens ou services pour les vendre sur un marché afin de réaliser un profit.
+État (éco) | Administration publique produisant des services non marchands, fixant les règles et redistribuant les richesses via impôts et dépenses.
+PIB (Produit intérieur brut) | Valeur totale des richesses produites sur un territoire pendant une période donnée.
+Croissance économique | Augmentation durable de la production de richesses mesurée par le PIB.
+Inflation | Hausse générale et durable des prix réduisant le pouvoir d’achat de la monnaie.
+Chômage | Situation d’une personne sans emploi, disponible et recherchant activement un travail.
+Marché | Lieu réel ou virtuel de rencontre entre l’offre des vendeurs et la demande des acheteurs.
+Prix d’équilibre | Prix pour lequel la quantité offerte est égale à la quantité demandée sur un marché.
+Barrières à l’entrée | Obstacles (coûts, brevets, réglementation) rendant difficile l’arrivée de nouveaux concurrents sur un marché.
+Externalité | Effet positif ou négatif de l’activité d’un agent sur un autre sans compensation monétaire.
+Asymétrie d’information | Situation où un acteur d’un échange possède plus d’informations que l’autre.
+Économies d’échelle | Baisse du coût unitaire de production lorsque la quantité produite augmente par la répartition des coûts fixes.
+Politique budgétaire | Action de l’État sur l’économie par l’ajustement de ses recettes (impôts) et ses dépenses publiques.
+Politique monétaire | Action de la banque centrale sur la masse monétaire et les taux d’intérêt pour stabiliser l’économie.
+Biens publics | Biens fournis par l’État qui sont non excluables et non rivaux, comme l'éclairage public.
+Finalités de l’entreprise | Raisons d’être de l’organisation incluant le profit, la pérennité et le respect des obligations sociales et environnementales.
+Parties prenantes | Individus ou groupes (salariés, clients, État, etc.) influençant ou étant influencés par l’entreprise.
+Performance globale | Capacité d’une organisation à atteindre simultanément ses objectifs économiques, sociaux et environnementaux.
+Logique entrepreneuriale | Démarche de création ou reprise d'activité fondée sur l’innovation, la prise de risque et la recherche d’opportunités.
+Logique managériale | Gestion et pilotage d'une organisation existante pour organiser le travail et atteindre les objectifs fixés.
+Décision stratégique | Choix de long terme engageant fortement l’avenir de l’entreprise (marchés, activités).
+Ressources tangibles | Moyens physiques et financiers dont dispose l’entreprise, tels que les locaux, machines et trésorerie.
+Ressources intangibles | Éléments immatériels comme la marque, le savoir-faire, les brevets ou le système d’information.
+Avantage concurrentiel | Élément permettant à l’entreprise de se distinguer durablement de ses concurrents par le prix, la qualité ou l'innovation.
+Style participatif | Mode de management où les salariés sont associés aux décisions et à la recherche de solutions.
+Diagnostic interne | Analyse visant à identifier les forces et les faiblesses de l'organisation.
+Diagnostic externe | Analyse de l’environnement pour identifier les opportunités et les menaces.
+Croissance externe | Développement de l'entreprise via des fusions, acquisitions ou prises de participation dans d'autres sociétés.
+Responsabilité sociétale des entreprises (RSE) | Intégration volontaire des préoccupations sociales et environnementales aux activités commerciales.
