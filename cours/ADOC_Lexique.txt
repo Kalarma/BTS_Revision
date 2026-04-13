@@ -1,0 +1,106 @@
+# Lexique ADOC
+# Format : Terme | Définition  (une paire par ligne)
+# Les lignes commençant par # sont des commentaires
+
+Accords de référencement | Relation producteur/distributeur sur produit, prix, conditions, livraisons.
+Affichage digital | Écrans numériques permettant un affichage dynamique.
+Agencement | Aménagement de l'espace pour optimiser l'ergonomie et la valeur.
+Ajustement linéaire | Modèle pour établir des estimations futures via les données passées.
+Alignement | Fixation d'un prix identique aux concurrents directs ou au leader.
+Analyse ABC | Segmentation : A (20%=80%), B (30%=15%), C (50%=5%).
+Analyse PESTEL | Politique, Économique, Sociologique, Technologique, Écologique, Légal.
+Analyse SWOT | Diagnostic interne/externe : Forces, Faiblesses, Opportunités, Menaces.
+Assortiment | Ensemble des produits et services proposés à la vente.
+Benchmarking | Étude comparative des pratiques d'autres entreprises pour s'améliorer.
+Budget de trésorerie | Prévision des encaissements et décaissements sur une période.
+Canal de distribution | Circuit emprunté par le produit du producteur au consommateur.
+Category management | Gestion des catégories de produits comme des unités stratégiques.
+Centrale d'achat | Organisme qui négocie et achète pour le compte de ses adhérents.
+Chiffre d'affaires | Total des ventes réalisées sur une période (CA = PV × Quantités).
+Coefficient de pondération | Poids attribué à un critère dans une évaluation multicritère.
+Commercialisation | Ensemble des actions pour mettre un produit sur le marché.
+Communication institutionnelle | Communication sur l'image et les valeurs de l'entreprise.
+Communication produit | Communication centrée sur un produit ou une gamme de produits.
+Compte de résultat | Document comptable mesurant la performance économique de l'entreprise.
+Concurrence directe | Entreprises proposant des produits similaires au même segment.
+Concurrence indirecte | Entreprises proposant des produits substituables différents.
+Conditions générales de vente | Règles contractuelles entre vendeur et acheteur.
+Consommateur final | Personne qui utilise le produit pour son usage personnel.
+Contrat de franchise | Accord donnant droit d'exploiter une enseigne contre redevance.
+Coût de revient | Somme de tous les coûts engagés pour produire ou vendre un produit.
+CRM | Customer Relationship Management : gestion de la relation client.
+Cross-selling | Technique de vente proposant des produits complémentaires.
+Démarque connue | Perte de marchandise identifiée (casse, retour fournisseur).
+Démarque inconnue | Perte non identifiée (vol, erreur de caisse, détérioration).
+Développement durable | Répondre aux besoins présents sans compromettre les générations futures.
+Distribution intensive | Présence du produit dans le maximum de points de vente.
+Distribution sélective | Choix limité de distributeurs selon des critères définis.
+Distribution exclusive | Un seul distributeur par zone géographique.
+Drives | Points de collecte de commandes internet sans entrer en magasin.
+E-commerce | Commerce électronique effectué via internet.
+Enseigne | Marque commerciale d'un point de vente ou d'un réseau.
+Étude de marché | Recueil et analyse d'informations sur un marché donné.
+Facing | Nombre d'unités d'un produit visibles en façade sur un linéaire.
+Force de vente | Ensemble des vendeurs et commerciaux d'une entreprise.
+Gamme | Ensemble de produits liés entre eux par une même technologie ou besoin.
+Gestion des stocks | Ensemble des actions pour optimiser les niveaux de stock.
+GMS | Grandes et Moyennes Surfaces (supermarchés, hypermarchés).
+Gondole | Meuble de présentation central ou périphérique dans un magasin.
+ILV | Information sur le Lieu de Vente : signalétique dans un point de vente.
+Implantation | Disposition des produits dans un rayon ou un magasin.
+Indice de sensibilité | Rapport entre la part de CA d'un rayon et sa part de surface.
+Jours de vente | Nombre de jours d'activité commerciale sur une période.
+Largeur de gamme | Nombre de lignes de produits dans une gamme.
+Linéaire | Espace de présentation des produits dans un point de vente.
+Linéaire développé | Longueur totale de présentation (linéaire au sol × nombre de niveaux).
+Livret d'accueil | Document remis au nouvel employé pour faciliter son intégration.
+Logistique | Gestion des flux physiques de marchandises de l'approvisionnement à la livraison.
+Loi de Pareto | 20% des références génèrent 80% du chiffre d'affaires.
+Marge brute | CA - coût d'achat des marchandises vendues.
+Marge commerciale | Différence entre le prix de vente HT et le coût d'achat HT.
+Marque de distributeur (MDD) | Produit développé et vendu sous la marque du distributeur.
+Marque nationale | Marque appartenant au producteur, distribuée à grande échelle.
+Merchandising | Ensemble des techniques d'optimisation de la présentation des produits.
+Mix marketing | Combinaison des 4P : Produit, Prix, Place (distribution), Promotion.
+Motivation d'achat | Raison psychologique qui pousse un individu à acheter.
+Négociation commerciale | Processus de discussion pour aboutir à un accord commercial.
+Offre promotionnelle | Proposition temporaire avantageuse pour stimuler les ventes.
+Panel distributeur | Mesure des ventes en sortie de caisse dans un échantillon de magasins.
+Panel consommateur | Suivi des comportements d'achat d'un groupe représentatif.
+Part de linéaire | Pourcentage de l'espace attribué à un produit ou fournisseur.
+Part de marché | Pourcentage des ventes d'une marque sur le total du marché.
+Planogramme | Représentation graphique de l'implantation des produits en rayon.
+PLV | Publicité sur le Lieu de Vente : matériel promotionnel en magasin.
+Politique de prix | Stratégie globale de l'entreprise concernant la fixation des prix.
+Politique tarifaire | Ensemble des décisions relatives aux prix pratiqués.
+Positionnement | Place qu'occupe un produit dans l'esprit du consommateur.
+Prix psychologique | Prix accepté par la majorité des consommateurs cibles.
+Productivité | Rapport entre la production obtenue et les moyens utilisés.
+Promotion des ventes | Techniques à court terme pour stimuler les achats.
+Prospection | Recherche de nouveaux clients potentiels.
+Rayon | Zone d'un magasin regroupant des produits de même nature.
+Référencement | Inscription d'un produit dans le catalogue d'un distributeur.
+Relation fournisseur | Gestion des interactions avec les partenaires d'approvisionnement.
+Rendement linéaire | CA ou marge générée par mètre de linéaire.
+Rupture de stock | Absence de produit disponible à la vente au moment de la demande.
+SAV | Service Après-Vente : assistance aux clients après achat.
+Saisonnalité | Variation régulière des ventes selon les périodes de l'année.
+Satisfaction client | Mesure dans laquelle les attentes du client sont comblées.
+Segmentation | Division du marché en groupes homogènes de consommateurs.
+Stock de sécurité | Stock minimum pour faire face aux aléas de la demande ou livraison.
+Stock moyen | (Stock initial + stock final) / 2.
+Stratégie de pénétration | Prix bas pour conquérir rapidement des parts de marché.
+Stratégie d'écrémage | Prix élevé au lancement pour maximiser la marge sur clients peu sensibles au prix.
+Tableau de bord | Outil de pilotage regroupant les indicateurs clés de performance.
+Taux de marge | (Marge brute / CA HT) × 100.
+Taux de marque | (Marge / Prix de vente HT) × 100.
+Taux de rotation | Nombre de fois où le stock se renouvelle sur une période.
+Taux de service | Pourcentage de commandes livrées sans rupture ni retard.
+Trade marketing | Actions marketing co-développées entre producteur et distributeur.
+Up-selling | Technique de vente proposant un produit de gamme supérieure.
+USP | Unique Selling Proposition : argument de vente distinctif et unique.
+Valeur perçue | Bénéfice que le client estime obtenir pour le prix payé.
+Vente additionnelle | Proposition d'un achat supplémentaire lors d'une transaction.
+Zone de chalandise | Zone géographique d'où provient la clientèle d'un point de vente.
+Zone chaude | Emplacement à fort trafic naturel dans un point de vente.
+Zone froide | Emplacement à faible trafic naturel nécessitant une animation.

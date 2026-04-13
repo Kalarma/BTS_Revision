@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Master Lexique Pro - V2.1.4</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        
+        :root {
+            --app-height: 100dvh;
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #020617;
+            height: var(--app-height);
+            width: 100vw;
+            overflow: hidden;
+            color: #f8fafc;
+            margin: 0;
+            padding: 0;
+        }
+
+        #app {
+            height: var(--app-height);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .card-swipe {
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease, background-color 0.2s ease;
+            touch-action: none;
+            will-change: transform, opacity;
+            z-index: 10;
+        }
+
+        .swipe-right-out { transform: translateX(150vw) rotate(45deg) !important; opacity: 0 !important; }
+        .swipe-left-out { transform: translateX(-150vw) rotate(-45deg) !important; opacity: 0 !important; }
+        
+        .card-feedback-overlay {
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 5;
+        }
+
+        @keyframes cardEntry {
+            from { opacity: 0; transform: scale(0.9) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .animate-card-entry { animation: cardEntry 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .fade-in { animation: fadeIn 0.3s ease forwards; }
+
+        /* Custom Scrollbar for elements */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+
+        /* Hide scrollbar for the filter list but keep it scrollable */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="selection:bg-indigo-500/30">
+
+    <div id="app" class="w-full relative flex flex-col mx-auto">
+        
+        <!-- BADGE Version -->
+        <div id="version-badge" class="absolute top-6 left-6 z-50 transition-opacity duration-300">
+            <span class="px-3 py-1.5 bg-indigo-500/20 text-indigo-400 font-black text-xs rounded-lg border border-indigo-500/30 shadow-lg shadow-indigo-500/10">V2.1.4</span>
+        </div>
+
+        <!-- MODALS -->
+        <div id="modal-container" class="hidden fixed inset-0 z-[100] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-6">
+            <div id="modal-exit" class="hidden bg-slate-900 border border-slate-800 p-8 rounded-[2.5rem] w-full max-w-sm text-center shadow-2xl fade-in">
+                <h3 class="text-2xl font-extrabold text-white mb-4">Quitter ?</h3>
+                <p class="text-slate-400 mb-8 leading-relaxed">Ta progression est sauvegardée sur ton compte.</p>
+                <div class="flex flex-col gap-3">
+                    <button onclick="window.confirmAction('exit', true)" class="w-full py-4 bg-rose-500 text-white font-bold rounded-2xl active:scale-95 transition-transform">Oui, quitter</button>
+                    <button onclick="window.confirmAction('exit', false)" class="w-full py-4 bg-slate-800 text-slate-300 font-bold rounded-2xl active:scale-95 transition-transform">Continuer</button>
+                </div>
+            </div>
+            <div id="modal-reset" class="hidden bg-slate-900 border border-slate-800 p-8 rounded-[2.5rem] w-full max-w-sm text-center shadow-2xl fade-in">
+                <h3 class="text-2xl font-extrabold text-white mb-4">Tout effacer ?</h3>
+                <p class="text-slate-400 mb-8 leading-relaxed">Cette action supprimera tout ton historique de révision. C'est irréversible.</p>
+                <div class="flex flex-col gap-3">
+                    <button onclick="window.confirmAction('reset', true)" class="w-full py-4 bg-rose-600 text-white font-bold rounded-2xl active:scale-95 transition-transform">Effacer définitivement</button>
+                    <button onclick="window.confirmAction('reset', false)" class="w-full py-4 bg-slate-800 text-slate-300 font-bold rounded-2xl active:scale-95 transition-transform">Annuler</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHARGEMENT -->
+        <div id="loading" class="flex-grow flex flex-col items-center justify-center">
+            <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-indigo-500"></div>
+            <p class="mt-4 text-slate-500 font-black uppercase tracking-widest text-[10px]">Chargement des données</p>
+        </div>
+
+        <!-- ACCUEIL -->
+        <div id="screen-home" class="hidden flex-grow flex flex-col p-6 overflow-y-auto fade-in max-w-md mx-auto w-full transition-all duration-500">
+            <header class="text-center py-6 mt-6">
+                <h1 class="text-4xl md:text-5xl font-black text-white tracking-tighter italic uppercase">Lexique <span class="text-indigo-500">Pro</span></h1>
+            </header>
+
+            <!-- SWITCH MODE -->
+            <div class="flex justify-center mb-6">
+                <div class="bg-slate-900 p-1.5 rounded-2xl flex border border-slate-800 shadow-xl shadow-black/50">
+                    <button id="btn-mode-mobile" onclick="window.setMode('mobile')" class="px-5 py-2.5 text-xs md:text-sm font-bold rounded-xl bg-indigo-500 text-white transition-all">📱 Mobile</button>
+                    <button id="btn-mode-desktop" onclick="window.setMode('desktop')" class="px-5 py-2.5 text-xs md:text-sm font-bold rounded-xl text-slate-400 hover:text-white transition-all">💻 Ordi</button>
+                </div>
+            </div>
+
+            <!-- CERCLE DE PROGRESSION & STATS -->
+            <div class="bg-slate-900/50 rounded-[2.5rem] p-6 border border-slate-800 text-center mb-8 shadow-xl">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Statistiques</h3>
+                
+                <div class="inline-flex items-center justify-center w-32 h-32 md:w-40 md:h-40 rounded-full bg-slate-950 mb-6 relative shadow-inner">
+                    <!-- SVG Donut Chart (C = 276.46) -->
+                    <svg class="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="44" fill="transparent" stroke="#1e293b" stroke-width="8" />
+                        <circle id="circle-red" cx="50" cy="50" r="44" fill="transparent" stroke="#f43f5e" stroke-width="8" stroke-dasharray="0 276.46" stroke-dashoffset="0" class="transition-all duration-1000" />
+                        <circle id="circle-blue" cx="50" cy="50" r="44" fill="transparent" stroke="#3b82f6" stroke-width="8" stroke-dasharray="0 276.46" stroke-dashoffset="0" class="transition-all duration-1000" />
+                        <circle id="circle-green" cx="50" cy="50" r="44" fill="transparent" stroke="#10b981" stroke-width="8" stroke-dasharray="0 276.46" stroke-dashoffset="0" class="transition-all duration-1000" stroke-linecap="round" />
+                    </svg>
+                    <div class="flex flex-col items-center z-10">
+                        <span id="global-mastery" class="text-3xl md:text-4xl font-black text-emerald-400">0%</span>
+                        <span class="text-[8px] font-bold text-emerald-500/70 uppercase tracking-widest">Validés</span>
+                    </div>
+                </div>
+
+                <!-- Légende des % -->
+                <div class="grid grid-cols-4 gap-2 text-center mb-4">
+                    <div class="flex flex-col items-center">
+                        <span class="w-3 h-3 rounded-full bg-slate-700 mb-1"></span>
+                        <span id="stat-grey" class="text-xs font-black text-white">0%</span>
+                        <span class="text-[8px] uppercase tracking-widest text-slate-500">Pas vu</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="w-3 h-3 rounded-full bg-rose-500 mb-1 shadow-[0_0_8px_rgba(244,63,94,0.5)]"></span>
+                        <span id="stat-red" class="text-xs font-black text-white">0%</span>
+                        <span class="text-[8px] uppercase tracking-widest text-slate-500">À revoir</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="w-3 h-3 rounded-full bg-blue-500 mb-1 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></span>
+                        <span id="stat-blue" class="text-xs font-black text-white">0%</span>
+                        <span class="text-[8px] uppercase tracking-widest text-slate-500">En cours</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="w-3 h-3 rounded-full bg-emerald-500 mb-1 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+                        <span id="stat-green" class="text-xs font-black text-white">0%</span>
+                        <span class="text-[8px] uppercase tracking-widest text-slate-500">Validé</span>
+                    </div>
+                </div>
+
+                <button onclick="window.showScreen('screen-progress')" class="w-full py-3 bg-slate-800/50 hover:bg-slate-800 text-indigo-400 rounded-xl text-xs font-black uppercase tracking-widest transition-colors border border-slate-700/50">
+                    Détail et Tri des Mots ➔
+                </button>
+            </div>
+
+            <!-- BOUTONS JOUER -->
+            <div id="mode-buttons-container" class="space-y-4 mb-12 w-full">
+                <button onclick="window.startSession('termToDef')" class="w-full flex items-center gap-4 p-5 md:p-8 bg-slate-900 rounded-3xl border border-slate-800 active:bg-slate-800 transition-all text-left group hover:border-indigo-500/50 shadow-xl shadow-slate-950/50">
+                    <div class="shrink-0 w-12 h-12 md:w-16 md:h-16 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white text-sm md:text-xl">Mode Classique</h4>
+                        <p class="text-slate-500 text-[10px] md:text-xs uppercase font-bold tracking-widest mt-1">Terme ➔ Définition</p>
+                    </div>
+                </button>
+
+                <button onclick="window.startSession('defToTerm')" class="w-full flex items-center gap-4 p-5 md:p-8 bg-slate-900 rounded-3xl border border-slate-800 active:bg-slate-800 transition-all text-left group hover:border-purple-500/50 shadow-xl shadow-slate-950/50">
+                    <div class="shrink-0 w-12 h-12 md:w-16 md:h-16 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-500 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white text-sm md:text-xl">Mode Inverse</h4>
+                        <p class="text-slate-500 text-[10px] md:text-xs uppercase font-bold tracking-widest mt-1">Définition ➔ Terme</p>
+                    </div>
+                </button>
+            </div>
+
+            <!-- FOOTER : CREDITS & TIPEEE -->
+            <div class="mt-auto pt-8 text-center pb-6 flex flex-col items-center gap-4 w-full">
+                <button onclick="window.requestReset()" class="text-rose-500/40 text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:text-rose-500 transition-colors">
+                    Effacer ma progression
+                </button>
+                <div class="h-px w-1/2 max-w-[200px] bg-slate-800 my-2"></div>
+                <div>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Créé par Zao Barrez-Girardot</p>
+                    <a href="https://fr.tipeee.com/zao" target="_blank" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-rose-500/10 text-rose-400 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-rose-500/20 active:scale-95 transition-all border border-rose-500/20 shadow-lg shadow-rose-500/5">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                        Me soutenir
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- PROGRESSION DETAIL (LISTE OU GRILLE AVEC FILTRES) -->
+        <div id="screen-progress" class="hidden flex-grow flex flex-col p-6 overflow-hidden fade-in w-full max-w-md mx-auto transition-all duration-500">
+            <div class="flex items-center justify-between mb-4 shrink-0 w-full">
+                <button onclick="window.showScreen('screen-home')" class="text-slate-400 font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:text-white transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    Retour
+                </button>
+                <h2 class="text-xs font-black text-slate-500 uppercase tracking-widest">Maîtrise</h2>
+            </div>
+            
+            <!-- FILTRES -->
+            <div class="flex gap-2 overflow-x-auto pb-4 scrollbar-hide snap-x w-full shrink-0">
+                <button id="btn-filter-all" onclick="window.setFilter('all')" class="shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all bg-slate-800 text-white border border-slate-700">Tous</button>
+                <button id="btn-filter-green" onclick="window.setFilter('green')" class="shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all bg-emerald-500/10 text-emerald-500 border border-transparent">Validés</button>
+                <button id="btn-filter-blue" onclick="window.setFilter('blue')" class="shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all bg-blue-500/10 text-blue-500 border border-transparent">En cours</button>
+                <button id="btn-filter-red" onclick="window.setFilter('red')" class="shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all bg-rose-500/10 text-rose-500 border border-transparent">À revoir</button>
+                <button id="btn-filter-grey" onclick="window.setFilter('grey')" class="shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all bg-slate-800/50 text-slate-400 border border-transparent">Non vus</button>
+            </div>
+
+            <div id="progress-container" class="flex-grow overflow-y-auto w-full">
+                <div id="progress-list" class="pb-10">
+                    <!-- Généré dynamiquement en JS (flex-col / grid) -->
+                </div>
+            </div>
+        </div>
+
+        <!-- JEU -->
+        <div id="screen-game" class="hidden flex-grow flex flex-col p-6 overflow-hidden fade-in max-w-lg mx-auto w-full transition-all duration-500">
+            <header class="flex justify-between items-center mb-4 shrink-0 mt-4 w-full">
+                <button onclick="window.exitSession()" class="px-4 py-2.5 bg-rose-500/10 text-rose-500 rounded-xl font-black text-[9px] md:text-xs tracking-widest border border-rose-500/20 active:bg-rose-500/30 hover:bg-rose-500/20 transition-all">
+                    QUITTER
+                </button>
+                <div class="text-right">
+                    <p id="question-counter" class="text-[10px] md:text-xs font-black text-slate-500 uppercase tracking-widest">1/25</p>
+                    <div id="historical-stats" class="flex gap-2 justify-end mt-1"></div>
+                </div>
+            </header>
+
+            <div class="w-full bg-slate-900 h-1.5 md:h-2 rounded-full mb-6 shrink-0">
+                <div id="session-progress-bar" class="bg-indigo-500 h-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+
+            <!-- CARTE -->
+            <div class="flex-grow flex flex-col justify-center relative min-h-0 w-full items-center">
+                <div id="swipe-hints" class="absolute inset-0 flex justify-between items-center pointer-events-none opacity-0 transition-opacity z-20 px-4">
+                    <div class="p-4 rounded-full bg-rose-500/40 text-rose-500 border border-rose-500/50 font-black shadow-[0_0_30px_rgba(244,63,94,0.3)]">X</div>
+                    <div class="p-4 rounded-full bg-emerald-500/40 text-emerald-500 border border-emerald-500/50 font-black shadow-[0_0_30px_rgba(16,185,129,0.3)]">V</div>
+                </div>
+
+                <div id="card-element" class="bg-slate-900 rounded-[2.5rem] md:rounded-[3.5rem] border-2 border-slate-800 p-8 md:p-12 flex flex-col items-center justify-center text-center shadow-2xl relative h-full w-full max-h-[450px]">
+                    <div id="card-overlay" class="card-feedback-overlay"></div>
+                    <div class="flex flex-col gap-6 md:gap-10 w-full relative z-10">
+                        <h2 id="display-text" class="text-xl md:text-4xl font-bold text-white leading-snug md:leading-tight"></h2>
+                        <div id="answer-box" class="hidden pt-6 md:pt-10 border-t border-slate-800/50 fade-in">
+                            <p id="answer-text" class="text-slate-400 italic text-sm md:text-2xl leading-relaxed md:leading-relaxed"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTRÔLES -->
+            <div id="game-controls" class="pt-6 shrink-0 pb-2 w-full flex flex-col items-center">
+                <button id="btn-reveal" onclick="window.revealAnswer()" class="w-full max-w-2xl py-5 md:py-6 bg-indigo-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-xl active:scale-95 transition-transform hover:bg-indigo-700 md:text-lg">
+                    Voir la réponse
+                </button>
+                
+                <div id="validation-controls" class="hidden w-full flex-col items-center">
+                    <div id="swipe-instruction" class="text-center mt-3 hidden">
+                        <p class="text-[9px] font-black uppercase tracking-widest text-slate-500 flex items-center justify-center gap-3">
+                            <span class="text-rose-500/70">← Faux</span>
+                            <span class="w-1 h-1 rounded-full bg-slate-800"></span>
+                            <span class="text-emerald-500/70">Juste →</span>
+                        </p>
+                    </div>
+                    
+                    <div id="desktop-buttons" class="flex gap-6 w-full max-w-2xl hidden mt-4">
+                        <button onclick="window.handleDesktopValidation(false)" class="flex-1 py-5 md:py-6 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-2xl font-black text-base md:text-xl uppercase tracking-widest hover:bg-rose-500/20 active:scale-95 transition-all shadow-xl shadow-rose-500/5">✕ Faux</button>
+                        <button onclick="window.handleDesktopValidation(true)" class="flex-1 py-5 md:py-6 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-2xl font-black text-base md:text-xl uppercase tracking-widest hover:bg-emerald-500/20 active:scale-95 transition-all shadow-xl shadow-emerald-500/5">✓ Juste</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RÉSUMÉ -->
+        <div id="screen-summary" class="hidden flex-grow flex flex-col items-center justify-center p-6 text-center space-y-8 fade-in max-w-md mx-auto w-full transition-all duration-500">
+            <div class="w-20 h-20 md:w-32 md:h-32 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto border border-emerald-500/30">
+                <svg class="w-10 h-10 md:w-16 md:h-16 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <h2 class="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter">Terminé !</h2>
+            <div class="w-full grid grid-cols-2 gap-4">
+                <div class="p-6 md:p-8 bg-emerald-500/5 rounded-3xl border border-emerald-500/10 text-emerald-400 font-black text-3xl md:text-5xl" id="summary-correct">0</div>
+                <div class="p-6 md:p-8 bg-rose-500/5 rounded-3xl border border-rose-500/10 text-rose-400 font-black text-3xl md:text-5xl" id="summary-wrong">0</div>
+            </div>
+            <button onclick="window.showScreen('screen-home')" class="w-full py-5 md:py-6 bg-white text-slate-950 font-black uppercase rounded-2xl active:scale-95 transition-transform hover:bg-slate-200 md:text-xl">Continuer</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc, getDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+
+        // Gérer les erreurs d'initialisation Firebase pour l'export GitHub avec Fallback LocalStorage
+        let app, auth, db;
+        let isFirebaseAvailable = false;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'lexique-mco-v2-1-3';
+        const LOCAL_STORAGE_KEY = 'lexique_pro_stats_v2';
+
+        try {
+            if (typeof __firebase_config !== 'undefined') {
+                const firebaseConfig = JSON.parse(__firebase_config);
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                isFirebaseAvailable = true;
+            }
+        } catch (error) {
+            console.warn("Firebase configuration non détectée. L'application tourne en mode hors-ligne (LocalStorage).");
+        }
+
+        const lexiconItems = [
+            { id: "1", term: "Accords de référencement", def: "Relation producteur/distributeur sur produit, prix, conditions, livraisons." },
+            { id: "2", term: "Affichage digital", def: "Écrans numériques permettant un affichage dynamique." },
+            { id: "3", term: "Agencement", def: "Aménagement de l'espace pour optimiser l'ergonomie et la valeur." },
+            { id: "4", term: "Ajustement linéaire", def: "Modèle pour établir des estimations futures via les données passées." },
+            { id: "5", term: "Alignement", def: "Fixation d'un prix identique aux concurrents directs ou au leader." },
+            { id: "6", term: "Allée pénétrante", def: "Chemin par lequel les clients entrent dans le point de vente." },
+            { id: "7", term: "Allée principale", def: "Allée centrale du magasin souvent parallèle aux caisses." },
+            { id: "8", term: "Allée secondaire", def: "Allée étroite permettant d'accéder aux rayons." },
+            { id: "9", term: "Ampleur", def: "Nombre total de références (Largeur x Profondeur)." },
+            { id: "10", term: "Analyse ABC", def: "Segmentation : A (20%=80%), B (30%=15%), C (50%=5%)." },
+            { id: "11", term: "Analyse PESTEL", def: "Politique, Économique, Sociologique, Techno, Éco, Légal." },
+            { id: "12", term: "Analyse SWOT", def: "Diagnostic : Forces/Faiblesses et Opportunités/Menaces." },
+            { id: "13", term: "Animation commerciale", def: "Promotion qui dynamise l'unité et pousse le produit." },
+            { id: "14", term: "Assortiment", def: "Ensemble des produits et services proposés à la vente." },
+            { id: "15", term: "Attitude", def: "Évaluation personnelle (cognitif, affectif, conatif) face à une offre." },
+            { id: "16", term: "Back office", def: "Espaces réservés au personnel (réserves, bureaux)." },
+            { id: "17", term: "Balisage de linéaire", def: "Éléments d'information et d'orientation dans le rayon." },
+            { id: "18", term: "Benchmarking", def: "Étude des techniques d'organisation d'autres entreprises." },
+            { id: "19", term: "Besoin", def: "Manque qui pousse à agir (Physiologique, Sécurité...)." },
+            { id: "20", term: "BOGOF", def: "Buy One Get One Free (1 acheté, 1 gratuit)." },
+            { id: "21", term: "Category management", def: "Organisation par univers de consommation." },
+            { id: "22", term: "Charges fixes", def: "Coûts indépendants de l'activité (loyer, assurances)." },
+            { id: "23", term: "Charges variables", def: "Coûts évoluant selon le volume d'activité." },
+            { id: "24", term: "Circuit de distribution", def: "Chemin du produit : Direct, Court ou Long." },
+            { id: "25", term: "Circulation", def: "Déplacements des clients dans le point de vente." },
+            { id: "26", term: "Click and collect", def: "Commande en ligne et retrait en magasin." },
+            { id: "27", term: "Coefficient saisonnier", def: "Mesure de la saisonnalité des ventes sur l'année." },
+            { id: "28", term: "Commerce équitable", def: "Système d'échanges éthiques visant une égalité Nord-Sud." },
+            { id: "29", term: "CDAC", def: "Commission autorisant les projets d'implantation." },
+            { id: "30", term: "CNIL", def: "Instance de contrôle pour la protection des données personnelles." },
+            { id: "31", term: "Communication hors médias", def: "Ensemble des véhicules n'empruntant pas les 6 médias." },
+            { id: "32", term: "Communication médias", def: "TV, Presse, Radio, Affichage, Cinéma, Internet." },
+            { id: "33", term: "Comportement", def: "Étude des processus de décision et réactions des clients." },
+            { id: "34", term: "Concurrence directe", def: "Entreprises offrant des produits similaires." },
+            { id: "35", term: "Concurrence indirecte", def: "Offre différente répondant au même besoin." },
+            { id: "36", term: "CGV", def: "Conditions Générales de Vente (obligation en B2B)." },
+            { id: "37", term: "Consommaction", def: "Défense des intérêts des consommateurs." },
+            { id: "38", term: "Consumérisme", def: "Action collective pour s'informer et se défendre." },
+            { id: "39", term: "Cookie", def: "Fichier traceur déposé sur l'ordinateur du visiteur." },
+            { id: "40", term: "Coopération commerciale", def: "Opérations conjointes distributeur/fabricant." },
+            { id: "41", term: "Coût de revient", def: "Prix d'achat + frais d'achat - remises." },
+            { id: "42", term: "CPC / CPM", def: "Coût Par Clic ou Pour Mille affichages." },
+            { id: "43", term: "Couverture d'un risque", def: "Protection via assurances ou garanties." },
+            { id: "44", term: "Cross-canal", def: "Intégration des canaux pour le parcours client." },
+            { id: "45", term: "Cross-device", def: "Usage alterné d'appareils pour un achat." },
+            { id: "46", term: "Cross-marchandisage", def: "Produit hors rayon habituel, près d'un complémentaire." },
+            { id: "47", term: "Cross-selling", def: "Vente de produits complémentaires." },
+            { id: "48", term: "Cybersécurité", def: "Protection contre les risques informatiques." },
+            { id: "49", term: "Démarque connue", def: "Pertes enregistrées régulièrement (casse, DLC)." },
+            { id: "50", term: "Démarque inconnue", def: "Pertes inexplicables (vols, erreurs)." },
+            { id: "51", term: "Design", def: "Apparence visuelle séduisante et fonctionnelle." },
+            { id: "52", term: "Diagnostic stratégique", def: "Identification forces/faiblesses et opportunités/menaces." },
+            { id: "53", term: "Digital in store", def: "Outils digitaux en magasin." },
+            { id: "54", term: "E-commerce", def: "Transactions commerciales électroniques." },
+            { id: "55", term: "Écran interactif", def: "Écran tactile pour les recherches clients." },
+            { id: "56", term: "ECR", def: "Efficient Consumer Response : partenariat industrie/commerce." },
+            { id: "57", term: "Écrémage", def: "Prix élevé pour viser une forte rentabilité unitaire." },
+            { id: "58", term: "Élasticité", def: "Variation de la demande suite à variation de prix." },
+            { id: "59", term: "Emballage", def: "Protection, stockage et transport du produit." },
+            { id: "60", term: "E-mailing", def: "Envoi de mail à un ensemble de cibles." },
+            { id: "61", term: "E-merchandising", def: "Optimisation de présentation sur sites marchands." },
+            { id: "62", term: "Enseigne commerciale", def: "Appellation et support d'identification physique." },
+            { id: "63", term: "Entretien", def: "Dépenses pour maintenir les actifs en bon état." },
+            { id: "64", term: "E-réputation", def: "Image d'une marque sur internet." },
+            { id: "65", term: "EEG", def: "Étiquette Électronique de Gondole." },
+            { id: "66", term: "Facteurs explicatifs", def: "Éléments décrivant l'individu (socios, psychos)." },
+            { id: "67", term: "Freins", def: "Forces négatives empêchant l'achat (peurs, inhibitions)." },
+            { id: "68", term: "Frontale", def: "Nombre de produits faisant face au client." },
+            { id: "69", term: "Front office", def: "Surface de vente accessible aux clients." },
+            { id: "70", term: "Gamme", def: "Ensemble de produits pour un même besoin." },
+            { id: "71", term: "Geofencing", def: "Messages envoyés lors de l'entrée dans une zone." },
+            { id: "72", term: "Géomarketing", def: "Marketing utilisant la géolocalisation." },
+            { id: "73", term: "Hauteur", def: "Niveau de prix (Bas, Moyen, Élevé)." },
+            { id: "74", term: "Image de marque", def: "Représentations mentales associées à une marque." },
+            { id: "75", term: "Inbound marketing", def: "Attirer l'internaute via des contenus utiles." },
+            { id: "76", term: "Incident", def: "Événement non anticipé à conséquences potentielles." },
+            { id: "77", term: "Indice de sensibilité", def: "Rentabilité par rapport à la place occupée." },
+            { id: "78", term: "ILV", def: "Information sur le Lieu de Vente." },
+            { id: "79", term: "INPI", def: "Délivre les brevets et protège les marques." },
+            { id: "80", term: "KPI", def: "Key Performance Indicators (Indicateurs clés)." },
+            { id: "81", term: "Landing page", def: "Page web conçue pour une action précise." },
+            { id: "82", term: "Largeur", def: "Nombre de familles de produits différentes." },
+            { id: "83", term: "Linéaire développé", def: "Linéaire au sol multiplié par le nombre de niveaux." },
+            { id: "84", term: "Logo", def: "Représentation graphique d'une marque." },
+            { id: "85", term: "Loi ALUR", def: "Soumet les drives à autorisation d'exploitation." },
+            { id: "86", term: "Loi de Pareto", def: "Règle des 20/80 (20% causes = 80% effets)." },
+            { id: "87", term: "Loi LME", def: "Fixe les seuils de dossier CDAC." },
+            { id: "88", term: "Maintenance", def: "Réglage et contrôle des équipements." },
+            { id: "89", term: "Marge arrière", def: "Avantages fournisseur pour services de mise en avant." },
+            { id: "90", term: "Marge commerciale", def: "Prix de vente HT - Coût d'achat HT." },
+            { id: "91", term: "Marketing mix", def: "4P : Produit, Prix, Place, Promotion." },
+            { id: "92", term: "Marketing sensoriel", def: "Usage des sens pour influencer le comportement." },
+            { id: "93", term: "Marque ombrelle", def: "Une marque pour plusieurs catégories." },
+            { id: "94", term: "MDD", def: "Marque De Distributeur." },
+            { id: "95", term: "M-commerce", def: "Achats via mobiles ou tablettes." },
+            { id: "96", term: "Motivations", def: "Forces positives poussant à l'achat." },
+            { id: "97", term: "Multicanal", def: "Usage alterné de canaux physiques et virtuels." },
+            { id: "98", term: "NCA / NCR", def: "Non-Consommateur Absolu ou Relatif." },
+            { id: "99", term: "Omnicanalité", def: "Synergie de tous les points de contact." },
+            { id: "100", term: "POEM", def: "Paid, Owned, Earned Media." },
+            { id: "101", term: "Pénétration", def: "Prix bas pour toucher un maximum de clients." },
+            { id: "102", term: "Perception", def: "Interprétation des stimuli via les sens." },
+            { id: "103", term: "Persona", def: "Représentation fictive du client cible." },
+            { id: "104", term: "Phygitalisation", def: "Fusion du physique et du digital." },
+            { id: "105", term: "Planogramme", def: "Schéma de la place des références en linéaire." },
+            { id: "106", term: "Positionnement", def: "Place dans l'esprit face aux concurrents." },
+            { id: "107", term: "Prix psychologique", def: "Prix d'acceptabilité maximale." },
+            { id: "108", term: "Processus d'achat", def: "Besoin, Info, Comparaison, Décision, Évaluation." },
+            { id: "109", term: "Produit", def: "Bien ou service pour satisfaire un besoin." },
+            { id: "110", term: "Profondeur", def: "Nombre de références par famille." },
+            { id: "111", term: "PLV", def: "Publicité sur le Lieu de Vente." },
+            { id: "112", term: "RGPD", def: "Loi européenne de protection des données." },
+            { id: "113", term: "Rentabilité", def: "Capacité à dégager des bénéfices." },
+            { id: "114", term: "Résultat", def: "Ressources restantes après charges." },
+            { id: "115", term: "Retargeting", def: "Publicité reciblée selon le parcours." },
+            { id: "116", term: "Rétroplanning", def: "Planification dès la date de fin." },
+            { id: "117", term: "SEA / SEO", def: "Référencement payant ou naturel." },
+            { id: "118", term: "Seuil de rentabilité", def: "Volume où le bénéfice est nul." },
+            { id: "119", term: "SRP", def: "Seuil de Revente à Perte." },
+            { id: "120", term: "Signes de qualité", def: "Logos reconnaissant l'origine ou qualité." },
+            { id: "121", term: "Social commerce", def: "Vendre via les réseaux sociaux." },
+            { id: "122", term: "Sourcing", def: "Recherche et évaluation de fournisseurs." },
+            { id: "123", term: "Taux de clic", def: "Efficacité d'un lien publicitaire." },
+            { id: "124", term: "Taux de conversion", def: "Transformation des visiteurs en acheteurs." },
+            { id: "125", term: "Taux de marque", def: "Part de marge dans le prix de vente." },
+            { id: "126", term: "Taux de rebond", def: "Sortie du site après une page." },
+            { id: "127", term: "Trade marketing", def: "Actions communes fabricant/distributeur." },
+            { id: "128", term: "Up-selling", def: "Vente d'un produit de gamme supérieure." },
+            { id: "129", term: "Veille concurrentielle", def: "Surveillance des actions des concurrents." },
+            { id: "130", term: "Yield management", def: "Prix variant en temps réel selon la demande." },
+            { id: "131", term: "Zone de chalandise", def: "Zone d'attractivité géographique du point de vente." },
+            { id: "132", term: "Zone chaude / froide", def: "Zones fréquentées ou délaissées du magasin." }
+        ];
+
+        let userStats = {};
+        let currentUser = null;
+        let currentSession = [];
+        let sessionIndex = 0;
+        let sessionResults = { correct: 0, wrong: 0 };
+        let sessionMode = '';
+        
+        let currentFilter = 'all';
+        let isDesktopMode = window.innerWidth > 768; 
+
+        let startX = 0;
+        let currentX = 0;
+        let isDragging = false;
+        
+        const card = document.getElementById('card-element');
+        const cardOverlay = document.getElementById('card-overlay');
+        const swipeHints = document.getElementById('swipe-hints');
+
+        const classesPairs = {
+            home: ['max-w-5xl'], mobileHome: ['max-w-md'],
+            game: ['max-w-6xl'], mobileGame: ['max-w-lg'],
+            summary: ['max-w-4xl'], mobileSummary: ['max-w-md'],
+            prog: ['max-w-7xl'], mobileProg: ['max-w-md']
+        };
+
+        window.setMode = (mode) => {
+            isDesktopMode = (mode === 'desktop');
+            const btnMobile = document.getElementById('btn-mode-mobile');
+            const btnDesktop = document.getElementById('btn-mode-desktop');
+            
+            const home = document.getElementById('screen-home');
+            const game = document.getElementById('screen-game');
+            const summary = document.getElementById('screen-summary');
+            const prog = document.getElementById('screen-progress');
+            
+            const modeButtons = document.getElementById('mode-buttons-container');
+            const cardText = document.getElementById('display-text');
+            const answerText = document.getElementById('answer-text');
+
+            if (isDesktopMode) {
+                btnDesktop.classList.replace('text-slate-400', 'text-white');
+                btnDesktop.classList.replace('bg-transparent', 'bg-indigo-500');
+                btnMobile.classList.replace('text-white', 'text-slate-400');
+                btnMobile.classList.replace('bg-indigo-500', 'bg-transparent');
+                
+                card.classList.remove('card-swipe'); 
+
+                home.classList.remove(...classesPairs.mobileHome);
+                home.classList.add(...classesPairs.home);
+
+                game.classList.remove(...classesPairs.mobileGame);
+                game.classList.add(...classesPairs.game);
+
+                summary.classList.remove(...classesPairs.mobileSummary);
+                summary.classList.add(...classesPairs.summary);
+                
+                prog.classList.remove(...classesPairs.mobileProg);
+                prog.classList.add(...classesPairs.prog);
+
+                modeButtons.classList.remove('space-y-4');
+                modeButtons.classList.add('grid', 'grid-cols-2', 'gap-6');
+
+                card.classList.remove('max-h-[450px]');
+                card.classList.add('max-h-[60vh]');
+                
+                cardText.classList.remove('text-xl', 'md:text-2xl');
+                cardText.classList.add('text-3xl', 'md:text-5xl');
+                
+                answerText.classList.remove('text-sm', 'md:text-base');
+                answerText.classList.add('text-xl', 'md:text-3xl');
+
+            } else {
+                btnMobile.classList.replace('text-slate-400', 'text-white');
+                btnMobile.classList.replace('bg-transparent', 'bg-indigo-500');
+                btnDesktop.classList.replace('text-white', 'text-slate-400');
+                btnDesktop.classList.replace('bg-indigo-500', 'bg-transparent');
+                
+                card.classList.add('card-swipe');
+
+                home.classList.remove(...classesPairs.home);
+                home.classList.add(...classesPairs.mobileHome);
+
+                game.classList.remove(...classesPairs.game);
+                game.classList.add(...classesPairs.mobileGame);
+
+                summary.classList.remove(...classesPairs.summary);
+                summary.classList.add(...classesPairs.mobileSummary);
+                
+                prog.classList.remove(...classesPairs.prog);
+                prog.classList.add(...classesPairs.mobileProg);
+
+                modeButtons.classList.add('space-y-4');
+                modeButtons.classList.remove('grid', 'grid-cols-2', 'gap-6');
+
+                card.classList.add('max-h-[450px]');
+                card.classList.remove('max-h-[60vh]');
+                
+                cardText.classList.add('text-xl', 'md:text-2xl');
+                cardText.classList.remove('text-3xl', 'md:text-5xl');
+                
+                answerText.classList.add('text-sm', 'md:text-base');
+                answerText.classList.remove('text-xl', 'md:text-3xl');
+            }
+            updateProgressUI();
+        };
+
+        window.showScreen = (id) => {
+            ['loading', 'screen-home', 'screen-game', 'screen-summary', 'screen-progress'].forEach(s => {
+                const el = document.getElementById(s);
+                if (el) el.classList.add('hidden');
+            });
+            const target = document.getElementById(id);
+            if (target) target.classList.remove('hidden');
+            
+            const badge = document.getElementById('version-badge');
+            if (badge) {
+                // Cache le badge pour le jeu ou la progression
+                if (id === 'screen-game' || id === 'screen-progress') badge.classList.add('hidden');
+                else badge.classList.remove('hidden');
+            }
+            
+            if (id === 'screen-progress') updateProgressUI();
+            if (id === 'screen-home') updateHomeUI();
+        };
+
+        const updateHomeUI = () => {
+            let cGrey = 0, cRed = 0, cBlue = 0, cGreen = 0;
+            const totalItems = lexiconItems.length;
+
+            lexiconItems.forEach(t => {
+                const s = userStats[t.id] || { c: 0, w: 0 };
+                const total = s.c + s.w;
+                if (total === 0) {
+                    cGrey++;
+                } else if (s.c > s.w && s.c >= 3) {
+                    cGreen++;
+                } else if (s.w > s.c) {
+                    cRed++;
+                } else {
+                    cBlue++;
+                }
+            });
+
+            // Pourcentage Global validé
+            const percentage = Math.round((cGreen / totalItems) * 100);
+            document.getElementById('global-mastery').innerText = `${percentage}%`;
+
+            // Textes légende
+            document.getElementById('stat-grey').innerText = `${Math.round((cGrey/totalItems)*100)}%`;
+            document.getElementById('stat-red').innerText = `${Math.round((cRed/totalItems)*100)}%`;
+            document.getElementById('stat-blue').innerText = `${Math.round((cBlue/totalItems)*100)}%`;
+            document.getElementById('stat-green').innerText = `${Math.round((cGreen/totalItems)*100)}%`;
+
+            // SVG Donut (Circumference C = 276.46015)
+            const C = 276.46;
+            const pRed = (cRed / totalItems) * C;
+            const pBlue = (cBlue / totalItems) * C;
+            const pGreen = (cGreen / totalItems) * C;
+
+            const circleRed = document.getElementById('circle-red');
+            const circleBlue = document.getElementById('circle-blue');
+            const circleGreen = document.getElementById('circle-green');
+
+            // Masquer les cercles si la valeur est 0 pour éviter le point de rendu lié au stroke-linecap
+            circleRed.style.opacity = cRed === 0 ? '0' : '1';
+            circleBlue.style.opacity = cBlue === 0 ? '0' : '1';
+            circleGreen.style.opacity = cGreen === 0 ? '0' : '1';
+
+            circleRed.style.strokeDasharray = `${pRed} ${C}`;
+            circleBlue.style.strokeDasharray = `${pBlue} ${C}`;
+            circleBlue.style.strokeDashoffset = `-${pRed}`;
+            circleGreen.style.strokeDasharray = `${pGreen} ${C}`;
+            circleGreen.style.strokeDashoffset = `-${pRed + pBlue}`;
+
+            window.setMode(isDesktopMode ? 'desktop' : 'mobile');
+        };
+
+        window.setFilter = (filter) => {
+            currentFilter = filter;
+            
+            // UI Button Reset
+            ['all', 'green', 'blue', 'red', 'grey'].forEach(f => {
+                const btn = document.getElementById(`btn-filter-${f}`);
+                if (f === 'all') {
+                    btn.className = `shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all ${filter === 'all' ? 'bg-slate-800 text-white border border-slate-700' : 'bg-transparent text-slate-500 border border-transparent hover:bg-slate-800/50'}`;
+                } else if (f === 'green') {
+                    btn.className = `shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all ${filter === 'green' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]' : 'bg-emerald-500/5 text-emerald-600/50 border border-transparent hover:bg-emerald-500/10 hover:text-emerald-500'}`;
+                } else if (f === 'blue') {
+                    btn.className = `shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all ${filter === 'blue' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30 shadow-[0_0_10px_rgba(59,130,246,0.2)]' : 'bg-blue-500/5 text-blue-600/50 border border-transparent hover:bg-blue-500/10 hover:text-blue-500'}`;
+                } else if (f === 'red') {
+                    btn.className = `shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all ${filter === 'red' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30 shadow-[0_0_10px_rgba(244,63,94,0.2)]' : 'bg-rose-500/5 text-rose-600/50 border border-transparent hover:bg-rose-500/10 hover:text-rose-500'}`;
+                } else if (f === 'grey') {
+                    btn.className = `shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all ${filter === 'grey' ? 'bg-slate-700 text-slate-300 border border-slate-600' : 'bg-slate-800/30 text-slate-500 border border-transparent hover:bg-slate-800'}`;
+                }
+            });
+
+            updateProgressUI();
+        };
+
+        const updateProgressUI = () => {
+            const list = document.getElementById('progress-list');
+            list.innerHTML = '';
+            
+            list.className = isDesktopMode 
+                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-10" 
+                : "flex flex-col space-y-3 pb-10";
+            
+            lexiconItems.forEach(item => {
+                const stats = userStats[item.id] || { c: 0, w: 0 };
+                const total = stats.c + stats.w;
+                
+                let status = 'grey';
+                if (total > 0) {
+                    if (stats.c > stats.w && stats.c >= 3) status = 'green';
+                    else if (stats.w > stats.c) status = 'red';
+                    else status = 'blue';
+                }
+
+                // Filtre
+                if (currentFilter !== 'all' && currentFilter !== status) return;
+
+                let borderColor = "border-slate-800 text-slate-500"; 
+                if (status === 'green') borderColor = "border-emerald-500/50 bg-emerald-500/5 shadow-lg shadow-emerald-500/5"; 
+                else if (status === 'red') borderColor = "border-rose-500/50 bg-rose-500/5 shadow-lg shadow-rose-500/5"; 
+                else if (status === 'blue') borderColor = "border-blue-500/50 bg-blue-500/5 shadow-lg shadow-blue-500/5"; 
+
+                const cardDiv = document.createElement('div');
+                cardDiv.className = `p-5 rounded-[1.5rem] border-2 ${borderColor} transition-all duration-300 flex flex-col gap-3`;
+                cardDiv.innerHTML = `
+                    <div class="flex justify-between items-start mb-1">
+                        <h4 class="font-bold text-white text-[13px] flex-1 pr-2">${item.term}</h4>
+                        <div class="flex gap-2 shrink-0 ${total === 0 ? 'opacity-30' : ''}">
+                            <span class="text-[10px] font-black text-emerald-500">${stats.c} ✓</span>
+                            <span class="text-[10px] font-black text-rose-500">${stats.w} ✕</span>
+                        </div>
+                    </div>
+                    <p class="text-slate-400 text-xs leading-relaxed italic">${item.def}</p>
+                `;
+                list.appendChild(cardDiv);
+            });
+        };
+
+        window.startSession = (mode) => {
+            sessionMode = mode;
+            sessionIndex = 0;
+            sessionResults = { correct: 0, wrong: 0 };
+            
+            const pool = lexiconItems.map(item => {
+                const s = userStats[item.id] || { c: 0, w: 0 };
+                const priority = (s.w + 1) / (s.c + 0.5);
+                return { ...item, p: priority };
+            })
+            .sort((a, b) => b.p - a.p)
+            .slice(0, 25)
+            .sort(() => Math.random() - 0.5);
+
+            currentSession = pool;
+            window.showScreen('screen-game');
+            updateQuestionUI();
+        };
+
+        const updateQuestionUI = () => {
+            const item = currentSession[sessionIndex];
+            const stats = userStats[item.id] || { c: 0, w: 0 };
+            
+            card.classList.remove('swipe-right-out', 'swipe-left-out', 'animate-card-entry');
+            card.style.transform = "translateX(0) rotate(0) scale(1)";
+            card.style.opacity = "1";
+            cardOverlay.style.opacity = "0";
+            
+            void card.offsetWidth; 
+            if (!isDesktopMode) card.classList.add('animate-card-entry');
+
+            document.getElementById('question-counter').innerText = `${sessionIndex+1}/${currentSession.length}`;
+            document.getElementById('session-progress-bar').style.width = `${(sessionIndex / currentSession.length) * 100}%`;
+            
+            document.getElementById('historical-stats').innerHTML = `
+                <span class="text-[10px] font-bold text-emerald-500">${stats.c} ✓</span>
+                <span class="text-[10px] font-bold text-rose-500">${stats.w} ✕</span>
+            `;
+
+            document.getElementById('display-text').innerText = sessionMode === 'termToDef' ? item.term : item.def;
+            document.getElementById('answer-text').innerText = sessionMode === 'termToDef' ? item.def : item.term;
+
+            document.getElementById('answer-box').classList.add('hidden');
+            document.getElementById('validation-controls').classList.add('hidden');
+            document.getElementById('btn-reveal').classList.remove('hidden');
+            document.getElementById('swipe-instruction').classList.add('hidden');
+            document.getElementById('desktop-buttons').classList.add('hidden');
+            
+            isDragging = false;
+            startX = 0;
+            currentX = 0;
+        };
+
+        window.revealAnswer = () => {
+            document.getElementById('answer-box').classList.remove('hidden');
+            document.getElementById('btn-reveal').classList.add('hidden');
+            document.getElementById('validation-controls').classList.remove('hidden');
+            document.getElementById('validation-controls').classList.add('flex');
+            
+            if (isDesktopMode) {
+                document.getElementById('desktop-buttons').classList.remove('hidden');
+                document.getElementById('desktop-buttons').classList.add('flex');
+            } else {
+                document.getElementById('swipe-instruction').classList.remove('hidden');
+            }
+        };
+
+        window.handleDesktopValidation = (isCorrect) => {
+            card.style.transition = "transform 0.4s ease, opacity 0.3s ease";
+            card.classList.add(isCorrect ? 'swipe-right-out' : 'swipe-left-out');
+            processValidation(isCorrect);
+        };
+
+        const processValidation = async (isCorrect) => {
+            const item = currentSession[sessionIndex];
+            if (!userStats[item.id]) userStats[item.id] = { c: 0, w: 0 };
+            
+            if (isCorrect) { userStats[item.id].c++; sessionResults.correct++; }
+            else { userStats[item.id].w++; sessionResults.wrong++; }
+            
+            if (isFirebaseAvailable && currentUser) {
+                setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'statistics', 'v1'), { stats: userStats }, { merge: true }).catch(() => {});
+            } else if (!isFirebaseAvailable) {
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userStats));
+            }
+
+            sessionIndex++;
+            setTimeout(() => {
+                if (sessionIndex < currentSession.length) updateQuestionUI();
+                else {
+                    document.getElementById('summary-correct').innerText = sessionResults.correct;
+                    document.getElementById('summary-wrong').innerText = sessionResults.wrong;
+                    window.showScreen('screen-summary');
+                }
+            }, 300);
+        };
+
+        window.exitSession = () => {
+            document.getElementById('modal-container').classList.remove('hidden');
+            document.getElementById('modal-exit').classList.remove('hidden');
+            document.getElementById('modal-reset').classList.add('hidden');
+        };
+
+        window.requestReset = () => {
+            document.getElementById('modal-container').classList.remove('hidden');
+            document.getElementById('modal-exit').classList.add('hidden');
+            document.getElementById('modal-reset').classList.remove('hidden');
+        };
+
+        window.confirmAction = async (type, confirmed) => {
+            document.getElementById('modal-container').classList.add('hidden');
+            
+            if (type === 'exit' && confirmed) {
+                window.showScreen('screen-home');
+            } else if (type === 'reset' && confirmed) {
+                if (isFirebaseAvailable && currentUser) {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'statistics', 'v1')).catch(()=>{});
+                } else if (!isFirebaseAvailable) {
+                    localStorage.removeItem(LOCAL_STORAGE_KEY);
+                }
+                userStats = {};
+                updateHomeUI();
+            }
+        };
+
+        const handleDragStart = (e) => {
+            if (isDesktopMode || document.getElementById('answer-box').classList.contains('hidden')) return;
+            isDragging = true;
+            startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            currentX = startX;
+            card.style.transition = "none";
+            card.classList.remove('animate-card-entry');
+        };
+
+        const handleDragMove = (e) => {
+            if (!isDragging || isDesktopMode) return;
+            currentX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            const diffX = currentX - startX;
+            card.style.transform = `translateX(${diffX}px) rotate(${diffX / 20}deg)`;
+            swipeHints.style.opacity = Math.min(Math.abs(diffX) / 80, 1);
+            swipeHints.querySelector('.text-rose-500').parentElement.style.opacity = diffX < 0 ? 1 : 0;
+            swipeHints.querySelector('.text-emerald-500').parentElement.style.opacity = diffX > 0 ? 1 : 0;
+            cardOverlay.style.opacity = Math.min(Math.abs(diffX) / 200, 0.3);
+            cardOverlay.style.backgroundColor = diffX > 0 ? "#10b981" : "#f43f5e";
+            if (Math.abs(diffX) > 10 && e.cancelable) e.preventDefault();
+        };
+
+        const handleDragEnd = () => {
+            if (!isDragging || isDesktopMode) return;
+            isDragging = false;
+            const diffX = currentX - startX;
+            card.style.transition = "transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease";
+            swipeHints.style.opacity = "0";
+            cardOverlay.style.opacity = "0";
+            if (diffX > 80) { card.classList.add('swipe-right-out'); processValidation(true); }
+            else if (diffX < -80) { card.classList.add('swipe-left-out'); processValidation(false); }
+            else { card.style.transform = "translateX(0) rotate(0)"; }
+        };
+
+        card.addEventListener('mousedown', handleDragStart);
+        card.addEventListener('touchstart', handleDragStart, { passive: true });
+        window.addEventListener('mousemove', handleDragMove);
+        window.addEventListener('touchmove', handleDragMove, { passive: false });
+        window.addEventListener('mouseup', handleDragEnd);
+        window.addEventListener('touchend', handleDragEnd);
+
+        function loadLocalStats() {
+            try {
+                const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+                if (saved) {
+                    userStats = JSON.parse(saved);
+                }
+            } catch (e) {
+                console.error("Erreur de lecture du localStorage", e);
+            }
+        }
+
+        window.onload = async () => {
+            if (isFirebaseAvailable) {
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token).catch(() => signInAnonymously(auth));
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    onAuthStateChanged(auth, async (user) => {
+                        if (user) {
+                            currentUser = user;
+                            try {
+                                const d = await getDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'statistics', 'v1'));
+                                userStats = d.exists() ? d.data().stats || {} : {};
+                            } catch(e) {}
+                            window.showScreen('screen-home');
+                        }
+                    });
+                } catch (e) {
+                    console.error("Auth failed", e);
+                    loadLocalStats();
+                    window.showScreen('screen-home');
+                }
+            } else {
+                loadLocalStats();
+                window.showScreen('screen-home');
+            }
+        };
+    </script>
+</body>
+</html>
