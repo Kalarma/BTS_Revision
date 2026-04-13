@@ -2,105 +2,170 @@
 # Format : Terme | Définition  (une paire par ligne)
 # Les lignes commençant par # sont des commentaires
 
-Accords de référencement | Relation producteur/distributeur sur produit, prix, conditions, livraisons.
-Affichage digital | Écrans numériques permettant un affichage dynamique.
-Agencement | Aménagement de l'espace pour optimiser l'ergonomie et la valeur.
-Ajustement linéaire | Modèle pour établir des estimations futures via les données passées.
-Alignement | Fixation d'un prix identique aux concurrents directs ou au leader.
-Analyse ABC | Segmentation : A (20%=80%), B (30%=15%), C (50%=5%).
-Analyse PESTEL | Politique, Économique, Sociologique, Technologique, Écologique, Légal.
-Analyse SWOT | Diagnostic interne/externe : Forces, Faiblesses, Opportunités, Menaces.
-Assortiment | Ensemble des produits et services proposés à la vente.
-Benchmarking | Étude comparative des pratiques d'autres entreprises pour s'améliorer.
-Budget de trésorerie | Prévision des encaissements et décaissements sur une période.
-Canal de distribution | Circuit emprunté par le produit du producteur au consommateur.
-Category management | Gestion des catégories de produits comme des unités stratégiques.
-Centrale d'achat | Organisme qui négocie et achète pour le compte de ses adhérents.
-Chiffre d'affaires | Total des ventes réalisées sur une période (CA = PV × Quantités).
-Coefficient de pondération | Poids attribué à un critère dans une évaluation multicritère.
-Commercialisation | Ensemble des actions pour mettre un produit sur le marché.
-Communication institutionnelle | Communication sur l'image et les valeurs de l'entreprise.
-Communication produit | Communication centrée sur un produit ou une gamme de produits.
-Compte de résultat | Document comptable mesurant la performance économique de l'entreprise.
-Concurrence directe | Entreprises proposant des produits similaires au même segment.
-Concurrence indirecte | Entreprises proposant des produits substituables différents.
-Conditions générales de vente | Règles contractuelles entre vendeur et acheteur.
-Consommateur final | Personne qui utilise le produit pour son usage personnel.
-Contrat de franchise | Accord donnant droit d'exploiter une enseigne contre redevance.
-Coût de revient | Somme de tous les coûts engagés pour produire ou vendre un produit.
-CRM | Customer Relationship Management : gestion de la relation client.
-Cross-selling | Technique de vente proposant des produits complémentaires.
-Démarque connue | Perte de marchandise identifiée (casse, retour fournisseur).
-Démarque inconnue | Perte non identifiée (vol, erreur de caisse, détérioration).
-Développement durable | Répondre aux besoins présents sans compromettre les générations futures.
-Distribution intensive | Présence du produit dans le maximum de points de vente.
-Distribution sélective | Choix limité de distributeurs selon des critères définis.
-Distribution exclusive | Un seul distributeur par zone géographique.
-Drives | Points de collecte de commandes internet sans entrer en magasin.
-E-commerce | Commerce électronique effectué via internet.
-Enseigne | Marque commerciale d'un point de vente ou d'un réseau.
-Étude de marché | Recueil et analyse d'informations sur un marché donné.
-Facing | Nombre d'unités d'un produit visibles en façade sur un linéaire.
-Force de vente | Ensemble des vendeurs et commerciaux d'une entreprise.
-Gamme | Ensemble de produits liés entre eux par une même technologie ou besoin.
-Gestion des stocks | Ensemble des actions pour optimiser les niveaux de stock.
-GMS | Grandes et Moyennes Surfaces (supermarchés, hypermarchés).
-Gondole | Meuble de présentation central ou périphérique dans un magasin.
-ILV | Information sur le Lieu de Vente : signalétique dans un point de vente.
-Implantation | Disposition des produits dans un rayon ou un magasin.
-Indice de sensibilité | Rapport entre la part de CA d'un rayon et sa part de surface.
-Jours de vente | Nombre de jours d'activité commerciale sur une période.
-Largeur de gamme | Nombre de lignes de produits dans une gamme.
-Linéaire | Espace de présentation des produits dans un point de vente.
-Linéaire développé | Longueur totale de présentation (linéaire au sol × nombre de niveaux).
-Livret d'accueil | Document remis au nouvel employé pour faciliter son intégration.
-Logistique | Gestion des flux physiques de marchandises de l'approvisionnement à la livraison.
-Loi de Pareto | 20% des références génèrent 80% du chiffre d'affaires.
-Marge brute | CA - coût d'achat des marchandises vendues.
+Accords de référencement | Matérialisent la relation entre le producteur et le distributeur concernant une offre déterminée dans le cadre du référencement conclu.
+Affichage digital | Affichage sur des écrans numériques permettant un affichage dynamique.
+Agencement | Consiste à aménager l'espace en mettant en place des zones et du mobilier pour optimiser l'ergonomie et la mise en valeur des produits.
+Ajustement linéaire | Modélisation linéaire qui permet d'établir des estimations dans le futur à partir d'informations provenant du passé.
+Alignement | Fixation d'un prix identique à ceux des concurrents directs ou du leader du marché.
+Allée pénétrante | Allée par laquelle les clients pénètrent dans un point de vente.
+Allée principale | Allée généralement située au centre du magasin et parallèle à la ligne de caisses.
+Allée secondaire | Allée plus étroite permettant d'accéder aux rayons.
+Ampleur (de l'assortiment) | Nombre total de références, calculé par la largeur multipliée par la profondeur.
+Analyse ABC (Activity Based Costing) | Outil d'analyse découpant les produits en trois segments : Classe A (20% des produits font 80% du CA), Classe B (30% des produits font 15% du CA) et Classe C (50% des produits font 5% du CA).
+Analyse PESTEL | Identification de l'influence des facteurs Politiques, Économiques, Sociologiques, Technologiques, Écologiques et Légaux sur l'unité commerciale.
+Analyse SWOT | Méthode d'analyse stratégique étudiant les Forces, Faiblesses, Opportunités et Menaces d'une entreprise ou d'un produit.
+Animation commerciale | Technique promotionnelle qui dynamise l'unité commerciale et pousse le produit vers le consommateur.
+Assortiment | Ensemble des produits et services proposés à la vente dans un rayon ou un point de vente.
+Attitude | Ensemble des éléments d'évaluation personnelle (cognitifs, conatifs et affectifs) d'un individu à l'égard d'une marque ou d'un produit.
+Back office | Espace réservé au personnel comprenant les réserves, les bureaux et les ateliers de fabrication.
+Balisage de linéaire | Fait d'équiper un linéaire d'éléments d'information et d'orientation pour le client.
+Benchmarking | Technique consistant à analyser les modes d'organisation d'autres entreprises pour s'en inspirer.
+Besoin | Sensation née d'un manque poussant l'individu à agir, classée par Maslow en besoins physiologiques, de sécurité, d'appartenance, d'estime et d'accomplissement.
+Buy One Get One Free (BOGOF) | Un article acheté, le deuxième gratuit.
+Category management | Organisation du point de vente en univers de consommation par catégorie de produits.
+Charges fixes | Charges liées à l'existence de l'unité commerciale qui ne varient pas en fonction de l'activité.
+Charges variables | Charges évoluant en fonction de l'activité, définie par le volume des ventes ou des quantités produites.
+Circuit (ou canal) de distribution | Chemin suivi par un bien de la production à la consommation (direct, court ou long selon le nombre d'intermédiaires).
+Circulation | Déplacements des clients dans le magasin.
+Click and collect | Service permettant de commander en ligne et de retirer l'achat en point de vente.
+Coefficient saisonnier | Permet de déterminer la saisonnalité des ventes sur l'année pour connaître le poids d'une période dans le CA annuel.
+Commerce équitable | Système d'échanges éthiques visant une plus grande égalité entre pays développés et pays pauvres.
+CDAC | Commission départementale d'aménagement commercial se prononçant sur les conséquences d'un projet d'aménagement.
+CNIL | Instance de contrôle veillant à la protection des données à caractère personnel.
+Communication hors médias | Ensemble des vecteurs de communication n'empruntant pas les six médias de masse.
+Communication médias | Utilisation de la télévision, presse, radio, affichage, cinéma et internet pour transmettre des messages commerciaux.
+Comportement | Étude des processus de décision, des réactions et des actions du consommateur.
+Concurrence directe | Entreprises proposant un produit ou service similaire.
+Concurrence indirecte | Entreprises proposant une offre différente mais répondant au même besoin.
+Conditions générales de vente (CGV) | Document regroupant les informations relatives à la vente (prix, livraison, remboursement), obligatoire en BtoB.
+Consommaction | Actions et organisations destinées à défendre et représenter les intérêts des consommateurs.
+Consumérisme | Action collective des consommateurs pour s'informer et défendre leurs droits.
+Cookie | Fichier déposé sur l'ordinateur d'un visiteur pour tracer son parcours et collecter des données.
+Coopération commerciale | Opérations marketing réalisées et financées conjointement entre distributeur et fabricant.
+Coût de revient | Prix d'achat des marchandises plus les frais d'achat, moins les remises.
+Coût par clic (CPC) | Mode de facturation publicitaire où l'enseigne paye à chaque clic d'un internaute.
+Coût pour mille (CPM) | Prix payé pour mille affichages d'une campagne publicitaire.
+Couverture d'un risque | Protection contre un sinistre via des contrats d'assurance ou de garantie.
+Cross-canal | Stratégie intégrant les différents canaux au sein du parcours consommateur pour le fluidifier.
+Cross-device | Usages alternés par le consommateur de plusieurs terminaux (smartphone, ordinateur, tablette) pour ses achats.
+Cross-marchandisage | Proposer un produit hors de son rayon habituel à proximité d'un produit complémentaire.
+Cross-selling | Proposition de produits complémentaires lors du parcours d'achat.
+Cybersécurité | Mesures et outils utilisés pour protéger les personnes et les actifs contre les risques informatiques.
+Démarque connue | Pertes sur produits enregistrées régulièrement comme la casse ou les dates dépassées.
+Démarque inconnue | Coût des produits volés ou disparus.
+Design | Éléments contribuant à l'apparence visuelle et physique d'un produit pour séduire et assurer sa fonctionnalité.
+Diagnostic stratégique | Phase permettant d'identifier les forces, faiblesses, opportunités et menaces pour prendre des décisions.
+Digital in store | Dispositifs digitaux utilisés en point de vente pour enrichir l'expérience client.
+E-commerce | Transactions commerciales s'opérant à distance via des interfaces électroniques.
+Écran interactif | Écran tactile permettant au client d'effectuer des recherches.
+ECR (Efficient Consumer Response) | Partenariat industrie-commerce pour gérer en commun approvisionnements et promotions selon les ventes réelles.
+Écrémage | Fixation d'un prix élevé pour assurer une forte rentabilité sur de faibles quantités.
+Élasticité | Indicateur de la réaction de la demande face à une variation du prix.
+Emballage | Enveloppes destinées à protéger le produit et faciliter son stockage et transport.
+E-mailing | Envoi d'un courrier électronique à un ensemble de clients ou prospects.
+E-merchandising | Optimisation de la présentation des produits et de la navigation sur un site marchand.
+Enseigne commerciale | Appellation et support physique permettant d'identifier l'unité commerciale.
+Entretien | Dépenses liées aux réparations et au maintien en état des actifs.
+E-réputation | Image d'une entreprise ou marque véhiculée sur internet.
+Étiquette électronique de gondole (EEG) | Affichage numérique du prix pouvant être mis à jour à distance.
+Facteurs explicatifs du comportement | Caractéristiques démographiques, sociologiques et psychologiques décrivant un individu lors de l'achat.
+Freins | Forces psychologiques négatives (rationnelles, peurs ou inhibitions) empêchant l'achat.
+Frontale | Nombre de produits faisant face au consommateur sur un niveau de linéaire.
+Front office | Zone de l'unité commerciale accessible aux clients (surface de vente).
+Gamme | Ensemble des produits d'une entreprise destinés à satisfaire le même besoin.
+Geofencing | Procédé d'envoi de messages aux utilisateurs présents dans une zone géographique donnée.
+Géomarketing | Utilisation de la géolocalisation pour proposer des informations adaptées aux clients.
+Hauteur (de l'assortiment) | Caractérisation du niveau de prix entre le prix le plus bas et le prix le plus élevé.
+Hygiène et sécurité | Règles spécifiques visant à protéger la santé et améliorer les conditions de travail.
+Image de marque | Représentations matérielles et immatérielles associées à une marque dans la mémoire d'un individu.
+Inbound marketing | Création de contenus non commerciaux pour attirer naturellement les internautes vers l'entreprise.
+Incident | Événement imprévu peu important pouvant entraîner de graves conséquences.
+Indicateurs | Mesures permettant d'apprécier une situation.
+Indice de sensibilité (IS) | Indicateur évaluant si la place accordée à un produit est justifiée par ses ventes ou sa marge.
+Information sur le lieu de vente (ILV) | Signalétique en magasin pour guider le consommateur vers les rayons.
+INPI | Institut chargé de délivrer les brevets et protéger les marques, dessins et modèles.
+Key Performance Indicator (KPI) | Indicateurs clés de performance utilisés pour mesurer l'efficacité d'une action commerciale.
+Landing page | Page web d'atterrissage conçue pour qu'un visiteur y effectue une action précise.
+Largeur (de l'assortiment) | Nombre de familles de produits différentes proposées.
+Linéaire développé | Linéaire au sol multiplié par le nombre de niveaux de présentation.
+Logo | Représentation graphique d'une marque ou d'une entreprise.
+Loi ALUR | Soumet à autorisation commerciale la création ou l'agrandissement de surfaces pour les drives.
+Loi de Pareto (20/80) | Règle selon laquelle 20% des causes (produits, clients) produisent 80% des effets (CA, réclamations).
+Loi LME | Fixe à 1 000 m² le seuil d'autorisation CDAC pour l'implantation d'une unité commerciale.
+Maintenance | Actions de révision et contrôle des équipements matériels et immatériels.
+Marge arrière | Avantages financiers versés par le fournisseur au distributeur en échange de services spécifiques.
 Marge commerciale | Différence entre le prix de vente HT et le coût d'achat HT.
-Marque de distributeur (MDD) | Produit développé et vendu sous la marque du distributeur.
-Marque nationale | Marque appartenant au producteur, distribuée à grande échelle.
-Merchandising | Ensemble des techniques d'optimisation de la présentation des produits.
-Mix marketing | Combinaison des 4P : Produit, Prix, Place (distribution), Promotion.
-Motivation d'achat | Raison psychologique qui pousse un individu à acheter.
-Négociation commerciale | Processus de discussion pour aboutir à un accord commercial.
-Offre promotionnelle | Proposition temporaire avantageuse pour stimuler les ventes.
-Panel distributeur | Mesure des ventes en sortie de caisse dans un échantillon de magasins.
-Panel consommateur | Suivi des comportements d'achat d'un groupe représentatif.
-Part de linéaire | Pourcentage de l'espace attribué à un produit ou fournisseur.
-Part de marché | Pourcentage des ventes d'une marque sur le total du marché.
-Planogramme | Représentation graphique de l'implantation des produits en rayon.
-PLV | Publicité sur le Lieu de Vente : matériel promotionnel en magasin.
-Politique de prix | Stratégie globale de l'entreprise concernant la fixation des prix.
-Politique tarifaire | Ensemble des décisions relatives aux prix pratiqués.
-Positionnement | Place qu'occupe un produit dans l'esprit du consommateur.
-Prix psychologique | Prix accepté par la majorité des consommateurs cibles.
-Productivité | Rapport entre la production obtenue et les moyens utilisés.
-Promotion des ventes | Techniques à court terme pour stimuler les achats.
-Prospection | Recherche de nouveaux clients potentiels.
-Rayon | Zone d'un magasin regroupant des produits de même nature.
-Référencement | Inscription d'un produit dans le catalogue d'un distributeur.
-Relation fournisseur | Gestion des interactions avec les partenaires d'approvisionnement.
-Rendement linéaire | CA ou marge générée par mètre de linéaire.
-Rupture de stock | Absence de produit disponible à la vente au moment de la demande.
-SAV | Service Après-Vente : assistance aux clients après achat.
-Saisonnalité | Variation régulière des ventes selon les périodes de l'année.
-Satisfaction client | Mesure dans laquelle les attentes du client sont comblées.
-Segmentation | Division du marché en groupes homogènes de consommateurs.
-Stock de sécurité | Stock minimum pour faire face aux aléas de la demande ou livraison.
-Stock moyen | (Stock initial + stock final) / 2.
-Stratégie de pénétration | Prix bas pour conquérir rapidement des parts de marché.
-Stratégie d'écrémage | Prix élevé au lancement pour maximiser la marge sur clients peu sensibles au prix.
-Tableau de bord | Outil de pilotage regroupant les indicateurs clés de performance.
-Taux de marge | (Marge brute / CA HT) × 100.
-Taux de marque | (Marge / Prix de vente HT) × 100.
-Taux de rotation | Nombre de fois où le stock se renouvelle sur une période.
-Taux de service | Pourcentage de commandes livrées sans rupture ni retard.
-Trade marketing | Actions marketing co-développées entre producteur et distributeur.
-Up-selling | Technique de vente proposant un produit de gamme supérieure.
-USP | Unique Selling Proposition : argument de vente distinctif et unique.
-Valeur perçue | Bénéfice que le client estime obtenir pour le prix payé.
-Vente additionnelle | Proposition d'un achat supplémentaire lors d'une transaction.
-Zone de chalandise | Zone géographique d'où provient la clientèle d'un point de vente.
-Zone chaude | Emplacement à fort trafic naturel dans un point de vente.
-Zone froide | Emplacement à faible trafic naturel nécessitant une animation.
+Marketing de rue (street marketing) | Technique utilisant l'espace public pour promouvoir une marque ou un produit.
+Marketing mix | Ensemble des décisions (Produit, Prix, Distribution, Communication) pour réussir la mise sur le marché.
+Marketing sensoriel | Techniques utilisant les sens pour influencer le comportement du consommateur.
+Marque | Signe graphique servant à distinguer les produits ou services.
+Marque caution | Marque notoire juxtaposée à une autre pour en authentifier la qualité.
+Marque de distributeur (MDD) | Produit fabriqué selon le cahier des charges spécifique d'une enseigne de distribution.
+Marque gamme | Marque utilisée pour un ensemble de produits d'un même univers.
+Marque ombrelle | Marque signant des produits appartenant à des catégories différentes.
+Marque réservée | Marque d'un producteur dont l'usage est exclusif à un distributeur.
+M-commerce | Transactions commerciales effectuées via un téléphone mobile ou une tablette.
+Méthode de Mayer | Méthode statistique pour effectuer une régression affine à deux variables.
+Méthode des moindres carrés | Ajustement mathématique pour obtenir des données proches de la réalité malgré des erreurs potentielles.
+Modulation | Adaptation du prix à chaque client selon la situation d'achat.
+Motivations | Forces psychologiques positives (hédonistes, oblatives ou d'auto-expression) poussant à l'achat.
+Multicanal | Utilisation simultanée de plusieurs canaux physiques et virtuels pour la relation client.
+Non-consommateur absolu (NCA) | Individu qui n'achètera jamais le produit (raisons morales, physiques, etc.).
+Non-consommateur relatif (NCR) | Prospect n'achetant pas actuellement mais susceptible de le faire plus tard.
+Omnicanal | Synergie entre tous les points de contact pour fluidifier le parcours client grâce aux données en temps réel.
+POEM (Paid, Owned, Earned Media) | Classification des expositions médiatiques : achetées, détenues ou gagnées (bouche-à-oreille).
+Pénétration | Fixation d'un prix bas pour gagner rapidement d'importantes parts de marché.
+Perception | Processus d'interprétation des stimuli par les sens.
+Persona | Représentation fictive de l'utilisateur type ciblé par l'enseigne.
+Phygitalisation | Combinaison des avantages du magasin physique avec des solutions digitales.
+PLA (Product Listing Ads) | Liens commerciaux sur internet intégrant visuels, prix et avis.
+Planogramme | Schéma indiquant la place de chaque référence dans le linéaire.
+Point de vente phygital | Magasin physique utilisant des outils numériques pour transformer l'expérience client.
+Position concurrentielle | Place d'une offre dans son espace de marché selon ses parts de marché et son image.
+Positionnement | Place occupée par un produit dans l'esprit du consommateur par rapport aux concurrents.
+Prix psychologique | Prix d'acceptabilité déterminé par sondage pour lequel le nombre d'acheteurs potentiels est maximal.
+Processus d'achat | Étapes mentales et physiques (besoin, recherche, comparaison, décision, évaluation, fidélité) menant à l'achat.
+Produit | Bien ou service destiné à satisfaire un besoin contre un prix.
+Profondeur (de l'assortiment) | Nombre de références différentes au sein d'une même famille de produits.
+Promotion digitale | Promotion via des outils numériques (e-mail, SMS, beacons, gamification).
+Publicité sur le lieu de vente (PLV) | Moyens utilisés en magasin pour valoriser les produits (totems, stop rayons).
+Qualité | Aptitude de caractéristiques à satisfaire des exigences déterminées.
+Réactance psychologique | Volonté d'un individu de retrouver sa liberté quand elle est menacée.
+Référencement (web) | Optimisation de la visibilité d'un site dans les moteurs de recherche.
+RGPD | Règlement européen protégeant les données personnelles et imposant le consentement spécifique des clients.
+Relevé de prix | Pratique consistant à surveiller les prix pratiqués par la concurrence.
+Rentabilité | Capacité à dégager des bénéfices par rapport aux capitaux mobilisés.
+Résultat | Ressources restantes une fois les charges déduites du chiffre d'affaires.
+Retargeting | Publicité reciblée basée sur l'étude du parcours d'un internaute n'ayant pas acheté.
+Rétroplanning | Méthode de planification inversée partant de la date de fin du projet.
+Risque | Probabilité de survenance d'un incident ou d'un sinistre.
+Scoring | Note évaluant la probabilité qu'un client réponde à une sollicitation.
+SEA | Référencement payant sur les moteurs de recherche via l'achat de mots-clés.
+Segmentation | Découpage d'une population en sous-ensembles homogènes selon des critères précis.
+SEM | Ensemble des méthodes de référencement regroupant SEO, SEA et SMO.
+SEO | Référencement naturel et gratuit dépendant de la structure du site.
+Service | Activité intangible associée ou non à un produit.
+Seuil de rentabilité | Volume d'activité nécessaire pour que l'entreprise commence à dégager des bénéfices.
+Seuil de revente à perte (SRP) | Limite de prix en dessous de laquelle la revente est interdite (majorée de 10% pour l'alimentaire).
+Signes officiels de qualité | Logos permettant d'identifier les produits bénéficiant d'une certification d'origine ou de qualité.
+Sinistre | Événement prévu au contrat d'assurance générant une obligation d'indemnisation.
+SMO | Optimisation de la visibilité d'une enseigne sur les réseaux sociaux.
+Social commerce | Utilisation des réseaux sociaux pour accroître les ventes.
+Sourcing | Recherche et évaluation de fournisseurs pour répondre à un besoin.
+Stratégie commerciale | Moyens coordonnés pour atteindre les objectifs fixés par l'entreprise.
+Stratégie de distribution | Choix des moyens pour acheminer l'offre (intensive, sélective, exclusive, etc.).
+Taux de clic | Pourcentage d'abonnés ayant cliqué sur un lien spécifique.
+Taux de conversion | Capacité à transformer les visiteurs en acheteurs (moyenne d'environ 4%).
+Taux de marque | Part de la marge commerciale dans le prix de vente d'un produit.
+Taux d'ouverture | Pourcentage d'e-mails ouverts par rapport aux envois (moyenne de 25%).
+Taux de rebond | Pourcentage de visiteurs quittant le site après n'avoir consulté qu'une seule page.
+T-commerce | Achats effectués via une télévision connectée.
+Trade marketing | Actions menées en commun par un producteur et un distributeur servant leurs intérêts convergents.
+Type d'achat | Classification des achats en trois catégories : routinier, impulsif ou réfléchi.
+Up-selling | Proposition d'un produit de gamme supérieure lors de l'achat.
+V-commerce | Commerce réalisé via des applications de réalité virtuelle.
+Veille concurrentielle | Surveillance continue des actions et produits des concurrents.
+Yield management | Variation des prix en temps réel selon la demande (prix forts en période de pointe).
+Zone chaude | Secteur du point de vente naturellement très fréquenté par les clients.
+Zone de chalandise | Zone d'attractivité géographique décomposée en zones primaire, secondaire et tertiaire.
+Zone froide | Secteur peu fréquenté à cause d'obstacles ou de l'éloignement de l'entrée.
