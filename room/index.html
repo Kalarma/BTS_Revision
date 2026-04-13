@@ -15,30 +15,25 @@
         .screen.active { display:flex; }
         @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+        @keyframes rankBounce { 0%{transform:translateX(-8px);opacity:.5} 100%{transform:translateX(0);opacity:1} }
+        @keyframes timerPulse { 0%,100%{background:#6366f1} 50%{background:#f43f5e} }
         .fade-up { animation:fadeUp .35s ease forwards; }
         .pulse { animation:pulse 1.5s infinite; }
-        .choice-A { background:#e74c3c20; border-color:#e74c3c60; color:#e74c3c; }
-        .choice-B { background:#3498db20; border-color:#3498db60; color:#3498db; }
-        .choice-C { background:#f39c1220; border-color:#f39c1260; color:#f39c12; }
-        .choice-D { background:#27ae6020; border-color:#27ae6060; color:#27ae60; }
-        .choice-A:active, .choice-B:active, .choice-C:active, .choice-D:active { transform:scale(.97); }
-        .choice-A.selected { background:#e74c3c !important; color:white !important; }
-        .choice-B.selected { background:#3498db !important; color:white !important; }
-        .choice-C.selected { background:#f39c12 !important; color:white !important; }
-        .choice-D.selected { background:#27ae60 !important; color:white !important; }
-        .choice-btn.correct { background:rgba(16,185,129,.3) !important; border-color:rgb(16,185,129) !important; color:white !important; }
-        .choice-btn.wrong   { opacity:.4 !important; }
+        .choice-btn:active { transform:scale(.95) !important; }
         input:-webkit-autofill { -webkit-box-shadow:0 0 0 50px #0f172a inset!important; -webkit-text-fill-color:#fff!important; }
         .timer-animate { transition:width linear; }
+        .color-btn { cursor:pointer; }
+        #screen-question { overflow:hidden; }
+        #q-choices { display:grid; }
     </style>
 </head>
 <body>
 <div id="app">
 
-<!-- JOIN -->
+<!-- ============================================================ JOIN -->
 <div id="screen-join" class="screen active items-center justify-center p-6">
     <div class="w-full max-w-sm fade-up">
-        <div class="text-center mb-10">
+        <div class="text-center mb-8">
             <div class="text-5xl mb-3">🎮</div>
             <h1 class="text-3xl font-black text-white uppercase italic">Kahoot <span class="text-indigo-500">BTS</span></h1>
             <p class="text-slate-600 text-[10px] font-bold uppercase tracking-widest mt-1">Rejoindre une partie</p>
@@ -50,6 +45,22 @@
             <input id="join-name" type="text" placeholder="Ton prénom" maxlength="20"
                    class="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-white font-bold placeholder-slate-700 outline-none focus:border-indigo-500 transition-colors">
         </div>
+
+        <!-- Sélecteur de couleur -->
+        <div class="mb-4">
+            <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest text-center mb-3">Choisis ta couleur</p>
+            <div class="flex gap-3 justify-center flex-wrap py-2">
+                <button onclick="selectColor('#6366f1')" class="color-btn w-10 h-10 rounded-full border-2 active:scale-90 transition-all" style="background:#6366f1;border-color:white;transform:scale(1.2)" data-color="#6366f1"></button>
+                <button onclick="selectColor('#f43f5e')" class="color-btn w-10 h-10 rounded-full border-2 border-transparent active:scale-90 transition-all" style="background:#f43f5e" data-color="#f43f5e"></button>
+                <button onclick="selectColor('#10b981')" class="color-btn w-10 h-10 rounded-full border-2 border-transparent active:scale-90 transition-all" style="background:#10b981" data-color="#10b981"></button>
+                <button onclick="selectColor('#f59e0b')" class="color-btn w-10 h-10 rounded-full border-2 border-transparent active:scale-90 transition-all" style="background:#f59e0b" data-color="#f59e0b"></button>
+                <button onclick="selectColor('#a855f7')" class="color-btn w-10 h-10 rounded-full border-2 border-transparent active:scale-90 transition-all" style="background:#a855f7" data-color="#a855f7"></button>
+                <button onclick="selectColor('#06b6d4')" class="color-btn w-10 h-10 rounded-full border-2 border-transparent active:scale-90 transition-all" style="background:#06b6d4" data-color="#06b6d4"></button>
+                <button onclick="selectColor('#ec4899')" class="color-btn w-10 h-10 rounded-full border-2 border-transparent active:scale-90 transition-all" style="background:#ec4899" data-color="#ec4899"></button>
+                <button onclick="selectColor('#84cc16')" class="color-btn w-10 h-10 rounded-full border-2 border-transparent active:scale-90 transition-all" style="background:#84cc16" data-color="#84cc16"></button>
+            </div>
+        </div>
+
         <div id="join-error" class="hidden mb-3 px-4 py-2 bg-rose-500/10 border border-rose-500/20 rounded-xl">
             <p class="text-rose-400 text-xs font-bold text-center"></p>
         </div>
@@ -59,23 +70,29 @@
     </div>
 </div>
 
-<!-- WAITING -->
+<!-- ============================================================ WAITING -->
 <div id="screen-waiting" class="screen items-center justify-center p-6 text-center">
     <div class="fade-up">
         <div class="text-6xl mb-6 pulse">⏳</div>
         <h2 class="text-2xl font-black text-white uppercase">Connecté !</h2>
-        <p id="waiting-name" class="text-indigo-400 font-bold text-lg mt-1"></p>
+        <p id="waiting-name" class="font-bold text-lg mt-1"></p>
         <p class="text-slate-600 text-xs font-bold uppercase tracking-widest mt-4 pulse">En attente du professeur...</p>
         <div class="mt-8 bg-slate-900 border border-slate-800 rounded-2xl px-6 py-4 inline-block">
             <p class="text-[9px] text-slate-600 font-bold uppercase mb-1">Code de la salle</p>
             <p id="waiting-code" class="text-white font-black text-2xl tracking-[0.3em]"></p>
         </div>
+        <div class="mt-6">
+            <button onclick="confirmQuitPlayer()" class="text-slate-700 font-bold text-xs uppercase hover:text-rose-400 transition-colors">
+                Quitter la partie
+            </button>
+        </div>
     </div>
 </div>
 
-<!-- QUESTION -->
-<div id="screen-question" class="screen flex-col">
-    <div class="px-4 pt-4 pb-2 flex-shrink-0">
+<!-- ============================================================ QUESTION -->
+<div id="screen-question" class="screen flex-col" style="height:100dvh">
+    <!-- Header -->
+    <div class="px-4 pt-safe pt-4 pb-2 flex-shrink-0">
         <div class="flex items-center justify-between mb-2">
             <span id="q-round" class="text-[10px] font-black text-slate-600 uppercase">Q 1/10</span>
             <span id="q-score" class="text-sm font-black text-indigo-400">0 pts</span>
@@ -84,37 +101,55 @@
             <div id="q-timer-bar" class="h-full w-full timer-animate" style="background:#6366f1"></div>
         </div>
     </div>
+    <!-- Terme -->
     <div class="px-4 py-3 flex-shrink-0">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 text-center">
-            <span class="text-[9px] font-black text-slate-600 uppercase tracking-widest block mb-2">Terme — Quelle est sa définition ?</span>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-center">
+            <span class="text-[9px] font-black text-slate-600 uppercase tracking-widest block mb-2">Quelle est la définition ?</span>
             <p id="q-term" class="text-white font-bold text-lg leading-snug"></p>
         </div>
     </div>
-    <div id="q-choices" class="flex-grow grid grid-cols-2 gap-3 px-4 pb-6 content-stretch">
-        <!-- Filled by JS -->
+    <!-- Boutons A/B/C/D plein écran -->
+    <div id="q-choices" class="flex-grow grid grid-cols-2 gap-4 p-4">
+        <button class="choice-btn rounded-3xl flex items-center justify-center text-5xl font-black text-white active:scale-95 transition-all" style="background:#e74c3c" onclick="selectAnswer(0)">A</button>
+        <button class="choice-btn rounded-3xl flex items-center justify-center text-5xl font-black text-white active:scale-95 transition-all" style="background:#3498db" onclick="selectAnswer(1)">B</button>
+        <button class="choice-btn rounded-3xl flex items-center justify-center text-5xl font-black text-white active:scale-95 transition-all" style="background:#f39c12" onclick="selectAnswer(2)">C</button>
+        <button class="choice-btn rounded-3xl flex items-center justify-center text-5xl font-black text-white active:scale-95 transition-all" style="background:#27ae60" onclick="selectAnswer(3)">D</button>
     </div>
 </div>
 
-<!-- RESULT -->
-<div id="screen-result" class="screen items-center justify-center p-6 text-center">
+<!-- ============================================================ SENT (réponse envoyée, pas encore révélée) -->
+<div id="screen-sent" class="screen items-center justify-center p-6 text-center">
     <div class="fade-up w-full max-w-sm">
-        <div id="result-emoji" class="text-7xl mb-4">✓</div>
-        <h2 id="result-title" class="text-3xl font-black uppercase text-white mb-2">Correct !</h2>
-        <div id="result-points" class="text-5xl font-black text-indigo-400 mb-2">+1000</div>
-        <p class="text-slate-500 text-sm font-bold mb-6">pts gagnés</p>
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-left mb-4">
-            <p class="text-[9px] font-black text-slate-600 uppercase mb-1">Bonne réponse</p>
-            <p id="result-correct-answer" class="text-emerald-400 font-bold text-sm"></p>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-center">
-            <p class="text-[9px] font-black text-slate-600 uppercase mb-1">Ton score total</p>
-            <p id="result-total-score" class="text-white font-black text-2xl"></p>
-        </div>
-        <p class="text-slate-700 text-[10px] font-bold uppercase mt-4 pulse">Attente de la prochaine question...</p>
+        <div id="sent-color-badge" class="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl font-black text-white mx-auto mb-6">A</div>
+        <h2 class="text-2xl font-black text-white uppercase mb-2">Réponse envoyée !</h2>
+        <p class="text-slate-500 text-sm mb-8">En attente du résultat...</p>
+        <!-- Bouton bookmark -->
+        <button id="btn-bookmark-q" onclick="bookmarkCurrentQuestion()" class="mb-4 px-6 py-3 bg-slate-900 border border-slate-800 rounded-2xl text-slate-400 font-bold text-xs uppercase active:scale-95 transition-all hover:border-yellow-500 hover:text-yellow-400 w-full">
+            🔖 Enregistrer cette question
+        </button>
+        <!-- Bouton quitter -->
+        <button onclick="confirmQuitPlayer()" class="block w-full py-3 text-slate-700 font-bold text-xs uppercase hover:text-rose-400 transition-colors">
+            Quitter la partie
+        </button>
     </div>
 </div>
 
-<!-- LEADERBOARD -->
+<!-- ============================================================ RESULT (après reveal du host) -->
+<div id="screen-result" class="screen items-center justify-center p-6 text-center">
+    <div class="fade-up w-full max-w-xs">
+        <div id="result-big" class="text-8xl mb-4">✓</div>
+        <h2 id="result-title" class="text-3xl font-black uppercase mb-3 text-white">Correct !</h2>
+        <div id="result-points" class="text-6xl font-black text-indigo-400 mb-1">+1000</div>
+        <p class="text-slate-500 text-sm font-bold mb-6">pts gagnés cette question</p>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-center">
+            <p class="text-[9px] font-black text-slate-600 uppercase mb-1">Score total</p>
+            <p id="result-total-score" class="text-white font-black text-3xl"></p>
+        </div>
+        <p class="text-slate-700 text-[10px] font-bold uppercase mt-6 pulse">Prochaine question bientôt...</p>
+    </div>
+</div>
+
+<!-- ============================================================ LEADERBOARD -->
 <div id="screen-leaderboard" class="screen p-6">
     <div class="max-w-sm mx-auto w-full">
         <h3 class="text-[10px] font-black text-slate-600 uppercase tracking-widest text-center mb-6">Classement</h3>
@@ -123,15 +158,20 @@
     </div>
 </div>
 
-<!-- FINAL -->
-<div id="screen-final" class="screen items-center justify-center p-6 text-center">
+<!-- ============================================================ FINAL -->
+<div id="screen-final" class="screen items-center justify-center p-6 text-center overflow-y-auto">
     <div class="fade-up w-full max-w-sm">
         <div id="final-emoji" class="text-6xl mb-4">🏆</div>
         <h2 class="text-3xl font-black text-white uppercase italic mb-1">Fin de partie !</h2>
         <p id="final-rank" class="text-indigo-400 font-bold text-lg mb-6"></p>
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 mb-6">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 mb-4">
             <p class="text-[9px] font-black text-slate-600 uppercase mb-1">Score final</p>
             <p id="final-score" class="text-4xl font-black text-white"></p>
+        </div>
+        <!-- Bookmarks -->
+        <div id="final-bookmarks" class="hidden mb-4 text-left">
+            <p class="text-[9px] font-black text-yellow-400 uppercase mb-2">🔖 Questions enregistrées</p>
+            <div id="final-bm-list" class="space-y-1"></div>
         </div>
         <div id="final-leaderboard" class="space-y-2 mb-6"></div>
         <button onclick="location.href='../'" class="w-full py-4 bg-slate-800 text-white font-black uppercase rounded-2xl active:scale-95 transition-all">
@@ -140,7 +180,7 @@
     </div>
 </div>
 
-<!-- ERROR -->
+<!-- ============================================================ ERROR -->
 <div id="screen-room-error" class="screen items-center justify-center p-6 text-center">
     <div>
         <div class="text-5xl mb-4">⚠️</div>
@@ -149,16 +189,36 @@
     </div>
 </div>
 
-</div>
+</div><!-- /app -->
 <script>
 // =====================================================================
 // STATE
 // =====================================================================
 let db = null, useFirebase = false;
 let roomCode = '', playerId = '', playerName = '', playerScore = 0;
+let playerColor = '#6366f1';
 let currentQ = 0, totalQ = 10, qTime = 20;
 let questions = [], roomListener = null;
 let hasAnswered = false, qTimerTimeout = null;
+let questionStartTime = 0;
+let lastAnswerIdx = -1;
+let prevRanks = {};
+let bookmarkedQuestions = JSON.parse(sessionStorage.getItem('kh_bookmarks') || '[]');
+
+// Couleurs des boutons A/B/C/D
+const BTN_COLORS = ['#e74c3c', '#3498db', '#f39c12', '#27ae60'];
+const BTN_LETTERS = ['A', 'B', 'C', 'D'];
+
+// =====================================================================
+// COULEUR JOUEUR
+// =====================================================================
+function selectColor(c) {
+    playerColor = c;
+    document.querySelectorAll('.color-btn').forEach(b => {
+        b.style.borderColor = b.dataset.color === c ? 'white' : 'transparent';
+        b.style.transform   = b.dataset.color === c ? 'scale(1.2)' : 'scale(1)';
+    });
+}
 
 // =====================================================================
 // FIREBASE INIT
@@ -191,6 +251,7 @@ function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
 }
+
 function showRoomError(msg) {
     document.getElementById('room-error-msg').textContent = msg;
     showScreen('screen-room-error');
@@ -218,23 +279,28 @@ async function joinRoom() {
         const snap = await db.collection('rooms').doc(code).get();
         if (!snap.exists) { showJoinError('Salle introuvable'); return; }
         const room = snap.data();
-        if (room.status === 'finished' || room.status === 'cancelled') { showJoinError('Cette partie est terminée'); return; }
+        if (room.status === 'finished' || room.status === 'cancelled') {
+            showJoinError('Cette partie est terminée'); return;
+        }
 
-        // Enregistrer le joueur
+        // Enregistrer le joueur avec sa couleur
         await db.collection('rooms').doc(code).update({
-            [`players.${playerId}`]: { name, score: 0, joinedAt: Date.now() }
+            [`players.${playerId}`]: { name, score: 0, color: playerColor, joinedAt: Date.now() }
         });
 
         // Stocker infos session
         sessionStorage.setItem('kh_room', code);
         sessionStorage.setItem('kh_pid', playerId);
         sessionStorage.setItem('kh_name', name);
+        sessionStorage.setItem('kh_color', playerColor);
 
-        document.getElementById('waiting-name').textContent = name;
+        // Mettre à jour waiting screen
+        const nameEl = document.getElementById('waiting-name');
+        nameEl.textContent = name;
+        nameEl.style.color = playerColor;
         document.getElementById('waiting-code').textContent = code;
         showScreen('screen-waiting');
 
-        // Écouter les changements
         listenToRoom(code);
     } catch(e) {
         showJoinError('Erreur : ' + e.message);
@@ -264,15 +330,21 @@ function handleRoomState(room) {
         case 'waiting':
             showScreen('screen-waiting');
             break;
-        case 'question':
-            if (room.currentQ !== currentQ || document.getElementById('screen-waiting').classList.contains('active')) {
+        case 'question': {
+            const isNewQ = room.currentQ !== currentQ ||
+                document.getElementById('screen-waiting').classList.contains('active') ||
+                document.getElementById('screen-leaderboard').classList.contains('active') ||
+                document.getElementById('screen-result').classList.contains('active');
+            if (isNewQ) {
                 currentQ = room.currentQ;
-                totalQ = room.settings?.totalQ || 10;
-                qTime  = room.settings?.time || 20;
+                totalQ   = room.settings?.totalQ || 10;
+                qTime    = room.settings?.time || 20;
                 questions = room.questions || [];
+                questionStartTime = room.questionStartTime || Date.now();
                 showQuestion(room);
             }
             break;
+        }
         case 'reveal':
             revealAnswer(room);
             break;
@@ -291,72 +363,157 @@ function handleRoomState(room) {
 // =====================================================================
 function showQuestion(room) {
     hasAnswered = false;
+    lastAnswerIdx = -1;
     clearTimeout(qTimerTimeout);
+
     const q = questions[currentQ];
     if (!q) return;
 
-    document.getElementById('q-round').textContent = `Q ${currentQ+1}/${totalQ}`;
+    document.getElementById('q-round').textContent = `Q ${currentQ + 1}/${totalQ}`;
     document.getElementById('q-score').textContent = playerScore + ' pts';
+    document.getElementById('q-term').textContent = q.term || q.question || '';
 
-    const colors = ['A','B','C','D'];
-    const cls = ['choice-A','choice-B','choice-C','choice-D'];
-    document.getElementById('q-choices').innerHTML = q.choices.map((ch, i) => `
-        <button class="choice-btn ${cls[i]} border-2 rounded-2xl flex flex-col items-center justify-center gap-2 p-4 font-black text-4xl transition-all"
-                onclick="selectAnswer(this, ${ch.correct}, '${ch.text.replace(/'/g,"\\'")}')">
-            <span class="text-5xl">${['🔴','🔵','🟡','🟢'][i]}</span>
-            <span class="text-[11px] font-bold leading-snug text-center text-white/80">${ch.text}</span>
-        </button>`).join('');
+    // Réinitialiser l'état des boutons (taille/opacité)
+    document.querySelectorAll('#q-choices .choice-btn').forEach(btn => {
+        btn.style.opacity = '1';
+        btn.style.transform = '';
+    });
 
-    // Timer
+    // Timer bar
     const bar = document.getElementById('q-timer-bar');
-    bar.style.transition = 'none'; bar.style.width = '100%';
+    bar.style.transition = 'none';
+    bar.style.width = '100%';
     bar.style.background = '#6366f1';
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    requestAnimationFrame(() => requestAnimationFrame(() => {
         bar.style.transition = `width ${qTime}s linear`;
         bar.style.width = '0%';
     }));
+
     qTimerTimeout = setTimeout(() => {
-        if (!hasAnswered) selectAnswer(null, false, '');
+        if (!hasAnswered) {
+            // Temps écoulé sans réponse
+            hasAnswered = true;
+            db.collection('rooms').doc(roomCode).update({
+                [`answers.${playerId}.${currentQ}`]: { idx: -1, correct: false, points: 0, ts: Date.now() }
+            }).catch(e => console.warn(e));
+            showTimedOut();
+        }
     }, qTime * 1000);
 
     showScreen('screen-question');
 }
 
-function selectAnswer(btn, isCorrect, answerText) {
-    if (hasAnswered) return;
-    hasAnswered = true;
-    clearTimeout(qTimerTimeout);
-
-    const points = isCorrect ? 1000 : 0;
-    playerScore += points;
-
-    // Mettre à jour Firestore
-    db.collection('rooms').doc(roomCode).update({
-        [`answers.${playerId}.${currentQ}`]: isCorrect,
-        [`players.${playerId}.score`]: playerScore
-    }).catch(e => console.warn(e));
-
-    // Afficher résultat
-    document.getElementById('result-emoji').textContent    = isCorrect ? '🎉' : '😅';
-    document.getElementById('result-title').textContent    = isCorrect ? 'Correct !' : 'Raté !';
-    document.getElementById('result-points').textContent   = isCorrect ? '+1000' : '+0';
-    document.getElementById('result-points').style.color   = isCorrect ? '#6366f1' : '#94a3b8';
-    document.getElementById('result-total-score').textContent = playerScore + ' pts';
-    // On affiche la bonne réponse seulement après le "reveal" du host
-    document.getElementById('result-correct-answer').textContent = '...';
-    showScreen('screen-result');
+function showTimedOut() {
+    // Afficher écran "envoyé" en version temps écoulé
+    document.getElementById('sent-color-badge').style.background = '#64748b';
+    document.getElementById('sent-color-badge').textContent = '⏰';
+    document.querySelector('#screen-sent h2').textContent = 'Temps écoulé !';
+    document.querySelector('#screen-sent p').textContent = 'Tu n\'as pas répondu à temps.';
+    // Remettre le bookmark btn
+    const btn = document.getElementById('btn-bookmark-q');
+    btn.textContent = '🔖 Enregistrer cette question';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+    showScreen('screen-sent');
 }
 
 // =====================================================================
-// REVEAL
+// CALCUL DES POINTS
 // =====================================================================
-function revealAnswer(room) {
-    if (!document.getElementById('screen-result').classList.contains('active') &&
-        !document.getElementById('screen-question').classList.contains('active')) return;
+function calcPoints(isCorrect) {
+    if (!isCorrect) return 0;
+    const elapsed = (Date.now() - questionStartTime) / 1000;
+    if (elapsed <= 3) return 1000;
+    const remaining = Math.max(0, qTime - elapsed);
+    if (qTime <= 3) return 1000;
+    return Math.round(500 + (500 * remaining / (qTime - 3)));
+}
+
+// =====================================================================
+// SÉLECTIONNER UNE RÉPONSE
+// =====================================================================
+function selectAnswer(answerIdx) {
+    if (hasAnswered) return;
+    hasAnswered = true;
+    lastAnswerIdx = answerIdx;
+    clearTimeout(qTimerTimeout);
+
     const q = questions[currentQ];
     if (!q) return;
-    const correct = q.choices.find(c => c.correct);
-    document.getElementById('result-correct-answer').textContent = correct?.text || '';
+
+    const isCorrect = q.choices && q.choices[answerIdx] ? !!q.choices[answerIdx].correct : false;
+    const calculatedPoints = calcPoints(isCorrect);
+
+    // Envoyer à Firestore
+    db.collection('rooms').doc(roomCode).update({
+        [`answers.${playerId}.${currentQ}`]: {
+            idx: answerIdx,
+            correct: isCorrect,
+            points: calculatedPoints,
+            ts: Date.now()
+        }
+    }).catch(e => console.warn(e));
+
+    // Préparer l'écran "sent"
+    const badge = document.getElementById('sent-color-badge');
+    badge.style.background = BTN_COLORS[answerIdx];
+    badge.textContent = BTN_LETTERS[answerIdx];
+    // Réinitialiser titre/sous-titre
+    document.querySelector('#screen-sent h2').textContent = 'Réponse envoyée !';
+    document.querySelector('#screen-sent p').textContent = 'En attente du résultat...';
+    // Réinitialiser bookmark btn
+    const btn = document.getElementById('btn-bookmark-q');
+    btn.textContent = '🔖 Enregistrer cette question';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+
+    showScreen('screen-sent');
+}
+
+// =====================================================================
+// REVEAL (le host révèle la bonne réponse)
+// =====================================================================
+function revealAnswer(room) {
+    // Ne traiter que si on est sur sent/question/result
+    const activeSent     = document.getElementById('screen-sent').classList.contains('active');
+    const activeQuestion = document.getElementById('screen-question').classList.contains('active');
+    const activeResult   = document.getElementById('screen-result').classList.contains('active');
+    if (!activeSent && !activeQuestion && !activeResult) return;
+
+    // Lire la réponse soumise
+    const myAnswer = room.answers?.[playerId]?.[currentQ];
+    if (!myAnswer && myAnswer !== false) {
+        // Pas répondu : afficher raté
+        showResultScreen(false, 0);
+        return;
+    }
+
+    const isCorrect = myAnswer.correct || false;
+    const pts = myAnswer.points || 0;
+
+    // Mettre à jour le score local depuis Firestore (source de vérité)
+    playerScore = room.players?.[playerId]?.score || playerScore;
+
+    // Mettre à jour score dans Firestore si points calculés côté client
+    if (isCorrect && pts > 0) {
+        const newScore = (room.players?.[playerId]?.score || 0);
+        // Le score peut déjà avoir été mis à jour, on s'assure
+        db.collection('rooms').doc(roomCode).update({
+            [`players.${playerId}.score`]: newScore + pts
+        }).then(() => {
+            playerScore = newScore + pts;
+        }).catch(e => console.warn(e));
+    }
+
+    showResultScreen(isCorrect, pts);
+}
+
+function showResultScreen(isCorrect, pts) {
+    document.getElementById('result-big').textContent    = isCorrect ? '🎉' : '😅';
+    document.getElementById('result-title').textContent  = isCorrect ? 'Correct !' : 'Raté !';
+    document.getElementById('result-points').textContent = isCorrect ? '+' + pts : '+0';
+    document.getElementById('result-points').style.color = isCorrect ? '#6366f1' : '#94a3b8';
+    document.getElementById('result-total-score').textContent = playerScore + ' pts';
     showScreen('screen-result');
 }
 
@@ -365,17 +522,30 @@ function revealAnswer(room) {
 // =====================================================================
 function showLeaderboard(room) {
     const players = room.players || {};
-    const sorted = Object.values(players).sort((a,b)=>(b.score||0)-(a.score||0));
-    document.getElementById('lb-list').innerHTML = sorted.map((p,i) => {
+    const sorted = Object.values(players).sort((a, b) => (b.score || 0) - (a.score || 0));
+
+    document.getElementById('lb-list').innerHTML = sorted.slice(0, 8).map((p, i) => {
+        const prevRank = prevRanks[p.name];
+        const rankChange = prevRank !== undefined ? prevRank - i : 0;
         const isMe = p.name === playerName;
-        return `<div class="flex items-center justify-between p-3 rounded-2xl border ${isMe ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-slate-900 border-slate-800'}">
+        const arrow = rankChange > 0 ? '▲' : rankChange < 0 ? '▼' : '';
+        const arrowColor = rankChange > 0 ? 'text-emerald-400' : rankChange < 0 ? 'text-rose-400' : '';
+        prevRanks[p.name] = i;
+
+        return `<div class="flex items-center justify-between p-3 rounded-2xl border transition-all ${isMe ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-slate-900 border-slate-800'}"
+                     style="${rankChange !== 0 ? 'animation:rankBounce .4s ease' : ''}">
             <div class="flex items-center gap-2">
-                <span class="text-slate-600 font-black text-xs w-4">${i+1}</span>
-                <span class="${isMe ? 'text-indigo-400' : 'text-white'} font-bold text-sm">${p.name}${isMe ? ' (toi)' : ''}</span>
+                <span class="font-black text-slate-600 text-sm w-5">${i + 1}</span>
+                <div class="w-3 h-3 rounded-full flex-shrink-0" style="background:${p.color || '#6366f1'}"></div>
+                <span class="font-bold text-sm" style="color:${isMe ? (p.color || '#6366f1') : 'white'}">${p.name}${isMe ? ' (toi)' : ''}</span>
             </div>
-            <span class="font-black ${isMe ? 'text-indigo-400' : 'text-slate-400'} text-sm">${p.score||0} pts</span>
+            <div class="flex items-center gap-2">
+                <span class="${arrowColor} text-xs font-black">${arrow}</span>
+                <span class="font-black text-sm" style="color:${isMe ? (p.color || '#6366f1') : '#94a3b8'}">${p.score || 0} pts</span>
+            </div>
         </div>`;
     }).join('');
+
     showScreen('screen-leaderboard');
 }
 
@@ -384,26 +554,72 @@ function showLeaderboard(room) {
 // =====================================================================
 function showFinalScreen(room) {
     const players = room.players || {};
-    const sorted = Object.values(players).sort((a,b)=>(b.score||0)-(a.score||0));
+    const sorted = Object.values(players).sort((a, b) => (b.score || 0) - (a.score || 0));
     const myRank = sorted.findIndex(p => p.name === playerName) + 1;
-    const emojis = ['🥇','🥈','🥉'];
+    const emojis = ['🥇', '🥈', '🥉'];
 
-    document.getElementById('final-emoji').textContent  = emojis[myRank-1] || '🎮';
-    document.getElementById('final-rank').textContent   = `${myRank}e sur ${sorted.length}`;
-    document.getElementById('final-score').textContent  = playerScore + ' pts';
-    document.getElementById('final-leaderboard').innerHTML = sorted.map((p,i) => {
+    document.getElementById('final-emoji').textContent = emojis[myRank - 1] || '🎮';
+    document.getElementById('final-rank').textContent  = `${myRank}e sur ${sorted.length}`;
+    document.getElementById('final-score').textContent = (room.players?.[playerId]?.score || playerScore) + ' pts';
+
+    document.getElementById('final-leaderboard').innerHTML = sorted.map((p, i) => {
         const isMe = p.name === playerName;
         return `<div class="flex items-center justify-between p-3 rounded-xl border ${isMe ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-slate-900 border-slate-800'}">
             <div class="flex items-center gap-2">
-                <span class="font-black text-xs">${emojis[i] || i+1}</span>
-                <span class="${isMe ? 'text-indigo-400' : 'text-white'} font-bold text-sm">${p.name}</span>
+                <span class="font-black text-xs">${emojis[i] || (i + 1)}</span>
+                <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${p.color || '#6366f1'}"></div>
+                <span class="font-bold text-sm" style="color:${isMe ? (p.color || '#6366f1') : 'white'}">${p.name}</span>
             </div>
-            <span class="font-black text-slate-400 text-sm">${p.score||0} pts</span>
+            <span class="font-black text-slate-400 text-sm">${p.score || 0} pts</span>
         </div>`;
     }).join('');
 
+    // Bookmarks
+    if (bookmarkedQuestions.length > 0) {
+        document.getElementById('final-bookmarks').classList.remove('hidden');
+        document.getElementById('final-bm-list').innerHTML = bookmarkedQuestions.map(b =>
+            `<div class="bg-slate-900 rounded-xl p-3 border border-yellow-500/20">
+                <p class="text-white font-bold text-xs">${b.term}</p>
+                <p class="text-slate-500 text-[10px]">${b.def}</p>
+            </div>`).join('');
+    }
+
     if (roomListener) { roomListener(); roomListener = null; }
     showScreen('screen-final');
+}
+
+// =====================================================================
+// BOOKMARK
+// =====================================================================
+function bookmarkCurrentQuestion() {
+    const q = questions[currentQ];
+    if (!q) return;
+    const btn = document.getElementById('btn-bookmark-q');
+    if (!bookmarkedQuestions.find(b => b.term === q.term)) {
+        bookmarkedQuestions.push({
+            term: q.term || q.question || '',
+            def: q.choices?.find(c => c.correct)?.text || ''
+        });
+        sessionStorage.setItem('kh_bookmarks', JSON.stringify(bookmarkedQuestions));
+        btn.textContent = '🔖 Enregistrée !';
+        btn.style.borderColor = '#eab308';
+        btn.style.color = '#eab308';
+    } else {
+        btn.textContent = '🔖 Déjà enregistrée';
+        btn.style.borderColor = '#eab308';
+        btn.style.color = '#eab308';
+    }
+}
+
+// =====================================================================
+// QUITTER
+// =====================================================================
+function confirmQuitPlayer() {
+    if (confirm('Quitter la partie ? Tu perdras ta progression.')) {
+        if (roomListener) { roomListener(); roomListener = null; }
+        sessionStorage.clear();
+        location.href = '../';
+    }
 }
 
 // =====================================================================
@@ -415,30 +631,41 @@ async function init() {
         showRoomError('Firebase non configuré. Contacte le professeur.');
         return;
     }
+
     // Lire code depuis URL
     const params = new URLSearchParams(window.location.search);
     const urlCode = params.get('code');
     if (urlCode) {
         document.getElementById('join-code').value = urlCode.toUpperCase();
     }
-    // Rejoindre session précédente si active
-    const savedRoom = sessionStorage.getItem('kh_room');
-    const savedPid  = sessionStorage.getItem('kh_pid');
-    const savedName = sessionStorage.getItem('kh_name');
+
+    // Reconnexion auto depuis sessionStorage
+    const savedRoom  = sessionStorage.getItem('kh_room');
+    const savedPid   = sessionStorage.getItem('kh_pid');
+    const savedName  = sessionStorage.getItem('kh_name');
+    const savedColor = sessionStorage.getItem('kh_color');
     if (savedRoom && savedPid && savedName) {
         try {
             const snap = await db.collection('rooms').doc(savedRoom).get();
-            if (snap.exists && !['finished','cancelled'].includes(snap.data().status)) {
-                roomCode = savedRoom; playerId = savedPid; playerName = savedName;
+            if (snap.exists && !['finished', 'cancelled'].includes(snap.data().status)) {
+                roomCode    = savedRoom;
+                playerId    = savedPid;
+                playerName  = savedName;
+                playerColor = savedColor || '#6366f1';
                 playerScore = snap.data().players?.[savedPid]?.score || 0;
-                document.getElementById('waiting-name').textContent = savedName;
+
+                const nameEl = document.getElementById('waiting-name');
+                nameEl.textContent = savedName;
+                nameEl.style.color = playerColor;
                 document.getElementById('waiting-code').textContent = savedRoom;
+
                 listenToRoom(savedRoom);
                 return;
             }
-        } catch {}
+        } catch(e) { console.warn(e); }
         sessionStorage.clear();
     }
+
     showScreen('screen-join');
 }
 
