@@ -5,54 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Révision BTS</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase config (optionnel — remplir dans /firebase-config.js) -->
+    <script src="../firebase-config.js" onerror="console.log('Firebase non configuré — mode local.')"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
         :root { --app-h: 100dvh; }
         body { font-family:'Plus Jakarta Sans',sans-serif; background:#020617; height:var(--app-h); width:100vw; overflow:hidden; color:#f8fafc; margin:0; }
-        #app { height:var(--app-h); display:flex; flex-direction:column; position:relative; overflow:hidden; }
+        #app { height:var(--app-h); display:flex; flex-direction:column; overflow:hidden; }
         .screen { display:none; flex:1; flex-direction:column; overflow:hidden; height:100%; }
         .screen.active { display:flex; }
         .scroll-area { overflow-y:auto; flex:1; }
-        /* Scrollbar */
         ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:#1e293b;border-radius:10px}
-        /* Card swipe */
-        .swipe-card { transition:transform 0.15s ease, box-shadow 0.15s ease; touch-action:none; user-select:none; cursor:pointer; }
-        .swipe-card.snapping { transition:transform 0.35s cubic-bezier(.175,.885,.32,1.275), opacity 0.3s ease; }
+        .swipe-card { transition:transform .15s ease,box-shadow .15s ease; touch-action:none; user-select:none; cursor:pointer; }
+        .swipe-card.snapping { transition:transform .35s cubic-bezier(.175,.885,.32,1.275),opacity .3s ease; }
         .swipe-card.fly-right { transform:translateX(150vw) rotate(25deg) !important; opacity:0 !important; }
-        .swipe-card.fly-left { transform:translateX(-150vw) rotate(-25deg) !important; opacity:0 !important; }
-        /* Animations */
+        .swipe-card.fly-left  { transform:translateX(-150vw) rotate(-25deg) !important; opacity:0 !important; }
         @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes pop { 0%{transform:scale(.8);opacity:0} 70%{transform:scale(1.05)} 100%{transform:scale(1);opacity:1} }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+        @keyframes pop    { 0%{transform:scale(.8);opacity:0} 70%{transform:scale(1.05)} 100%{transform:scale(1);opacity:1} }
+        @keyframes pulse  { 0%,100%{opacity:1} 50%{opacity:.4} }
+        @keyframes shake  { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
         .fade-up { animation:fadeUp .35s ease forwards; }
-        .pop { animation:pop .4s cubic-bezier(.34,1.56,.64,1) forwards; }
-        .pulse { animation:pulse 1.5s infinite; }
-        /* Timer */
+        .pop     { animation:pop .4s cubic-bezier(.34,1.56,.64,1) forwards; }
+        .pulse   { animation:pulse 1.5s infinite; }
+        .shake   { animation:shake .3s ease; }
         .timer-animate { transition:width linear; }
-        /* Choice buttons */
         .choice-btn { transition:all .15s ease; }
-        .choice-btn.correct { background:rgba(16,185,129,.2) !important; border-color:rgb(16,185,129) !important; color:rgb(16,185,129) !important; }
-        .choice-btn.wrong { background:rgba(239,68,68,.15) !important; border-color:rgba(239,68,68,.4) !important; color:rgba(239,68,68,.7) !important; }
-        /* Progress ring */
-        .ring-bg { fill:none; stroke:#1e293b; stroke-width:8; }
+        .choice-btn.correct { background:rgba(16,185,129,.2)!important; border-color:rgb(16,185,129)!important; color:rgb(16,185,129)!important; }
+        .choice-btn.wrong   { background:rgba(239,68,68,.15)!important; border-color:rgba(239,68,68,.4)!important; color:rgba(239,68,68,.7)!important; }
+        .ring-bg   { fill:none; stroke:#1e293b; stroke-width:8; }
         .ring-fill { fill:none; stroke:#6366f1; stroke-width:8; stroke-linecap:round; transition:stroke-dashoffset .8s ease; transform:rotate(-90deg); transform-origin:50% 50%; }
-        /* Card hint glow */
-        .glow-green { box-shadow:0 0 30px rgba(16,185,129,.35), inset 0 0 30px rgba(16,185,129,.05); border-color:rgb(16,185,129) !important; }
-        .glow-red { box-shadow:0 0 30px rgba(239,68,68,.35), inset 0 0 30px rgba(239,68,68,.05); border-color:rgb(239,68,68) !important; }
+        .glow-green { box-shadow:0 0 30px rgba(16,185,129,.35),inset 0 0 30px rgba(16,185,129,.05); border-color:rgb(16,185,129)!important; }
+        .glow-red   { box-shadow:0 0 30px rgba(239,68,68,.35),inset 0 0 30px rgba(239,68,68,.05); border-color:rgb(239,68,68)!important; }
+        input:-webkit-autofill { -webkit-box-shadow:0 0 0 50px #0f172a inset!important; -webkit-text-fill-color:#fff!important; }
     </style>
 </head>
 <body>
 <div id="app">
 
-<!-- ===================== LOADING ===================== -->
+<!-- ==================== LOADING ==================== -->
 <div id="screen-loading" class="screen active items-center justify-center">
-    <div class="flex flex-col items-center gap-4 fade-up">
+    <div class="flex flex-col items-center gap-4">
         <div class="w-12 h-12 rounded-full border-t-2 border-indigo-500 animate-spin"></div>
-        <p class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Chargement du cours...</p>
+        <p class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Chargement...</p>
     </div>
 </div>
 
-<!-- ===================== ERROR ===================== -->
+<!-- ==================== ERROR ==================== -->
 <div id="screen-error" class="screen items-center justify-center p-8 text-center">
     <div class="fade-up">
         <p class="text-4xl mb-4">⚠️</p>
@@ -62,22 +60,92 @@
     </div>
 </div>
 
-<!-- ===================== HOME ===================== -->
-<div id="screen-home" class="screen overflow-y-auto">
-    <div class="flex flex-col max-w-md mx-auto w-full px-6 pb-8">
-        <!-- Header -->
-        <div class="pt-8 pb-4 flex items-start justify-between">
-            <div>
-                <p id="home-subject" class="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Module</p>
-                <h1 id="home-title" class="text-3xl font-black text-white mt-1 leading-tight">Chargement...</h1>
+<!-- ==================== AUTH ==================== -->
+<div id="screen-auth" class="screen overflow-y-auto">
+    <div class="flex flex-col items-center justify-center min-h-full px-6 py-12">
+        <div class="w-full max-w-sm fade-up">
+            <!-- Logo -->
+            <div class="text-center mb-12">
+                <div class="w-16 h-16 bg-indigo-500/10 rounded-3xl flex items-center justify-center mx-auto mb-5 border border-indigo-500/20">
+                    <svg class="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-black text-white uppercase italic tracking-tighter">
+                    Révision <span class="text-indigo-500">BTS</span>
+                </h1>
+                <p class="text-slate-600 text-[10px] font-bold uppercase tracking-widest mt-2">Connecte-toi pour sauvegarder ta progression</p>
             </div>
-            <a href="../" class="mt-1 text-slate-600 hover:text-slate-400 transition-colors" title="Retour">
+
+            <!-- Bouton Google -->
+            <button id="btn-google" onclick="signInWithGoogle()"
+                    class="w-full flex items-center justify-center gap-3 py-4 bg-white text-slate-900 font-black rounded-2xl active:scale-95 transition-all mb-4 shadow-lg hover:bg-slate-100">
+                <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 48 48">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                </svg>
+                Se connecter avec Google
+            </button>
+
+            <!-- Error -->
+            <div id="auth-error" class="hidden mb-4 px-4 py-2.5 bg-rose-500/10 border border-rose-500/20 rounded-xl">
+                <p class="text-rose-400 text-xs font-bold text-center"></p>
+            </div>
+
+            <!-- Divider -->
+            <div class="flex items-center gap-3 mb-4">
+                <div class="flex-grow h-px bg-slate-800"></div>
+                <span class="text-slate-700 text-[10px] font-bold uppercase">ou</span>
+                <div class="flex-grow h-px bg-slate-800"></div>
+            </div>
+
+            <!-- Sans compte -->
+            <button onclick="continueWithoutAccount()"
+                    class="w-full py-3 bg-slate-900 border border-slate-800 text-slate-400 font-bold text-xs uppercase rounded-2xl active:scale-95 transition-all hover:border-slate-700">
+                Continuer sans compte
+            </button>
+            <p class="text-center text-[9px] text-slate-700 font-bold mt-2">La progression sera sauvegardée localement uniquement</p>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== HOME ==================== -->
+<div id="screen-home" class="screen overflow-y-auto">
+    <div class="flex flex-col max-w-md mx-auto w-full px-6 pb-10">
+        <!-- Header -->
+        <div class="pt-8 pb-2 flex items-start justify-between gap-3">
+            <div class="min-w-0">
+                <p id="home-subject" class="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Module</p>
+                <h1 id="home-title" class="text-3xl font-black text-white mt-1 leading-tight truncate">Chargement...</h1>
+            </div>
+            <a href="../" class="mt-1 flex-shrink-0 text-slate-700 hover:text-slate-400 transition-colors" title="Retour">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
             </a>
         </div>
 
+        <!-- User badge -->
+        <div id="home-user-badge" class="hidden mb-2 flex items-center justify-between bg-indigo-500/10 border border-indigo-500/20 rounded-2xl px-4 py-2.5">
+            <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 bg-indigo-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span id="home-user-initial" class="text-indigo-400 font-black text-xs"></span>
+                </div>
+                <span id="home-user-name" class="text-sm font-bold text-white"></span>
+            </div>
+            <button onclick="logout()" class="text-[9px] font-black text-slate-600 uppercase tracking-widest hover:text-rose-400 transition-colors">
+                Déco
+            </button>
+        </div>
+        <div id="home-guest-badge" class="hidden mb-2 flex items-center justify-between bg-slate-900/50 border border-slate-800 rounded-2xl px-4 py-2.5">
+            <span class="text-[10px] text-slate-600 font-bold">Mode invité — progression locale</span>
+            <button onclick="showScreen('screen-auth')" class="text-[9px] font-black text-indigo-500 uppercase tracking-widest hover:text-indigo-400 transition-colors">
+                Connexion
+            </button>
+        </div>
+
         <!-- Mastery ring -->
-        <div class="flex items-center justify-center py-6">
+        <div class="flex items-center justify-center py-5">
             <div class="relative w-36 h-36">
                 <svg width="144" height="144" viewBox="0 0 144 144">
                     <circle class="ring-bg" cx="72" cy="72" r="60"/>
@@ -91,12 +159,12 @@
         </div>
 
         <!-- Mini stats -->
-        <div id="home-stats" class="grid grid-cols-3 gap-3 mb-6"></div>
+        <div id="home-stats" class="grid grid-cols-3 gap-3 mb-5"></div>
 
         <!-- Mode buttons -->
         <div class="space-y-3">
             <button onclick="startFlashcards()" class="w-full py-5 bg-indigo-600 hover:bg-indigo-500 rounded-3xl font-black uppercase text-white text-sm tracking-wider active:scale-95 transition-all shadow-lg shadow-indigo-500/20">
-                Flashcards — Mode Solo
+                Flashcards — Solo
             </button>
             <button onclick="startQuiz()" class="w-full py-5 bg-slate-900 border border-slate-800 hover:border-violet-500/50 rounded-3xl font-black uppercase text-white text-sm tracking-wider active:scale-95 transition-all">
                 Quiz QCM — Auto-éval
@@ -111,32 +179,28 @@
             </div>
         </div>
 
-        <!-- Reset -->
-        <button onclick="confirmReset()" class="mt-6 text-[10px] font-bold text-slate-700 uppercase tracking-widest hover:text-slate-500 transition-colors">
+        <button onclick="confirmReset()" class="mt-6 text-[10px] font-bold text-slate-800 uppercase tracking-widest hover:text-slate-600 transition-colors">
             Réinitialiser la progression
         </button>
     </div>
 </div>
 
-<!-- ===================== FLASHCARD ===================== -->
+<!-- ==================== FLASHCARD ==================== -->
 <div id="screen-flashcard" class="screen">
-    <!-- Top bar -->
     <div class="px-6 pt-6 pb-3 flex items-center gap-3 flex-shrink-0">
-        <button onclick="exitToHome()" class="text-slate-600 hover:text-slate-400 font-black transition-colors text-lg leading-none">✕</button>
+        <button onclick="exitToHome()" class="text-slate-600 hover:text-slate-400 font-black text-lg leading-none">✕</button>
         <div class="flex-grow bg-slate-900 rounded-full h-1.5 overflow-hidden">
             <div id="fc-progress" class="bg-indigo-500 h-full transition-all duration-300" style="width:0%"></div>
         </div>
         <span id="fc-counter" class="text-slate-600 text-[10px] font-black">0/0</span>
     </div>
-    <!-- Swipe labels -->
     <div class="px-8 pb-2 flex justify-between flex-shrink-0">
         <span id="hint-left" class="text-[10px] font-black text-rose-500/40 uppercase tracking-widest transition-opacity">✗ À revoir</span>
         <span id="hint-right" class="text-[10px] font-black text-emerald-500/40 uppercase tracking-widest transition-opacity">✓ Je savais</span>
     </div>
-    <!-- Card zone -->
     <div class="flex-grow flex items-center justify-center px-6 py-2 overflow-hidden">
-        <div id="fc-card" class="swipe-card w-full max-w-sm bg-slate-900 border-2 border-slate-800 rounded-[2.5rem] p-8 flex flex-col items-center justify-center text-center min-h-[260px] select-none">
-            <span class="text-[9px] font-black text-slate-700 uppercase tracking-widest mb-4" id="fc-card-label">Terme</span>
+        <div id="fc-card" class="swipe-card w-full max-w-sm bg-slate-900 border-2 border-slate-800 rounded-[2.5rem] p-8 flex flex-col items-center justify-center text-center min-h-[260px]">
+            <span class="text-[9px] font-black text-slate-700 uppercase tracking-widest mb-4">Terme</span>
             <h2 id="fc-term" class="text-2xl font-bold text-white leading-snug"></h2>
             <div id="fc-def-area" class="hidden w-full mt-5 pt-5 border-t border-slate-800 fade-up">
                 <span class="text-[9px] font-black text-slate-600 uppercase tracking-widest block mb-2">Définition</span>
@@ -145,7 +209,6 @@
             <p id="fc-tap-hint" class="text-[10px] text-slate-700 font-bold uppercase tracking-widest mt-5 pulse">Appuyer pour révéler</p>
         </div>
     </div>
-    <!-- Actions -->
     <div id="fc-actions" class="hidden px-6 pb-8 grid grid-cols-2 gap-4 flex-shrink-0 fade-up">
         <button onclick="answerCard(false)" class="py-5 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-2xl font-black text-sm active:scale-95 transition-all hover:bg-rose-500/20">
             ✗ À revoir
@@ -156,7 +219,7 @@
     </div>
 </div>
 
-<!-- ===================== FLASHCARD END ===================== -->
+<!-- ==================== FLASHCARD END ==================== -->
 <div id="screen-fc-end" class="screen items-center justify-center p-6">
     <div class="w-full max-w-sm fade-up">
         <div class="text-center mb-8">
@@ -174,20 +237,16 @@
             </div>
         </div>
         <div class="space-y-3">
-            <button onclick="startFlashcards()" class="w-full py-5 bg-indigo-600 text-white font-black uppercase rounded-2xl active:scale-95 transition-all">
-                Rejouer
-            </button>
-            <button onclick="showScreen('screen-home')" class="w-full py-4 text-slate-500 font-black uppercase text-xs tracking-widest">
-                Retour accueil
-            </button>
+            <button onclick="startFlashcards()" class="w-full py-5 bg-indigo-600 text-white font-black uppercase rounded-2xl active:scale-95 transition-all">Rejouer</button>
+            <button onclick="exitToHome()" class="w-full py-4 text-slate-500 font-black uppercase text-xs tracking-widest">Retour accueil</button>
         </div>
     </div>
 </div>
 
-<!-- ===================== QUIZ QCM ===================== -->
+<!-- ==================== QUIZ QCM ==================== -->
 <div id="screen-quiz" class="screen">
     <div class="px-6 pt-6 pb-3 flex items-center gap-3 flex-shrink-0">
-        <button onclick="showScreen('screen-home')" class="text-slate-600 hover:text-slate-400 font-black transition-colors text-lg leading-none">✕</button>
+        <button onclick="exitToHome()" class="text-slate-600 hover:text-slate-400 font-black text-lg leading-none">✕</button>
         <div class="flex-grow bg-slate-900 rounded-full h-1.5 overflow-hidden">
             <div id="quiz-progress" class="bg-violet-500 h-full transition-all duration-300" style="width:0%"></div>
         </div>
@@ -195,20 +254,20 @@
     </div>
     <div class="px-6 pb-2 flex items-center justify-between flex-shrink-0">
         <span id="quiz-score-display" class="text-2xl font-black text-white">0 <span class="text-slate-600 text-sm font-bold">pts</span></span>
-        <div class="bg-slate-900 rounded-full h-1 w-24 overflow-hidden">
+        <div class="bg-slate-900 rounded-full h-1.5 w-28 overflow-hidden border border-slate-800">
             <div id="quiz-timer-bar" class="bg-violet-500 h-full w-full timer-animate"></div>
         </div>
     </div>
     <div class="flex-grow flex flex-col justify-center px-6 pb-6 gap-4 overflow-hidden">
         <div class="bg-slate-900 rounded-3xl p-6 border border-slate-800 text-center flex-shrink-0">
-            <span class="text-[9px] font-black text-slate-600 uppercase tracking-widest block mb-2" id="quiz-q-label">Terme</span>
+            <span class="text-[9px] font-black text-slate-600 uppercase tracking-widest block mb-2">Terme — Quelle est sa définition ?</span>
             <p id="quiz-question" class="text-white font-bold text-lg leading-snug"></p>
         </div>
         <div id="quiz-choices" class="grid grid-cols-2 gap-3"></div>
     </div>
 </div>
 
-<!-- ===================== QUIZ END ===================== -->
+<!-- ==================== QUIZ END ==================== -->
 <div id="screen-quiz-end" class="screen items-center justify-center p-6">
     <div class="w-full max-w-sm fade-up">
         <div class="text-center mb-8">
@@ -231,52 +290,46 @@
             </div>
         </div>
         <div class="space-y-3">
-            <button onclick="startQuiz()" class="w-full py-5 bg-violet-600 text-white font-black uppercase rounded-2xl active:scale-95 transition-all">
-                Rejouer
-            </button>
-            <button onclick="showScreen('screen-home')" class="w-full py-4 text-slate-500 font-black uppercase text-xs tracking-widest">
-                Retour accueil
-            </button>
+            <button onclick="startQuiz()" class="w-full py-5 bg-violet-600 text-white font-black uppercase rounded-2xl active:scale-95 transition-all">Rejouer</button>
+            <button onclick="exitToHome()" class="w-full py-4 text-slate-500 font-black uppercase text-xs tracking-widest">Retour accueil</button>
         </div>
     </div>
 </div>
 
-<!-- ===================== PROGRESS ===================== -->
+<!-- ==================== PROGRESS ==================== -->
 <div id="screen-progress" class="screen">
     <div class="px-6 pt-6 pb-4 flex items-center gap-4 flex-shrink-0">
-        <button onclick="showScreen('screen-home')" class="text-slate-600 font-black text-lg leading-none">←</button>
+        <button onclick="exitToHome()" class="text-slate-600 font-black text-lg leading-none">←</button>
         <h2 class="text-xl font-black text-white">Progression</h2>
     </div>
     <div id="prog-summary" class="px-6 grid grid-cols-3 gap-3 mb-4 flex-shrink-0"></div>
     <div id="prog-list" class="scroll-area px-6 pb-8 space-y-2"></div>
 </div>
 
-<!-- ===================== MULTI SETUP ===================== -->
+<!-- ==================== MULTI SETUP ==================== -->
 <div id="screen-multi-setup" class="screen overflow-y-auto">
     <div class="flex flex-col max-w-md mx-auto w-full px-6 pb-8">
         <div class="pt-6 pb-4 flex items-center gap-4">
-            <button onclick="showScreen('screen-home')" class="text-slate-600 font-black text-lg leading-none">←</button>
+            <button onclick="exitToHome()" class="text-slate-600 font-black text-lg leading-none">←</button>
             <h2 class="text-xl font-black text-white uppercase italic">Mode Multi</h2>
         </div>
-        <!-- Settings -->
         <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 mb-4">
-            <label class="text-[9px] font-black text-slate-500 uppercase block mb-3">Paramètres du match</label>
-            <div class="grid grid-cols-2 gap-4">
+            <label class="text-[9px] font-black text-slate-500 uppercase block mb-3">Paramètres</label>
+            <div class="grid grid-cols-3 gap-3">
                 <div>
-                    <span class="text-[9px] text-slate-400 block mb-1 uppercase">Temps (sec)</span>
+                    <span class="text-[9px] text-slate-400 block mb-1 uppercase">Temps (s)</span>
                     <input id="multi-time" type="number" value="20" min="5" max="60" class="w-full bg-slate-950 p-2 rounded-lg text-white font-bold border border-slate-800 text-center">
                 </div>
                 <div>
-                    <span class="text-[9px] text-slate-400 block mb-1 uppercase">Pts / Question</span>
+                    <span class="text-[9px] text-slate-400 block mb-1 uppercase">Pts/Q</span>
                     <input id="multi-pts" type="number" value="100" min="10" max="500" step="10" class="w-full bg-slate-950 p-2 rounded-lg text-white font-bold border border-slate-800 text-center">
                 </div>
-            </div>
-            <div class="mt-3">
-                <span class="text-[9px] text-slate-400 block mb-1 uppercase">Nb de questions</span>
-                <input id="multi-nb" type="number" value="15" min="5" max="50" class="w-full bg-slate-950 p-2 rounded-lg text-white font-bold border border-slate-800 text-center">
+                <div>
+                    <span class="text-[9px] text-slate-400 block mb-1 uppercase">Nb Q</span>
+                    <input id="multi-nb" type="number" value="15" min="5" max="50" class="w-full bg-slate-950 p-2 rounded-lg text-white font-bold border border-slate-800 text-center">
+                </div>
             </div>
         </div>
-        <!-- Teams -->
         <div class="mb-4">
             <label class="text-[9px] font-black text-slate-500 uppercase block mb-3">Équipes (2 à 6)</label>
             <div id="teams-list" class="space-y-2 mb-3"></div>
@@ -290,10 +343,10 @@
     </div>
 </div>
 
-<!-- ===================== MULTI GAME ===================== -->
+<!-- ==================== MULTI GAME ==================== -->
 <div id="screen-multi-game" class="screen">
     <div class="px-6 pt-6 pb-3 flex items-center justify-between flex-shrink-0">
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 min-w-0">
             <div id="mg-team-dot" class="w-4 h-4 rounded-full flex-shrink-0"></div>
             <span id="mg-team-name" class="font-black text-white uppercase italic text-lg truncate max-w-[160px]">Équipe</span>
         </div>
@@ -306,7 +359,7 @@
     </div>
     <div class="flex-grow flex items-center px-6 py-2 overflow-hidden">
         <div class="w-full max-w-lg mx-auto bg-slate-900 border-2 border-slate-800 rounded-[2.5rem] p-8 text-center">
-            <span id="mg-card-label" class="text-[9px] font-black text-slate-700 uppercase tracking-widest block mb-4">Terme</span>
+            <span class="text-[9px] font-black text-slate-700 uppercase tracking-widest block mb-4">Terme</span>
             <h2 id="mg-term" class="text-2xl font-bold text-white leading-snug"></h2>
             <div id="mg-def-area" class="hidden mt-5 pt-5 border-t border-slate-800 fade-up">
                 <span class="text-[9px] font-black text-slate-600 uppercase tracking-widest block mb-2">Définition</span>
@@ -319,28 +372,22 @@
             Voir la réponse
         </button>
         <div id="mg-validation" class="hidden grid grid-cols-2 gap-4">
-            <button onclick="scoreMulti(false)" class="py-5 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-2xl font-black active:scale-95 transition-all hover:bg-rose-500/20">
-                ✗ Faux
-            </button>
-            <button onclick="scoreMulti(true)" class="py-5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-2xl font-black active:scale-95 transition-all hover:bg-emerald-500/20">
-                ✓ Juste
-            </button>
+            <button onclick="scoreMulti(false)" class="py-5 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-2xl font-black active:scale-95 transition-all hover:bg-rose-500/20">✗ Faux</button>
+            <button onclick="scoreMulti(true)" class="py-5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-2xl font-black active:scale-95 transition-all hover:bg-emerald-500/20">✓ Juste</button>
         </div>
     </div>
 </div>
 
-<!-- ===================== MULTI SCORES ===================== -->
+<!-- ==================== MULTI SCORES ==================== -->
 <div id="screen-multi-scores" class="screen items-center justify-center p-6">
     <div class="w-full max-w-sm fade-up">
         <h3 class="text-[10px] font-black text-slate-600 uppercase tracking-widest text-center mb-6">Classement en cours</h3>
         <div id="ms-list" class="space-y-3 mb-8"></div>
-        <button onclick="nextMultiRound()" class="w-full py-5 bg-indigo-600 text-white font-black uppercase rounded-2xl active:scale-95 transition-all">
-            Tour suivant →
-        </button>
+        <button onclick="nextMultiRound()" class="w-full py-5 bg-indigo-600 text-white font-black uppercase rounded-2xl active:scale-95 transition-all">Tour suivant →</button>
     </div>
 </div>
 
-<!-- ===================== PODIUM ===================== -->
+<!-- ==================== PODIUM ==================== -->
 <div id="screen-podium" class="screen overflow-y-auto">
     <div class="flex flex-col max-w-sm mx-auto w-full px-6 pb-8 items-center">
         <div class="pt-8 pb-6 text-center">
@@ -349,51 +396,113 @@
         </div>
         <div id="podium-bars" class="flex items-end justify-center gap-3 h-52 w-full mb-6"></div>
         <div id="podium-list" class="w-full space-y-2 mb-8"></div>
-        <button onclick="showScreen('screen-home')" class="w-full py-5 bg-slate-800 text-white font-black uppercase rounded-2xl active:scale-95 transition-all">
-            Retour à l'accueil
-        </button>
+        <button onclick="exitToHome()" class="w-full py-5 bg-slate-800 text-white font-black uppercase rounded-2xl active:scale-95 transition-all">Retour à l'accueil</button>
     </div>
 </div>
 
 </div><!-- #app -->
-
 <script>
 // =====================================================================
-// CONFIGURATION
+// CONFIG & STATE
 // =====================================================================
-const MASTERY = { correct: 3, rate: 0.70 };
+const MASTERY     = { correct: 3, rate: 0.70 };
 const TEAM_COLORS = ['#6366f1','#f43f5e','#10b981','#f59e0b','#a855f7','#06b6d4'];
-const QUIZ_TIME = 15; // seconds per question
+const QUIZ_TIME   = 15;
+
+let C = null, courseName = '', progress = {};
+let fcDeck = [], fcIdx = 0, fcFlipped = false, fcSessionCorrect = 0, fcSessionWrong = 0;
+let quizDeck = [], quizIdx = 0, quizScore = 0, quizCorrect = 0, quizWrong = 0, quizTimer = null;
+let teams = [], multiPool = [], multiRound = 0, multiTeamIdx = 0, multiSettings = {}, multiTimerTimeout = null;
 
 // =====================================================================
-// STATE
+// FIREBASE AUTH
 // =====================================================================
-let C = null;          // course: { title, cards }
-let courseName = '';
-let progress = {};     // { [idx]: { c: correct, w: wrong } }
+let fbAuth = null, fbDb = null, currentUser = null, useFirebase = false;
+let authMode = 'login';
 
-// Solo flashcard
-let fcDeck = [];
-let fcIdx = 0;
-let fcFlipped = false;
-let fcSessionCorrect = 0;
-let fcSessionWrong = 0;
+async function loadScript(src) {
+    return new Promise((resolve, reject) => {
+        if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+        const s = document.createElement('script');
+        s.src = src; s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+    });
+}
 
-// Quiz
-let quizDeck = [];
-let quizIdx = 0;
-let quizScore = 0;
-let quizCorrect = 0;
-let quizWrong = 0;
-let quizTimer = null;
+async function initFirebase() {
+    const cfg = window.FIREBASE_CONFIG;
+    if (!cfg || cfg.apiKey === 'VOTRE_API_KEY') return;
+    try {
+        const v = '10.12.0';
+        await loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-app-compat.js`);
+        await loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-auth-compat.js`);
+        await loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-firestore-compat.js`);
+        if (!firebase.apps.length) firebase.initializeApp(cfg);
+        fbAuth = firebase.auth();
+        fbDb   = firebase.firestore();
+        useFirebase = true;
+    } catch(e) { console.warn('Firebase init failed:', e); }
+}
 
-// Multi
-let teams = [];
-let multiPool = [];
-let multiRound = 0;
-let multiTeamIdx = 0;
-let multiSettings = {};
-let multiTimerTimeout = null;
+async function checkAuthState() {
+    if (!fbAuth) return null;
+    return new Promise(resolve => {
+        const unsub = fbAuth.onAuthStateChanged(u => { unsub(); resolve(u); });
+    });
+}
+
+async function signInWithGoogle() {
+    const btn = document.getElementById('btn-google');
+    btn.disabled = true;
+    btn.textContent = 'Connexion en cours...';
+    try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        const cred = await fbAuth.signInWithPopup(provider);
+        currentUser = cred.user;
+        // Sauvegarde du profil à la première connexion
+        await fbDb.collection('users').doc(currentUser.uid).set({
+            username:  currentUser.displayName,
+            email:     currentUser.email,
+            photoURL:  currentUser.photoURL,
+            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+        await loadCourseAndStart();
+    } catch(e) {
+        btn.disabled = false;
+        btn.innerHTML = `<svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>Se connecter avec Google`;
+        const msgs = {
+            'auth/popup-closed-by-user':    'Connexion annulée',
+            'auth/popup-blocked':           'Popup bloquée par le navigateur',
+            'auth/cancelled-popup-request': 'Connexion annulée',
+        };
+        shakeAuthError(msgs[e.code] || 'Erreur : ' + e.message);
+    }
+}
+
+function shakeAuthError(msg) {
+    const el = document.getElementById('auth-error');
+    el.querySelector('p').textContent = msg;
+    el.classList.remove('hidden');
+    el.classList.add('shake');
+    setTimeout(() => el.classList.remove('shake'), 300);
+}
+
+function continueWithoutAccount() {
+    useFirebase = false;
+    currentUser = null;
+    loadCourseAndStart();
+}
+
+async function logout() {
+    if (fbAuth) await fbAuth.signOut();
+    currentUser = null;
+    progress = {};
+    if (useFirebase) {
+        showScreen('screen-auth');
+    } else {
+        updateHome();
+    }
+}
 
 // =====================================================================
 // INIT
@@ -401,22 +510,34 @@ let multiTimerTimeout = null;
 async function init() {
     const params = new URLSearchParams(window.location.search);
     const name = params.get('course');
-    if (!name) return showError('Aucun cours spécifié dans l\'URL (paramètre ?course=)');
+    if (!name) return showError('Aucun cours spécifié (?course=NomDuCours)');
     courseName = name;
 
-    // Determine fetch URL: relative from /app/ to /cours/
-    const url = `../cours/${name}.txt`;
+    await initFirebase();
+
+    if (useFirebase) {
+        currentUser = await checkAuthState();
+        if (!currentUser) {
+            showScreen('screen-auth');
+            return;
+        }
+    }
+
+    await loadCourseAndStart();
+}
+
+async function loadCourseAndStart() {
+    showScreen('screen-loading');
     try {
-        const r = await fetch(url);
+        const r = await fetch(`../cours/${courseName}.txt`);
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        const text = await r.text();
-        C = parseCourse(text);
-        if (!C.cards.length) throw new Error('Aucune carte trouvée dans le fichier.');
-        loadProgress();
+        C = parseCourse(await r.text());
+        if (!C.cards.length) throw new Error('Aucune carte trouvée');
+        await loadProgress();
         updateHome();
         showScreen('screen-home');
     } catch(e) {
-        showError(`Fichier introuvable : ${url}<br><small>${e.message}</small>`);
+        showError(`Fichier introuvable : cours/${courseName}.txt<br><small>${e.message}</small>`);
     }
 }
 
@@ -425,53 +546,48 @@ function parseCourse(text) {
     let title = courseName.replace(/_/g,' ');
     const cards = [];
     for (const line of lines) {
-        if (!line || line.startsWith('#')) {
-            if (line.startsWith('# ') && !line.startsWith('## ')) title = line.slice(2).trim();
-            continue;
-        }
+        if (!line) continue;
+        if (line.startsWith('# ') && !line.startsWith('## ')) { title = line.slice(2).trim(); continue; }
+        if (line.startsWith('#')) continue;
         const sep = line.indexOf('|');
         if (sep < 0) continue;
-        const term = line.slice(0, sep).trim();
-        const def  = line.slice(sep + 1).trim();
+        const term = line.slice(0, sep).trim(), def = line.slice(sep+1).trim();
         if (term && def) cards.push({ term, def });
     }
     return { title, cards };
 }
 
 // =====================================================================
-// PROGRESS
+// PROGRESS  (localStorage + Firestore)
 // =====================================================================
-function loadProgress() {
-    try { progress = JSON.parse(localStorage.getItem('prog_' + courseName) || '{}'); }
-    catch { progress = {}; }
+async function loadProgress() {
+    progress = {};
+    try { progress = JSON.parse(localStorage.getItem('prog_' + courseName) || '{}'); } catch {}
+    if (useFirebase && currentUser && fbDb) {
+        try {
+            const snap = await fbDb.collection('users').doc(currentUser.uid)
+                .collection('progress').doc(courseName).get();
+            if (snap.exists) { progress = snap.data(); }
+        } catch(e) { console.warn('Firestore load failed:', e); }
+        localStorage.setItem('prog_' + courseName, JSON.stringify(progress));
+    }
 }
 
 function saveProgress() {
     localStorage.setItem('prog_' + courseName, JSON.stringify(progress));
+    if (useFirebase && currentUser && fbDb) {
+        fbDb.collection('users').doc(currentUser.uid)
+            .collection('progress').doc(courseName)
+            .set(progress)
+            .catch(e => console.warn('Firestore save failed:', e));
+    }
 }
 
-function getP(idx) { return progress[idx] || { c: 0, w: 0 }; }
-
-function setP(idx, correct) {
-    const p = getP(idx);
-    if (correct) p.c++; else p.w++;
-    progress[idx] = p;
-    saveProgress();
-}
-
-function isMastered(idx) {
-    const p = getP(idx);
-    const total = p.c + p.w;
-    return total > 0 && p.c >= MASTERY.correct && (p.c / total) >= MASTERY.rate;
-}
-
-function isSeen(idx) { const p = getP(idx); return (p.c + p.w) > 0; }
-
-function getMasteryPct() {
-    if (!C) return 0;
-    const n = C.cards.filter((_,i) => isMastered(i)).length;
-    return Math.round((n / C.cards.length) * 100);
-}
+function getP(idx)         { return progress[idx] || { c:0, w:0 }; }
+function setP(idx, correct) { const p=getP(idx); if(correct) p.c++; else p.w++; progress[idx]=p; saveProgress(); }
+function isMastered(idx)   { const p=getP(idx), t=p.c+p.w; return t>0 && p.c>=MASTERY.correct && (p.c/t)>=MASTERY.rate; }
+function isSeen(idx)       { const p=getP(idx); return (p.c+p.w)>0; }
+function getMasteryPct()   { return C ? Math.round(C.cards.filter((_,i)=>isMastered(i)).length/C.cards.length*100) : 0; }
 
 // =====================================================================
 // NAVIGATION
@@ -480,30 +596,23 @@ function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
 }
-
-function showError(msg) {
-    document.getElementById('error-msg').innerHTML = msg;
-    showScreen('screen-error');
-}
+function showError(msg) { document.getElementById('error-msg').innerHTML = msg; showScreen('screen-error'); }
+function exitToHome()   { updateHome(); showScreen('screen-home'); }
 
 // =====================================================================
 // HOME
 // =====================================================================
 function updateHome() {
-    document.title = C.title + ' — Révision BTS';
-    document.getElementById('home-subject').textContent = 'Cours';
-    document.getElementById('home-title').textContent = C.title;
+    document.title = (C?.title || 'Révision') + ' — BTS';
+    document.getElementById('home-title').textContent = C?.title || '—';
 
     const pct = getMasteryPct();
     document.getElementById('mastery-pct').textContent = pct + '%';
-    // SVG ring: circumference = 2π×60 ≈ 377
-    const offset = 377 - (377 * pct / 100);
-    document.getElementById('mastery-ring').style.strokeDashoffset = offset;
+    document.getElementById('mastery-ring').style.strokeDashoffset = 377 - (377*pct/100);
 
-    const mastered = C.cards.filter((_,i) => isMastered(i)).length;
-    const learning = C.cards.filter((_,i) => isSeen(i) && !isMastered(i)).length;
-    const newCards = C.cards.length - mastered - learning;
-
+    const mastered = C.cards.filter((_,i)=>isMastered(i)).length;
+    const learning = C.cards.filter((_,i)=>isSeen(i)&&!isMastered(i)).length;
+    const newCards  = C.cards.length - mastered - learning;
     document.getElementById('home-stats').innerHTML = `
         <div class="bg-slate-900 rounded-2xl p-3 text-center border border-slate-800">
             <span class="text-xl font-black text-slate-400">${newCards}</span>
@@ -516,12 +625,35 @@ function updateHome() {
         <div class="bg-slate-900 rounded-2xl p-3 text-center border border-slate-800">
             <span class="text-xl font-black text-emerald-400">${mastered}</span>
             <p class="text-[8px] text-slate-600 font-black uppercase mt-1">Maîtrisées</p>
-        </div>
-    `;
+        </div>`;
+
+    // User badge
+    const userBadge  = document.getElementById('home-user-badge');
+    const guestBadge = document.getElementById('home-guest-badge');
+    if (currentUser) {
+        const uname = currentUser.displayName || currentUser.email || 'Utilisateur';
+        const initial = uname[0].toUpperCase();
+        document.getElementById('home-user-name').textContent = uname;
+        // Photo Google ou initiale
+        const photoEl = document.getElementById('home-user-initial');
+        if (currentUser.photoURL) {
+            photoEl.parentElement.innerHTML = `<img src="${currentUser.photoURL}" class="w-7 h-7 rounded-full" referrerpolicy="no-referrer">`;
+        } else {
+            photoEl.textContent = initial;
+        }
+        userBadge.classList.remove('hidden');
+        guestBadge.classList.add('hidden');
+    } else if (useFirebase) {
+        userBadge.classList.add('hidden');
+        guestBadge.classList.remove('hidden');
+    } else {
+        userBadge.classList.add('hidden');
+        guestBadge.classList.add('hidden');
+    }
 }
 
 function confirmReset() {
-    if (confirm('Réinitialiser toute la progression ? Cette action est irréversible.')) {
+    if (confirm('Réinitialiser toute la progression ? Irréversible.')) {
         progress = {};
         saveProgress();
         updateHome();
@@ -532,54 +664,35 @@ function confirmReset() {
 // FLASHCARD MODE
 // =====================================================================
 function startFlashcards() {
-    // Priority: not mastered first (learning then new), then mastered
-    const order = C.cards.map((_,i) => i);
-    order.sort((a, b) => {
-        const ma = isMastered(a), mb = isMastered(b);
-        if (ma !== mb) return ma ? 1 : -1;
-        const sa = isSeen(a), sb = isSeen(b);
-        if (sa !== sb) return sb ? -1 : 1; // seen before new
-        return Math.random() - 0.5;
+    const order = C.cards.map((_,i)=>i).sort((a,b) => {
+        const ma=isMastered(a), mb=isMastered(b);
+        if(ma!==mb) return ma?1:-1;
+        return Math.random()-.5;
     });
-    fcDeck = order;
-    fcIdx = 0;
-    fcSessionCorrect = 0;
-    fcSessionWrong = 0;
+    fcDeck=[...order]; fcIdx=0; fcSessionCorrect=0; fcSessionWrong=0;
     showScreen('screen-flashcard');
     showFlashcard();
     initSwipe();
 }
 
 function showFlashcard() {
-    if (fcIdx >= fcDeck.length) {
-        endFlashcards();
-        return;
-    }
-    const idx = fcDeck[fcIdx];
-    const card = C.cards[idx];
+    if (fcIdx >= fcDeck.length) { endFlashcards(); return; }
+    const card = C.cards[fcDeck[fcIdx]];
     fcFlipped = false;
-
     document.getElementById('fc-term').textContent = card.term;
-    document.getElementById('fc-def').textContent = card.def;
+    document.getElementById('fc-def').textContent  = card.def;
     document.getElementById('fc-def-area').classList.add('hidden');
     document.getElementById('fc-tap-hint').classList.remove('hidden');
     document.getElementById('fc-actions').classList.add('hidden');
-
-    const fcCard = document.getElementById('fc-card');
-    fcCard.classList.remove('fly-right','fly-left','snapping','glow-green','glow-red');
-    fcCard.style.transform = '';
-    fcCard.style.opacity = '';
-    fcCard.classList.add('pop');
-    setTimeout(() => fcCard.classList.remove('pop'), 400);
-
-    // Progress bar
-    const pct = Math.round((fcIdx / fcDeck.length) * 100);
-    document.getElementById('fc-progress').style.width = pct + '%';
-    document.getElementById('fc-counter').textContent = `${fcIdx}/${fcDeck.length}`;
-
-    // Swipe hints reset
-    document.getElementById('hint-left').style.opacity = '0.4';
-    document.getElementById('hint-right').style.opacity = '0.4';
+    const el = document.getElementById('fc-card');
+    el.classList.remove('fly-right','fly-left','snapping','glow-green','glow-red');
+    el.style.transform=''; el.style.opacity='';
+    el.classList.add('pop'); setTimeout(()=>el.classList.remove('pop'),400);
+    const pct = Math.round(fcIdx/fcDeck.length*100);
+    document.getElementById('fc-progress').style.width = pct+'%';
+    document.getElementById('fc-counter').textContent  = `${fcIdx}/${fcDeck.length}`;
+    document.getElementById('hint-left').style.opacity  = '.4';
+    document.getElementById('hint-right').style.opacity = '.4';
 }
 
 function flipFlashcard() {
@@ -594,35 +707,18 @@ function answerCard(correct) {
     const idx = fcDeck[fcIdx];
     setP(idx, correct);
     if (correct) fcSessionCorrect++; else fcSessionWrong++;
-
-    const card = document.getElementById('fc-card');
-    card.classList.add('snapping');
-    card.classList.add(correct ? 'fly-right' : 'fly-left');
-
-    // If wrong, push back to queue (spaced repetition lite)
-    if (!correct) {
-        const insertAt = Math.min(fcIdx + 3, fcDeck.length);
-        fcDeck.splice(insertAt, 0, idx);
-    }
-
-    setTimeout(() => {
-        fcIdx++;
-        showFlashcard();
-    }, 350);
-}
-
-function exitToHome() {
-    updateHome();
-    showScreen('screen-home');
+    if (!correct) fcDeck.splice(Math.min(fcIdx+3, fcDeck.length), 0, idx);
+    const el = document.getElementById('fc-card');
+    el.classList.add('snapping', correct ? 'fly-right' : 'fly-left');
+    setTimeout(() => { fcIdx++; showFlashcard(); }, 350);
 }
 
 function endFlashcards() {
     document.getElementById('fc-end-correct').textContent = fcSessionCorrect;
-    document.getElementById('fc-end-wrong').textContent = fcSessionWrong;
-    const rate = fcSessionCorrect / (fcSessionCorrect + fcSessionWrong || 1);
-    document.getElementById('fc-end-emoji').textContent = rate >= 0.8 ? '🔥' : rate >= 0.5 ? '💪' : '📖';
-    updateHome();
-    showScreen('screen-fc-end');
+    document.getElementById('fc-end-wrong').textContent   = fcSessionWrong;
+    const rate = fcSessionCorrect/(fcSessionCorrect+fcSessionWrong||1);
+    document.getElementById('fc-end-emoji').textContent   = rate>=.8?'🔥':rate>=.5?'💪':'📖';
+    updateHome(); showScreen('screen-fc-end');
 }
 
 // =====================================================================
@@ -630,152 +726,105 @@ function endFlashcards() {
 // =====================================================================
 function initSwipe() {
     const el = document.getElementById('fc-card');
-    let startX = 0, startY = 0, dragging = false, moved = false;
-
-    const onStart = (x, y) => { startX = x; startY = y; dragging = true; moved = false; };
-    const onMove = (x, y) => {
-        if (!dragging || !fcFlipped) return;
-        const dx = x - startX;
-        const dy = y - startY;
-        if (!moved && Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
-        if (!moved && Math.abs(dy) > Math.abs(dx)) { dragging = false; return; }
-        moved = true;
-        el.style.transform = `translateX(${dx}px) rotate(${dx * 0.04}deg)`;
-        // Glow feedback
-        el.classList.toggle('glow-green', dx > 40);
-        el.classList.toggle('glow-red', dx < -40);
-        document.getElementById('hint-right').style.opacity = dx > 0 ? Math.min(1, dx / 80) : '0.4';
-        document.getElementById('hint-left').style.opacity = dx < 0 ? Math.min(1, -dx / 80) : '0.4';
+    let startX=0, startY=0, dragging=false, moved=false;
+    const onStart=(x,y)=>{ startX=x; startY=y; dragging=true; moved=false; };
+    const onMove=(x,y)=>{
+        if(!dragging||!fcFlipped) return;
+        const dx=x-startX, dy=y-startY;
+        if(!moved&&Math.abs(dx)<5&&Math.abs(dy)<5) return;
+        if(!moved&&Math.abs(dy)>Math.abs(dx)){ dragging=false; return; }
+        moved=true;
+        el.style.transform=`translateX(${dx}px) rotate(${dx*.04}deg)`;
+        el.classList.toggle('glow-green', dx>40);
+        el.classList.toggle('glow-red',   dx<-40);
+        document.getElementById('hint-right').style.opacity = dx>0?Math.min(1,dx/80):'.4';
+        document.getElementById('hint-left').style.opacity  = dx<0?Math.min(1,-dx/80):'.4';
     };
-    const onEnd = (x) => {
-        if (!dragging) return;
-        dragging = false;
-        const dx = x - startX;
-        if (!fcFlipped || !moved) { el.style.transform = ''; el.classList.remove('glow-green','glow-red'); return; }
-        if (dx > 80) answerCard(true);
-        else if (dx < -80) answerCard(false);
-        else {
-            el.classList.add('snapping');
-            el.style.transform = '';
-            el.classList.remove('glow-green','glow-red');
-            setTimeout(() => el.classList.remove('snapping'), 350);
-        }
+    const onEnd=(x)=>{
+        if(!dragging) return; dragging=false;
+        const dx=x-startX;
+        if(!fcFlipped||!moved){ el.style.transform=''; el.classList.remove('glow-green','glow-red'); return; }
+        if(dx>80) answerCard(true);
+        else if(dx<-80) answerCard(false);
+        else { el.classList.add('snapping'); el.style.transform=''; el.classList.remove('glow-green','glow-red'); setTimeout(()=>el.classList.remove('snapping'),350); }
     };
-
-    el.addEventListener('touchstart', e => onStart(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
-    el.addEventListener('touchmove', e => { onMove(e.touches[0].clientX, e.touches[0].clientY); if(moved) e.preventDefault(); }, { passive: false });
-    el.addEventListener('touchend', e => onEnd(e.changedTouches[0].clientX));
-    el.addEventListener('mousedown', e => { onStart(e.clientX, e.clientY); });
-    window.addEventListener('mousemove', e => { if(dragging) onMove(e.clientX, e.clientY); });
-    window.addEventListener('mouseup', e => { if(dragging) onEnd(e.clientX); });
-    el.addEventListener('click', () => { if (!moved) flipFlashcard(); });
+    el.addEventListener('touchstart',e=>onStart(e.touches[0].clientX,e.touches[0].clientY),{passive:true});
+    el.addEventListener('touchmove', e=>{ onMove(e.touches[0].clientX,e.touches[0].clientY); if(moved)e.preventDefault(); },{passive:false});
+    el.addEventListener('touchend',  e=>onEnd(e.changedTouches[0].clientX));
+    el.addEventListener('mousedown', e=>{ onStart(e.clientX,e.clientY); });
+    window.addEventListener('mousemove', e=>{ if(dragging) onMove(e.clientX,e.clientY); });
+    window.addEventListener('mouseup',   e=>{ if(dragging) onEnd(e.clientX); });
+    el.addEventListener('click', ()=>{ if(!moved) flipFlashcard(); });
 }
 
 // =====================================================================
-// QUIZ QCM MODE
+// QUIZ QCM
 // =====================================================================
 function startQuiz() {
-    quizDeck = [...C.cards.map((_,i)=>i)].sort(() => Math.random() - 0.5);
-    quizIdx = 0;
-    quizScore = 0;
-    quizCorrect = 0;
-    quizWrong = 0;
-    showScreen('screen-quiz');
-    showQuizQuestion();
+    quizDeck=[...C.cards.map((_,i)=>i)].sort(()=>Math.random()-.5);
+    quizIdx=0; quizScore=0; quizCorrect=0; quizWrong=0;
+    showScreen('screen-quiz'); showQuizQuestion();
 }
 
 function showQuizQuestion() {
-    if (quizIdx >= quizDeck.length) { endQuiz(); return; }
+    if(quizIdx>=quizDeck.length){ endQuiz(); return; }
     clearTimeout(quizTimer);
-
-    const idx = quizDeck[quizIdx];
-    const card = C.cards[idx];
-    const pct = Math.round((quizIdx / quizDeck.length) * 100);
-
-    document.getElementById('quiz-progress').style.width = pct + '%';
-    document.getElementById('quiz-counter').textContent = `${quizIdx + 1}/${quizDeck.length}`;
+    const idx=quizDeck[quizIdx], card=C.cards[idx];
+    document.getElementById('quiz-progress').style.width = Math.round(quizIdx/quizDeck.length*100)+'%';
+    document.getElementById('quiz-counter').textContent = `${quizIdx+1}/${quizDeck.length}`;
     document.getElementById('quiz-score-display').innerHTML = `${quizScore} <span class="text-slate-600 text-sm font-bold">pts</span>`;
     document.getElementById('quiz-question').textContent = card.term;
-    document.getElementById('quiz-q-label').textContent = 'Terme — Quelle est sa définition ?';
-
-    // Generate 4 choices: 1 correct + 3 wrong
     const choices = generateChoices(idx);
-    document.getElementById('quiz-choices').innerHTML = choices.map((ch, i) => `
+    document.getElementById('quiz-choices').innerHTML = choices.map((ch,i)=>`
         <button class="choice-btn bg-slate-900 border border-slate-800 rounded-2xl p-4 text-left text-sm font-medium text-slate-300 active:scale-95 transition-all leading-snug"
-            onclick="selectAnswer(this, ${ch.correct})"
-            data-idx="${i}">
+                onclick="selectAnswer(this,${ch.correct})">
             <span class="text-[9px] font-black text-slate-600 block mb-1">${['A','B','C','D'][i]}</span>
             ${ch.text}
-        </button>
-    `).join('');
-
-    // Timer
-    const bar = document.getElementById('quiz-timer-bar');
-    bar.style.transition = 'none';
-    bar.style.width = '100%';
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-        bar.style.transition = `width ${QUIZ_TIME}s linear`;
-        bar.style.width = '0%';
-    }));
-    quizTimer = setTimeout(() => selectAnswer(null, false), QUIZ_TIME * 1000);
+        </button>`).join('');
+    const bar=document.getElementById('quiz-timer-bar');
+    bar.style.transition='none'; bar.style.width='100%';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{ bar.style.transition=`width ${QUIZ_TIME}s linear`; bar.style.width='0%'; }));
+    quizTimer=setTimeout(()=>selectAnswer(null,false), QUIZ_TIME*1000);
 }
 
 function generateChoices(correctIdx) {
-    const wrong = C.cards.map((_,i)=>i).filter(i => i !== correctIdx)
-        .sort(() => Math.random() - 0.5).slice(0, 3)
-        .map(i => ({ text: C.cards[i].def, correct: false }));
-    const all = [...wrong, { text: C.cards[correctIdx].def, correct: true }];
-    return all.sort(() => Math.random() - 0.5);
+    const wrong = C.cards.map((_,i)=>i).filter(i=>i!==correctIdx).sort(()=>Math.random()-.5).slice(0,3)
+        .map(i=>({text:C.cards[i].def, correct:false}));
+    return [...wrong,{text:C.cards[correctIdx].def,correct:true}].sort(()=>Math.random()-.5);
 }
 
 function selectAnswer(btn, isCorrect) {
     clearTimeout(quizTimer);
-    const btns = document.querySelectorAll('.choice-btn');
-    btns.forEach(b => {
-        b.disabled = true;
-        // Highlight correct answer
-        if (b === btn) b.classList.add(isCorrect ? 'correct' : 'wrong');
+    document.querySelectorAll('.choice-btn').forEach(b=>{
+        b.disabled=true;
+        if(b===btn) b.classList.add(isCorrect?'correct':'wrong');
     });
-    // Always show which was correct
-    if (!isCorrect) {
-        btns.forEach(b => {
-            if (b.getAttribute('onclick')?.includes('true')) b.classList.add('correct');
-        });
-    }
-
-    const idx = quizDeck[quizIdx];
+    if(!isCorrect) document.querySelectorAll('.choice-btn').forEach(b=>{ if(b.getAttribute('onclick')?.includes('true')) b.classList.add('correct'); });
+    const idx=quizDeck[quizIdx];
     setP(idx, isCorrect);
-    if (isCorrect) {
-        quizCorrect++;
-        quizScore += 100;
-    } else {
-        quizWrong++;
-    }
-    document.getElementById('quiz-score-display').innerHTML = `${quizScore} <span class="text-slate-600 text-sm font-bold">pts</span>`;
-
-    setTimeout(() => { quizIdx++; showQuizQuestion(); }, 1200);
+    if(isCorrect){ quizCorrect++; quizScore+=100; } else quizWrong++;
+    document.getElementById('quiz-score-display').innerHTML=`${quizScore} <span class="text-slate-600 text-sm font-bold">pts</span>`;
+    setTimeout(()=>{ quizIdx++; showQuizQuestion(); }, 1200);
 }
 
 function endQuiz() {
-    document.getElementById('qe-correct').textContent = quizCorrect;
-    document.getElementById('qe-wrong').textContent = quizWrong;
-    document.getElementById('qe-pts').textContent = quizScore;
-    const rate = quizCorrect / (quizCorrect + quizWrong || 1);
-    document.getElementById('qe-emoji').textContent = rate >= 0.8 ? '🏆' : rate >= 0.5 ? '💪' : '📚';
-    document.getElementById('qe-score-txt').textContent = `${Math.round(rate*100)}% de bonnes réponses`;
-    updateHome();
-    showScreen('screen-quiz-end');
+    document.getElementById('qe-correct').textContent=quizCorrect;
+    document.getElementById('qe-wrong').textContent=quizWrong;
+    document.getElementById('qe-pts').textContent=quizScore;
+    const rate=quizCorrect/(quizCorrect+quizWrong||1);
+    document.getElementById('qe-emoji').textContent=rate>=.8?'🏆':rate>=.5?'💪':'📚';
+    document.getElementById('qe-score-txt').textContent=`${Math.round(rate*100)}% de bonnes réponses`;
+    updateHome(); showScreen('screen-quiz-end');
 }
 
 // =====================================================================
 // PROGRESS SCREEN
 // =====================================================================
 function showProgressScreen() {
-    const mastered = C.cards.filter((_,i) => isMastered(i)).length;
-    const learning = C.cards.filter((_,i) => isSeen(i) && !isMastered(i)).length;
-    const newCards = C.cards.length - mastered - learning;
-
-    document.getElementById('prog-summary').innerHTML = `
+    const mastered=C.cards.filter((_,i)=>isMastered(i)).length;
+    const learning=C.cards.filter((_,i)=>isSeen(i)&&!isMastered(i)).length;
+    const newCards=C.cards.length-mastered-learning;
+    document.getElementById('prog-summary').innerHTML=`
         <div class="bg-slate-900 rounded-2xl p-3 text-center border border-slate-800">
             <span class="text-xl font-black text-slate-400">${newCards}</span>
             <p class="text-[8px] text-slate-600 font-black uppercase mt-1">Nouvelles</p>
@@ -787,31 +836,22 @@ function showProgressScreen() {
         <div class="bg-slate-900 rounded-2xl p-3 text-center border border-slate-800">
             <span class="text-xl font-black text-emerald-400">${mastered}</span>
             <p class="text-[8px] text-slate-600 font-black uppercase mt-1">Maîtrisées</p>
-        </div>
-    `;
-
-    document.getElementById('prog-list').innerHTML = C.cards.map((card, i) => {
-        const p = getP(i);
-        const total = p.c + p.w;
-        const pct = total ? Math.round((p.c / total) * 100) : 0;
-        const status = isMastered(i) ? { dot:'bg-emerald-500', label:'Maîtrisée' }
-                     : isSeen(i)     ? { dot:'bg-amber-500',   label:'En cours'  }
-                     :                  { dot:'bg-slate-700',   label:'Nouvelle'  };
-        return `
-            <div class="bg-slate-900 rounded-2xl px-4 py-3 border border-slate-800 flex items-center gap-3">
-                <div class="w-2 h-2 rounded-full flex-shrink-0 ${status.dot}"></div>
-                <div class="flex-grow min-w-0">
-                    <p class="text-sm font-bold text-white truncate">${card.term}</p>
-                    <p class="text-[10px] text-slate-600 truncate">${card.def}</p>
-                </div>
-                <div class="text-right flex-shrink-0 ml-2">
-                    ${total > 0 ? `<span class="text-[10px] font-black ${pct >= 70 ? 'text-emerald-400' : 'text-slate-500'}">${pct}%</span>
-                    <p class="text-[9px] text-slate-700">${p.c}✓ ${p.w}✗</p>` : '<span class="text-[10px] text-slate-700">—</span>'}
-                </div>
+        </div>`;
+    document.getElementById('prog-list').innerHTML=C.cards.map((card,i)=>{
+        const p=getP(i), total=p.c+p.w, pct=total?Math.round(p.c/total*100):0;
+        const status=isMastered(i)?{dot:'bg-emerald-500'}:isSeen(i)?{dot:'bg-amber-500'}:{dot:'bg-slate-700'};
+        return `<div class="bg-slate-900 rounded-2xl px-4 py-3 border border-slate-800 flex items-center gap-3">
+            <div class="w-2 h-2 rounded-full flex-shrink-0 ${status.dot}"></div>
+            <div class="flex-grow min-w-0">
+                <p class="text-sm font-bold text-white truncate">${card.term}</p>
+                <p class="text-[10px] text-slate-600 truncate">${card.def}</p>
             </div>
-        `;
+            <div class="text-right flex-shrink-0 ml-2">
+                ${total>0?`<span class="text-[10px] font-black ${pct>=70?'text-emerald-400':'text-slate-500'}">${pct}%</span>
+                <p class="text-[9px] text-slate-700">${p.c}✓ ${p.w}✗</p>`:'<span class="text-[10px] text-slate-700">—</span>'}
+            </div>
+        </div>`;
     }).join('');
-
     showScreen('screen-progress');
 }
 
@@ -819,139 +859,98 @@ function showProgressScreen() {
 // MULTI MODE
 // =====================================================================
 function addTeam() {
-    const list = document.getElementById('teams-list');
-    if (list.children.length >= 6) return;
-    const i = list.children.length;
-    const div = document.createElement('div');
-    div.className = 'flex items-center gap-3 bg-slate-950 p-2 rounded-xl border border-slate-800';
-    div.innerHTML = `
-        <div class="w-4 h-4 rounded-full flex-shrink-0" style="background:${TEAM_COLORS[i]}"></div>
+    const list=document.getElementById('teams-list');
+    if(list.children.length>=6) return;
+    const i=list.children.length;
+    const div=document.createElement('div');
+    div.className='flex items-center gap-3 bg-slate-950 p-2 rounded-xl border border-slate-800';
+    div.innerHTML=`<div class="w-4 h-4 rounded-full flex-shrink-0" style="background:${TEAM_COLORS[i]}"></div>
         <input type="text" placeholder="Équipe ${i+1}" class="bg-transparent flex-grow text-white font-bold outline-none team-input placeholder-slate-700">
-        <button onclick="this.parentElement.remove()" class="text-slate-700 hover:text-rose-500 transition-colors font-black text-sm flex-shrink-0">✕</button>
-    `;
+        <button onclick="this.parentElement.remove()" class="text-slate-700 hover:text-rose-500 transition-colors font-black text-sm flex-shrink-0">✕</button>`;
     list.appendChild(div);
 }
 
 function launchMulti() {
-    const inputs = [...document.querySelectorAll('.team-input')];
-    teams = inputs
-        .map((inp, i) => ({ name: inp.value.trim() || `Équipe ${i+1}`, score: 0, color: TEAM_COLORS[i] }));
-    if (teams.length < 2) { alert('Ajoute au moins 2 équipes !'); return; }
-
-    multiSettings = {
-        time: parseInt(document.getElementById('multi-time').value) || 20,
-        pts:  parseInt(document.getElementById('multi-pts').value)  || 100,
-        nb:   parseInt(document.getElementById('multi-nb').value)   || 15,
-    };
-
-    multiPool = [...C.cards.map((_,i)=>i)]
-        .sort(() => Math.random() - 0.5)
-        .slice(0, Math.min(multiSettings.nb, C.cards.length));
-    multiRound = 0;
-    multiTeamIdx = 0;
-    showScreen('screen-multi-game');
-    showMultiQuestion();
+    const inputs=[...document.querySelectorAll('.team-input')];
+    teams=inputs.map((inp,i)=>({name:inp.value.trim()||`Équipe ${i+1}`,score:0,color:TEAM_COLORS[i]}));
+    if(teams.length<2){ alert('Ajoute au moins 2 équipes !'); return; }
+    multiSettings={ time:parseInt(document.getElementById('multi-time').value)||20, pts:parseInt(document.getElementById('multi-pts').value)||100, nb:parseInt(document.getElementById('multi-nb').value)||15 };
+    multiPool=[...C.cards.map((_,i)=>i)].sort(()=>Math.random()-.5).slice(0,Math.min(multiSettings.nb,C.cards.length));
+    multiRound=0; multiTeamIdx=0;
+    showScreen('screen-multi-game'); showMultiQuestion();
 }
 
 function showMultiQuestion() {
-    const idx = multiPool[multiRound];
-    const card = C.cards[idx];
-    const team = teams[multiTeamIdx];
-
-    document.getElementById('mg-team-dot').style.backgroundColor = team.color;
-    document.getElementById('mg-team-name').textContent = team.name;
-    document.getElementById('mg-round').textContent = `${multiRound + 1}/${multiPool.length}`;
-    document.getElementById('mg-term').textContent = card.term;
-    document.getElementById('mg-def').textContent = card.def;
+    const idx=multiPool[multiRound], card=C.cards[idx], team=teams[multiTeamIdx];
+    document.getElementById('mg-team-dot').style.backgroundColor=team.color;
+    document.getElementById('mg-team-name').textContent=team.name;
+    document.getElementById('mg-round').textContent=`${multiRound+1}/${multiPool.length}`;
+    document.getElementById('mg-term').textContent=card.term;
+    document.getElementById('mg-def').textContent=card.def;
     document.getElementById('mg-def-area').classList.add('hidden');
     document.getElementById('mg-reveal-btn').classList.remove('hidden');
     document.getElementById('mg-validation').classList.add('hidden');
-
-    // Timer
     clearTimeout(multiTimerTimeout);
-    const bar = document.getElementById('mg-timer-bar');
-    bar.style.transition = 'none';
-    bar.style.width = '100%';
-    bar.style.backgroundColor = team.color;
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-        bar.style.transition = `width ${multiSettings.time}s linear`;
-        bar.style.width = '0%';
-    }));
-    multiTimerTimeout = setTimeout(revealMultiAnswer, multiSettings.time * 1000);
+    const bar=document.getElementById('mg-timer-bar');
+    bar.style.transition='none'; bar.style.width='100%'; bar.style.backgroundColor=team.color;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{ bar.style.transition=`width ${multiSettings.time}s linear`; bar.style.width='0%'; }));
+    multiTimerTimeout=setTimeout(revealMultiAnswer, multiSettings.time*1000);
 }
 
 function revealMultiAnswer() {
     clearTimeout(multiTimerTimeout);
-    const bar = document.getElementById('mg-timer-bar');
-    bar.style.transition = 'none';
-    bar.style.width = '0%';
+    document.getElementById('mg-timer-bar').style.cssText='transition:none;width:0%';
     document.getElementById('mg-def-area').classList.remove('hidden');
     document.getElementById('mg-reveal-btn').classList.add('hidden');
     document.getElementById('mg-validation').classList.remove('hidden');
 }
 
 function scoreMulti(correct) {
-    if (correct) teams[multiTeamIdx].score += multiSettings.pts;
+    if(correct) teams[multiTeamIdx].score+=multiSettings.pts;
     showMultiScores();
 }
 
 function showMultiScores() {
-    const sorted = [...teams].map((t,i)=>({...t,orig:i})).sort((a,b)=>b.score-a.score);
-    document.getElementById('ms-list').innerHTML = sorted.map((t, rank) => `
+    const sorted=[...teams].map((t,i)=>({...t,orig:i})).sort((a,b)=>b.score-a.score);
+    document.getElementById('ms-list').innerHTML=sorted.map((t,rank)=>`
         <div class="flex items-center justify-between bg-slate-900 p-4 rounded-2xl border border-slate-800">
             <div class="flex items-center gap-3">
                 <span class="text-slate-600 font-black text-sm w-5">${rank+1}</span>
                 <div class="w-3 h-3 rounded-full" style="background:${t.color}"></div>
                 <span class="text-white font-bold">${t.name}</span>
             </div>
-            <div class="flex items-center gap-3">
-                <button onclick="adjustScore(${t.orig}, -${multiSettings.pts})" class="text-slate-700 hover:text-slate-400 font-black w-6 text-center">−</button>
-                <span class="font-black text-indigo-400 w-14 text-right">${t.score} pts</span>
-                <button onclick="adjustScore(${t.orig}, ${multiSettings.pts})" class="text-slate-700 hover:text-slate-400 font-black w-6 text-center">+</button>
+            <div class="flex items-center gap-2">
+                <button onclick="adjustScore(${t.orig},-${multiSettings.pts})" class="text-slate-700 hover:text-slate-400 font-black w-6 text-center">−</button>
+                <span class="font-black text-indigo-400 w-16 text-right">${t.score} pts</span>
+                <button onclick="adjustScore(${t.orig},${multiSettings.pts})" class="text-slate-700 hover:text-slate-400 font-black w-6 text-center">+</button>
             </div>
-        </div>
-    `).join('');
+        </div>`).join('');
     showScreen('screen-multi-scores');
 }
 
-function adjustScore(origIdx, delta) {
-    teams[origIdx].score = Math.max(0, teams[origIdx].score + delta);
-    showMultiScores();
-}
+function adjustScore(origIdx, delta) { teams[origIdx].score=Math.max(0,teams[origIdx].score+delta); showMultiScores(); }
 
 function nextMultiRound() {
-    multiRound++;
-    multiTeamIdx = (multiTeamIdx + 1) % teams.length;
-    if (multiRound >= multiPool.length) {
-        showPodium();
-    } else {
-        showScreen('screen-multi-game');
-        showMultiQuestion();
-    }
+    multiRound++; multiTeamIdx=(multiTeamIdx+1)%teams.length;
+    if(multiRound>=multiPool.length) showPodium();
+    else { showScreen('screen-multi-game'); showMultiQuestion(); }
 }
 
 function showPodium() {
-    const sorted = [...teams].sort((a,b) => b.score - a.score);
-
-    // Podium bars (top 3 max)
-    const topN = sorted.slice(0, Math.min(3, sorted.length));
-    const maxScore = topN[0].score || 1;
-    const heights = [192, 140, 100];
-    const orders = ['order-2','order-1','order-3'];
-    document.getElementById('podium-bars').innerHTML = topN.map((t, i) => `
+    const sorted=[...teams].sort((a,b)=>b.score-a.score);
+    const topN=sorted.slice(0,Math.min(3,sorted.length));
+    const heights=[192,140,100], orders=['order-2','order-1','order-3'];
+    document.getElementById('podium-bars').innerHTML=topN.map((t,i)=>`
         <div class="flex flex-col items-center ${orders[i]} fade-up" style="animation-delay:${i*150}ms">
-            ${i === 0 ? '<span class="text-3xl mb-1">👑</span>' : ''}
+            ${i===0?'<span class="text-3xl mb-1">👑</span>':''}
             <div class="w-20 rounded-t-2xl flex flex-col items-center justify-end pb-3 border-t-4"
-                 style="height:${heights[i]}px; background:rgba(255,255,255,.05); border-color:${t.color}">
+                 style="height:${heights[i]}px;background:rgba(255,255,255,.05);border-color:${t.color}">
                 <span class="font-black text-white text-sm">${t.score}</span>
                 <span style="color:${t.color}" class="font-black text-[9px] uppercase">${['1er','2ème','3ème'][i]}</span>
             </div>
             <span class="text-[10px] font-bold text-slate-500 mt-2 uppercase text-center max-w-[80px] truncate">${t.name}</span>
-        </div>
-    `).join('');
-
-    // Full list
-    document.getElementById('podium-list').innerHTML = sorted.map((t, i) => `
+        </div>`).join('');
+    document.getElementById('podium-list').innerHTML=sorted.map((t,i)=>`
         <div class="flex items-center justify-between bg-slate-900 p-4 rounded-2xl border border-slate-800 fade-up" style="animation-delay:${i*80}ms">
             <div class="flex items-center gap-3">
                 <span class="font-black text-slate-600 w-5 text-sm">${i+1}</span>
@@ -959,24 +958,17 @@ function showPodium() {
                 <span class="font-bold text-white">${t.name}</span>
             </div>
             <span class="font-black text-indigo-400">${t.score} pts</span>
-        </div>
-    `).join('');
-
+        </div>`).join('');
     showScreen('screen-podium');
 }
 
 // =====================================================================
 // STARTUP
 // =====================================================================
-
-// Pre-add 2 teams in multi setup
-function initMultiSetup() {
-    const list = document.getElementById('teams-list');
-    if (list.children.length === 0) { addTeam(); addTeam(); }
-}
-
 document.addEventListener('DOMContentLoaded', () => {
-    initMultiSetup();
+    // Pre-add 2 teams
+    const list=document.getElementById('teams-list');
+    if(list.children.length===0){ addTeam(); addTeam(); }
     init();
 });
 </script>
