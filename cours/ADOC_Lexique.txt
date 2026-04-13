@@ -1,6 +1,5 @@
 # Lexique ADOC
 # Format : Terme | Définition  (une paire par ligne)
-# Les lignes commençant par # sont des commentaires
 
 Accords de référencement | Matérialisent la relation entre le producteur et le distributeur concernant une offre déterminée dans le cadre du référencement conclu.
 Affichage digital | Affichage sur des écrans numériques permettant un affichage dynamique.
