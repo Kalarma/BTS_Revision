@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Kahoot BTS — Rejoindre</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../firebase-config.js" onerror="console.log('no firebase')"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        :root { --app-h: 100dvh; }
+        body { font-family:'Plus Jakarta Sans',sans-serif; background:#020617; height:var(--app-h); overflow:hidden; color:#f8fafc; margin:0; }
+        #app { height:var(--app-h); display:flex; flex-direction:column; }
+        .screen { display:none; flex:1; flex-direction:column; height:100%; overflow-y:auto; }
+        .screen.active { display:flex; }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+        .fade-up { animation:fadeUp .35s ease forwards; }
+        .pulse { animation:pulse 1.5s infinite; }
+        .choice-A { background:#e74c3c20; border-color:#e74c3c60; color:#e74c3c; }
+        .choice-B { background:#3498db20; border-color:#3498db60; color:#3498db; }
+        .choice-C { background:#f39c1220; border-color:#f39c1260; color:#f39c12; }
+        .choice-D { background:#27ae6020; border-color:#27ae6060; color:#27ae60; }
+        .choice-A:active, .choice-B:active, .choice-C:active, .choice-D:active { transform:scale(.97); }
+        .choice-A.selected { background:#e74c3c !important; color:white !important; }
+        .choice-B.selected { background:#3498db !important; color:white !important; }
+        .choice-C.selected { background:#f39c12 !important; color:white !important; }
+        .choice-D.selected { background:#27ae60 !important; color:white !important; }
+        .choice-btn.correct { background:rgba(16,185,129,.3) !important; border-color:rgb(16,185,129) !important; color:white !important; }
+        .choice-btn.wrong   { opacity:.4 !important; }
+        input:-webkit-autofill { -webkit-box-shadow:0 0 0 50px #0f172a inset!important; -webkit-text-fill-color:#fff!important; }
+        .timer-animate { transition:width linear; }
+    </style>
+</head>
+<body>
+<div id="app">
+
+<!-- JOIN -->
+<div id="screen-join" class="screen active items-center justify-center p-6">
+    <div class="w-full max-w-sm fade-up">
+        <div class="text-center mb-10">
+            <div class="text-5xl mb-3">🎮</div>
+            <h1 class="text-3xl font-black text-white uppercase italic">Kahoot <span class="text-indigo-500">BTS</span></h1>
+            <p class="text-slate-600 text-[10px] font-bold uppercase tracking-widest mt-1">Rejoindre une partie</p>
+        </div>
+        <div class="space-y-3 mb-4">
+            <input id="join-code" type="text" placeholder="Code de la salle (6 lettres)" maxlength="6"
+                   class="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-white font-black text-center text-xl uppercase tracking-[0.3em] placeholder-slate-700 outline-none focus:border-indigo-500 transition-colors"
+                   oninput="this.value=this.value.toUpperCase()">
+            <input id="join-name" type="text" placeholder="Ton prénom" maxlength="20"
+                   class="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-white font-bold placeholder-slate-700 outline-none focus:border-indigo-500 transition-colors">
+        </div>
+        <div id="join-error" class="hidden mb-3 px-4 py-2 bg-rose-500/10 border border-rose-500/20 rounded-xl">
+            <p class="text-rose-400 text-xs font-bold text-center"></p>
+        </div>
+        <button onclick="joinRoom()" class="w-full py-4 bg-indigo-600 text-white font-black uppercase rounded-2xl active:scale-95 transition-all shadow-lg shadow-indigo-500/20">
+            Rejoindre !
+        </button>
+    </div>
+</div>
+
+<!-- WAITING -->
+<div id="screen-waiting" class="screen items-center justify-center p-6 text-center">
+    <div class="fade-up">
+        <div class="text-6xl mb-6 pulse">⏳</div>
+        <h2 class="text-2xl font-black text-white uppercase">Connecté !</h2>
+        <p id="waiting-name" class="text-indigo-400 font-bold text-lg mt-1"></p>
+        <p class="text-slate-600 text-xs font-bold uppercase tracking-widest mt-4 pulse">En attente du professeur...</p>
+        <div class="mt-8 bg-slate-900 border border-slate-800 rounded-2xl px-6 py-4 inline-block">
+            <p class="text-[9px] text-slate-600 font-bold uppercase mb-1">Code de la salle</p>
+            <p id="waiting-code" class="text-white font-black text-2xl tracking-[0.3em]"></p>
+        </div>
+    </div>
+</div>
+
+<!-- QUESTION -->
+<div id="screen-question" class="screen flex-col">
+    <div class="px-4 pt-4 pb-2 flex-shrink-0">
+        <div class="flex items-center justify-between mb-2">
+            <span id="q-round" class="text-[10px] font-black text-slate-600 uppercase">Q 1/10</span>
+            <span id="q-score" class="text-sm font-black text-indigo-400">0 pts</span>
+        </div>
+        <div class="bg-slate-900 h-2 rounded-full overflow-hidden">
+            <div id="q-timer-bar" class="h-full w-full timer-animate" style="background:#6366f1"></div>
+        </div>
+    </div>
+    <div class="px-4 py-3 flex-shrink-0">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 text-center">
+            <span class="text-[9px] font-black text-slate-600 uppercase tracking-widest block mb-2">Terme — Quelle est sa définition ?</span>
+            <p id="q-term" class="text-white font-bold text-lg leading-snug"></p>
+        </div>
+    </div>
+    <div id="q-choices" class="flex-grow grid grid-cols-2 gap-3 px-4 pb-6 content-stretch">
+        <!-- Filled by JS -->
+    </div>
+</div>
+
+<!-- RESULT -->
+<div id="screen-result" class="screen items-center justify-center p-6 text-center">
+    <div class="fade-up w-full max-w-sm">
+        <div id="result-emoji" class="text-7xl mb-4">✓</div>
+        <h2 id="result-title" class="text-3xl font-black uppercase text-white mb-2">Correct !</h2>
+        <div id="result-points" class="text-5xl font-black text-indigo-400 mb-2">+1000</div>
+        <p class="text-slate-500 text-sm font-bold mb-6">pts gagnés</p>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-left mb-4">
+            <p class="text-[9px] font-black text-slate-600 uppercase mb-1">Bonne réponse</p>
+            <p id="result-correct-answer" class="text-emerald-400 font-bold text-sm"></p>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-center">
+            <p class="text-[9px] font-black text-slate-600 uppercase mb-1">Ton score total</p>
+            <p id="result-total-score" class="text-white font-black text-2xl"></p>
+        </div>
+        <p class="text-slate-700 text-[10px] font-bold uppercase mt-4 pulse">Attente de la prochaine question...</p>
+    </div>
+</div>
+
+<!-- LEADERBOARD -->
+<div id="screen-leaderboard" class="screen p-6">
+    <div class="max-w-sm mx-auto w-full">
+        <h3 class="text-[10px] font-black text-slate-600 uppercase tracking-widest text-center mb-6">Classement</h3>
+        <div id="lb-list" class="space-y-2 mb-4"></div>
+        <p class="text-center text-slate-700 text-[10px] font-bold uppercase pulse">Prochaine question bientôt...</p>
+    </div>
+</div>
+
+<!-- FINAL -->
+<div id="screen-final" class="screen items-center justify-center p-6 text-center">
+    <div class="fade-up w-full max-w-sm">
+        <div id="final-emoji" class="text-6xl mb-4">🏆</div>
+        <h2 class="text-3xl font-black text-white uppercase italic mb-1">Fin de partie !</h2>
+        <p id="final-rank" class="text-indigo-400 font-bold text-lg mb-6"></p>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 mb-6">
+            <p class="text-[9px] font-black text-slate-600 uppercase mb-1">Score final</p>
+            <p id="final-score" class="text-4xl font-black text-white"></p>
+        </div>
+        <div id="final-leaderboard" class="space-y-2 mb-6"></div>
+        <button onclick="location.href='../'" class="w-full py-4 bg-slate-800 text-white font-black uppercase rounded-2xl active:scale-95 transition-all">
+            Retour au hub
+        </button>
+    </div>
+</div>
+
+<!-- ERROR -->
+<div id="screen-room-error" class="screen items-center justify-center p-6 text-center">
+    <div>
+        <div class="text-5xl mb-4">⚠️</div>
+        <p id="room-error-msg" class="text-rose-400 font-bold mb-4"></p>
+        <button onclick="location.reload()" class="text-indigo-400 font-bold text-sm">Réessayer</button>
+    </div>
+</div>
+
+</div>
+<script>
+// =====================================================================
+// STATE
+// =====================================================================
+let db = null, useFirebase = false;
+let roomCode = '', playerId = '', playerName = '', playerScore = 0;
+let currentQ = 0, totalQ = 10, qTime = 20;
+let questions = [], roomListener = null;
+let hasAnswered = false, qTimerTimeout = null;
+
+// =====================================================================
+// FIREBASE INIT
+// =====================================================================
+async function loadScript(src) {
+    return new Promise((resolve, reject) => {
+        const s = document.createElement('script'); s.src = src;
+        s.onload = resolve; s.onerror = reject; document.head.appendChild(s);
+    });
+}
+
+async function initFirebase() {
+    const cfg = window.FIREBASE_CONFIG;
+    if (!cfg || cfg.apiKey === 'VOTRE_API_KEY') return;
+    try {
+        const v = '10.12.0';
+        await loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-app-compat.js`);
+        await loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-auth-compat.js`);
+        await loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-firestore-compat.js`);
+        if (!firebase.apps.length) firebase.initializeApp(cfg);
+        db = firebase.firestore();
+        useFirebase = true;
+    } catch(e) { console.warn('Firebase failed:', e); }
+}
+
+// =====================================================================
+// NAV
+// =====================================================================
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+function showRoomError(msg) {
+    document.getElementById('room-error-msg').textContent = msg;
+    showScreen('screen-room-error');
+}
+
+// =====================================================================
+// JOIN
+// =====================================================================
+async function joinRoom() {
+    const code = document.getElementById('join-code').value.trim().toUpperCase();
+    const name = document.getElementById('join-name').value.trim();
+    const errEl = document.getElementById('join-error');
+
+    if (code.length !== 6) { showJoinError('Code invalide (6 caractères)'); return; }
+    if (!name) { showJoinError('Entre ton prénom'); return; }
+    if (!useFirebase) { showJoinError('Connexion Firebase introuvable'); return; }
+
+    errEl.classList.add('hidden');
+    roomCode = code;
+    playerName = name;
+    playerId = 'p_' + Math.random().toString(36).slice(2, 10);
+    playerScore = 0;
+
+    try {
+        const snap = await db.collection('rooms').doc(code).get();
+        if (!snap.exists) { showJoinError('Salle introuvable'); return; }
+        const room = snap.data();
+        if (room.status === 'finished' || room.status === 'cancelled') { showJoinError('Cette partie est terminée'); return; }
+
+        // Enregistrer le joueur
+        await db.collection('rooms').doc(code).update({
+            [`players.${playerId}`]: { name, score: 0, joinedAt: Date.now() }
+        });
+
+        // Stocker infos session
+        sessionStorage.setItem('kh_room', code);
+        sessionStorage.setItem('kh_pid', playerId);
+        sessionStorage.setItem('kh_name', name);
+
+        document.getElementById('waiting-name').textContent = name;
+        document.getElementById('waiting-code').textContent = code;
+        showScreen('screen-waiting');
+
+        // Écouter les changements
+        listenToRoom(code);
+    } catch(e) {
+        showJoinError('Erreur : ' + e.message);
+    }
+}
+
+function showJoinError(msg) {
+    const el = document.getElementById('join-error');
+    el.querySelector('p').textContent = msg;
+    el.classList.remove('hidden');
+}
+
+// =====================================================================
+// ROOM LISTENER
+// =====================================================================
+function listenToRoom(code) {
+    if (roomListener) roomListener();
+    roomListener = db.collection('rooms').doc(code).onSnapshot(snap => {
+        if (!snap.exists) return;
+        const room = snap.data();
+        handleRoomState(room);
+    });
+}
+
+function handleRoomState(room) {
+    switch(room.status) {
+        case 'waiting':
+            showScreen('screen-waiting');
+            break;
+        case 'question':
+            if (room.currentQ !== currentQ || document.getElementById('screen-waiting').classList.contains('active')) {
+                currentQ = room.currentQ;
+                totalQ = room.settings?.totalQ || 10;
+                qTime  = room.settings?.time || 20;
+                questions = room.questions || [];
+                showQuestion(room);
+            }
+            break;
+        case 'reveal':
+            revealAnswer(room);
+            break;
+        case 'leaderboard':
+            showLeaderboard(room);
+            break;
+        case 'finished':
+        case 'cancelled':
+            showFinalScreen(room);
+            break;
+    }
+}
+
+// =====================================================================
+// QUESTION
+// =====================================================================
+function showQuestion(room) {
+    hasAnswered = false;
+    clearTimeout(qTimerTimeout);
+    const q = questions[currentQ];
+    if (!q) return;
+
+    document.getElementById('q-round').textContent = `Q ${currentQ+1}/${totalQ}`;
+    document.getElementById('q-score').textContent = playerScore + ' pts';
+
+    const colors = ['A','B','C','D'];
+    const cls = ['choice-A','choice-B','choice-C','choice-D'];
+    document.getElementById('q-choices').innerHTML = q.choices.map((ch, i) => `
+        <button class="choice-btn ${cls[i]} border-2 rounded-2xl flex flex-col items-center justify-center gap-2 p-4 font-black text-4xl transition-all"
+                onclick="selectAnswer(this, ${ch.correct}, '${ch.text.replace(/'/g,"\\'")}')">
+            <span class="text-5xl">${['🔴','🔵','🟡','🟢'][i]}</span>
+            <span class="text-[11px] font-bold leading-snug text-center text-white/80">${ch.text}</span>
+        </button>`).join('');
+
+    // Timer
+    const bar = document.getElementById('q-timer-bar');
+    bar.style.transition = 'none'; bar.style.width = '100%';
+    bar.style.background = '#6366f1';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        bar.style.transition = `width ${qTime}s linear`;
+        bar.style.width = '0%';
+    }));
+    qTimerTimeout = setTimeout(() => {
+        if (!hasAnswered) selectAnswer(null, false, '');
+    }, qTime * 1000);
+
+    showScreen('screen-question');
+}
+
+function selectAnswer(btn, isCorrect, answerText) {
+    if (hasAnswered) return;
+    hasAnswered = true;
+    clearTimeout(qTimerTimeout);
+
+    const points = isCorrect ? 1000 : 0;
+    playerScore += points;
+
+    // Mettre à jour Firestore
+    db.collection('rooms').doc(roomCode).update({
+        [`answers.${playerId}.${currentQ}`]: isCorrect,
+        [`players.${playerId}.score`]: playerScore
+    }).catch(e => console.warn(e));
+
+    // Afficher résultat
+    document.getElementById('result-emoji').textContent    = isCorrect ? '🎉' : '😅';
+    document.getElementById('result-title').textContent    = isCorrect ? 'Correct !' : 'Raté !';
+    document.getElementById('result-points').textContent   = isCorrect ? '+1000' : '+0';
+    document.getElementById('result-points').style.color   = isCorrect ? '#6366f1' : '#94a3b8';
+    document.getElementById('result-total-score').textContent = playerScore + ' pts';
+    // On affiche la bonne réponse seulement après le "reveal" du host
+    document.getElementById('result-correct-answer').textContent = '...';
+    showScreen('screen-result');
+}
+
+// =====================================================================
+// REVEAL
+// =====================================================================
+function revealAnswer(room) {
+    if (!document.getElementById('screen-result').classList.contains('active') &&
+        !document.getElementById('screen-question').classList.contains('active')) return;
+    const q = questions[currentQ];
+    if (!q) return;
+    const correct = q.choices.find(c => c.correct);
+    document.getElementById('result-correct-answer').textContent = correct?.text || '';
+    showScreen('screen-result');
+}
+
+// =====================================================================
+// LEADERBOARD
+// =====================================================================
+function showLeaderboard(room) {
+    const players = room.players || {};
+    const sorted = Object.values(players).sort((a,b)=>(b.score||0)-(a.score||0));
+    document.getElementById('lb-list').innerHTML = sorted.map((p,i) => {
+        const isMe = p.name === playerName;
+        return `<div class="flex items-center justify-between p-3 rounded-2xl border ${isMe ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-slate-900 border-slate-800'}">
+            <div class="flex items-center gap-2">
+                <span class="text-slate-600 font-black text-xs w-4">${i+1}</span>
+                <span class="${isMe ? 'text-indigo-400' : 'text-white'} font-bold text-sm">${p.name}${isMe ? ' (toi)' : ''}</span>
+            </div>
+            <span class="font-black ${isMe ? 'text-indigo-400' : 'text-slate-400'} text-sm">${p.score||0} pts</span>
+        </div>`;
+    }).join('');
+    showScreen('screen-leaderboard');
+}
+
+// =====================================================================
+// FINAL
+// =====================================================================
+function showFinalScreen(room) {
+    const players = room.players || {};
+    const sorted = Object.values(players).sort((a,b)=>(b.score||0)-(a.score||0));
+    const myRank = sorted.findIndex(p => p.name === playerName) + 1;
+    const emojis = ['🥇','🥈','🥉'];
+
+    document.getElementById('final-emoji').textContent  = emojis[myRank-1] || '🎮';
+    document.getElementById('final-rank').textContent   = `${myRank}e sur ${sorted.length}`;
+    document.getElementById('final-score').textContent  = playerScore + ' pts';
+    document.getElementById('final-leaderboard').innerHTML = sorted.map((p,i) => {
+        const isMe = p.name === playerName;
+        return `<div class="flex items-center justify-between p-3 rounded-xl border ${isMe ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-slate-900 border-slate-800'}">
+            <div class="flex items-center gap-2">
+                <span class="font-black text-xs">${emojis[i] || i+1}</span>
+                <span class="${isMe ? 'text-indigo-400' : 'text-white'} font-bold text-sm">${p.name}</span>
+            </div>
+            <span class="font-black text-slate-400 text-sm">${p.score||0} pts</span>
+        </div>`;
+    }).join('');
+
+    if (roomListener) { roomListener(); roomListener = null; }
+    showScreen('screen-final');
+}
+
+// =====================================================================
+// INIT
+// =====================================================================
+async function init() {
+    await initFirebase();
+    if (!useFirebase) {
+        showRoomError('Firebase non configuré. Contacte le professeur.');
+        return;
+    }
+    // Lire code depuis URL
+    const params = new URLSearchParams(window.location.search);
+    const urlCode = params.get('code');
+    if (urlCode) {
+        document.getElementById('join-code').value = urlCode.toUpperCase();
+    }
+    // Rejoindre session précédente si active
+    const savedRoom = sessionStorage.getItem('kh_room');
+    const savedPid  = sessionStorage.getItem('kh_pid');
+    const savedName = sessionStorage.getItem('kh_name');
+    if (savedRoom && savedPid && savedName) {
+        try {
+            const snap = await db.collection('rooms').doc(savedRoom).get();
+            if (snap.exists && !['finished','cancelled'].includes(snap.data().status)) {
+                roomCode = savedRoom; playerId = savedPid; playerName = savedName;
+                playerScore = snap.data().players?.[savedPid]?.score || 0;
+                document.getElementById('waiting-name').textContent = savedName;
+                document.getElementById('waiting-code').textContent = savedRoom;
+                listenToRoom(savedRoom);
+                return;
+            }
+        } catch {}
+        sessionStorage.clear();
+    }
+    showScreen('screen-join');
+}
+
+window.onload = init;
+</script>
+</body>
+</html>
