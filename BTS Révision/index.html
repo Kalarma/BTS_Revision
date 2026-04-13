@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Hub de Révision - Kalarma</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        body { font-family:'Plus Jakarta Sans',sans-serif; background-color:#020617; color:#f8fafc; margin:0; min-height:100vh; }
+        .glass-card { background:rgba(15,23,42,.6); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,.08); transition:all .3s cubic-bezier(.4,0,.2,1); }
+        .glass-card:hover { transform:translateY(-4px); border-color:#6366f1; box-shadow:0 10px 30px -10px rgba(99,102,241,.4); }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+        .animate-fade-in { animation:fadeIn .5s ease forwards; }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <div class="max-w-6xl mx-auto p-6 flex-grow w-full">
+
+        <header class="text-center py-12 animate-fade-in">
+            <h1 class="text-5xl font-black text-white tracking-tighter uppercase italic">
+                Hub <span class="text-indigo-500">Révision</span>
+            </h1>
+            <p class="text-slate-400 mt-4 font-medium italic">Tes outils de réussite à portée de clic</p>
+            <div class="h-1 w-20 bg-indigo-500 mx-auto mt-6 rounded-full"></div>
+        </header>
+
+        <div id="loader" class="flex flex-col items-center justify-center py-20">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-indigo-500 border-opacity-50"></div>
+            <p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-4">Chargement des modules...</p>
+        </div>
+
+        <div id="app-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 hidden"></div>
+
+        <div id="error-state" class="hidden text-center py-20">
+            <p class="text-rose-400 font-bold">Oups ! Impossible de joindre le serveur GitHub.</p>
+            <p class="text-slate-600 text-xs mt-2">Vérifiez que le dépôt est public et que le dossier <code class="text-indigo-400">cours/</code> existe.</p>
+        </div>
+    </div>
+
+    <footer class="mt-auto pt-12 pb-8 text-center flex flex-col items-center gap-6 border-t border-slate-900 bg-slate-950/50">
+        <div>
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Créé par Zao Barrez-Girardot</p>
+            <a href="https://fr.tipeee.com/zao" target="_blank" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-rose-500/10 text-rose-400 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-rose-500/20 active:scale-95 transition-all border border-rose-500/20">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                Me soutenir sur Tipeee
+            </a>
+        </div>
+        <p class="text-[9px] text-slate-700 font-medium">Source : github.com/Kalarma/Revision_BTS</p>
+    </footer>
+
+    <script>
+        const USERNAME = "Kalarma";
+        const REPO     = "Revision_BTS";
+        // API GitHub pour lister le dossier cours/
+        const API_COURS = `https://api.github.com/repos/${USERNAME}/${REPO}/contents/cours`;
+        // URL de base GitHub Pages
+        const BASE_URL  = `https://${USERNAME}.github.io/${REPO}`;
+
+        async function fetchModules() {
+            const grid   = document.getElementById('app-grid');
+            const loader = document.getElementById('loader');
+            const error  = document.getElementById('error-state');
+
+            try {
+                const r = await fetch(API_COURS);
+                if (!r.ok) throw new Error('API error');
+                const files = await r.json();
+
+                // Ne garder que les fichiers .txt
+                const courses = files.filter(f => f.type === 'file' && f.name.endsWith('.txt'));
+
+                if (!courses.length) throw new Error('Aucun cours trouvé');
+
+                grid.innerHTML = courses.map((f, idx) => {
+                    const name    = f.name.replace('.txt', '');
+                    const label   = cleanName(name);
+                    const appUrl  = `${BASE_URL}/app/?course=${name}`;
+
+                    return `
+                    <a href="${appUrl}"
+                       class="glass-card p-8 rounded-[2.5rem] flex flex-col items-start group animate-fade-in"
+                       style="animation-delay:${idx * 80}ms">
+
+                        <div class="w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-400 mb-6
+                                    group-hover:bg-indigo-500 group-hover:text-white group-hover:rotate-6 transition-all duration-300">
+                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                            </svg>
+                        </div>
+
+                        <h3 class="text-xl font-extrabold text-white mb-2">${label}</h3>
+                        <p class="text-slate-500 text-xs leading-relaxed font-medium flex-grow">
+                            Flashcards · Quiz QCM · Mode Multi
+                        </p>
+
+                        <div class="mt-8 flex items-center text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em]">
+                            Lancer
+                            <svg class="w-4 h-4 ml-2 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                            </svg>
+                        </div>
+                    </a>`;
+                }).join('');
+
+                loader.classList.add('hidden');
+                grid.classList.remove('hidden');
+
+            } catch(e) {
+                console.error(e);
+                loader.classList.add('hidden');
+                error.classList.remove('hidden');
+            }
+        }
+
+        function cleanName(name) {
+            return name.replace(/_/g, ' ').replace(/-/g, ' ');
+        }
+
+        window.onload = fetchModules;
+    </script>
+</body>
+</html>
