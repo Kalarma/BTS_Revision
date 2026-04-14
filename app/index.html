@@ -213,17 +213,17 @@
         <span id="hint-left" class="text-[10px] font-black text-rose-500/40 uppercase tracking-widest transition-opacity">✗ À revoir</span>
         <span id="hint-right" class="text-[10px] font-black text-emerald-500/40 uppercase tracking-widest transition-opacity">✓ Je savais</span>
     </div>
-    <div class="flex-grow flex items-stretch px-6 py-2 overflow-hidden">
-        <div id="fc-card" class="swipe-card relative w-full bg-slate-900 border-2 border-slate-800 rounded-[2.5rem] p-8 flex flex-col items-center justify-center text-center flex-grow">
+    <div class="flex-grow flex items-center justify-center px-6 py-3 overflow-hidden">
+        <div id="fc-card" class="swipe-card relative w-full bg-slate-900 border-2 border-slate-800 rounded-[2.5rem] px-8 py-10 flex flex-col items-center justify-center text-center" style="min-height:55vh;max-height:72vh">
             <!-- Badge historique succès/échecs -->
             <div id="fc-stats-badge" class="hidden absolute top-5 right-5 flex items-center gap-1 bg-slate-800 rounded-xl px-2.5 py-1 text-[10px] font-bold pointer-events-none"></div>
-            <span class="text-[9px] font-black text-slate-700 uppercase tracking-widest mb-4">Terme</span>
-            <h2 id="fc-term" class="text-2xl font-bold text-white leading-snug"></h2>
-            <div id="fc-def-area" class="hidden w-full mt-5 pt-5 border-t border-slate-800 fade-up">
-                <span class="text-[9px] font-black text-slate-600 uppercase tracking-widest block mb-2">Définition</span>
-                <p id="fc-def" class="text-violet-400 text-base leading-relaxed font-medium"></p>
+            <span class="text-[9px] font-black text-slate-700 uppercase tracking-widest mb-5">Terme</span>
+            <h2 id="fc-term" class="text-[1.9rem] font-extrabold text-white leading-snug"></h2>
+            <div id="fc-def-area" class="hidden w-full mt-6 pt-6 border-t border-slate-800 fade-up">
+                <span class="text-[9px] font-black text-slate-600 uppercase tracking-widest block mb-3">Définition</span>
+                <p id="fc-def" class="text-violet-400 text-[1.2rem] leading-relaxed font-medium"></p>
             </div>
-            <p id="fc-tap-hint" class="text-[10px] text-slate-700 font-bold uppercase tracking-widest mt-5 pulse">Appuyer pour révéler</p>
+            <p id="fc-tap-hint" class="text-[10px] text-slate-700 font-bold uppercase tracking-widest mt-6 pulse">Appuyer pour révéler</p>
         </div>
     </div>
     <div id="fc-actions" class="hidden px-6 pb-8 grid grid-cols-2 gap-4 flex-shrink-0 fade-up">
@@ -1364,7 +1364,7 @@ function showKahootQuestion() {
             <span class="text-white text-xs font-medium leading-snug">${ch.text}</span>
         </div>`).join('');
 
-    let countdown = 5;
+    let countdown = 3;
     countdownEl.textContent = `Réponses dans ${countdown}s...`;
     clearInterval(kahootCountdownInterval);
     kahootCountdownInterval = setInterval(() => {
