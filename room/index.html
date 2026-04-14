@@ -95,30 +95,52 @@
 
 <!-- ============================================================ QUESTION -->
 <div id="screen-question" class="screen flex-col" style="height:100dvh">
-    <!-- Header -->
-    <div class="px-4 pt-safe pt-4 pb-2 flex-shrink-0">
+    <!-- Header : quit + round + score -->
+    <div class="px-4 pt-4 pb-2 flex-shrink-0">
         <div class="flex items-center justify-between mb-2">
-            <button onclick="confirmQuitPlayer()" class="text-slate-700 hover:text-rose-400 transition-colors text-xs font-bold uppercase flex items-center gap-1">✕</button>
+            <button onclick="confirmQuitPlayer()" class="text-slate-700 hover:text-rose-400 transition-colors text-xs font-bold uppercase">✕</button>
             <span id="q-round" class="text-[10px] font-black text-slate-600 uppercase">Q 1/10</span>
             <span id="q-score" class="text-sm font-black text-violet-400">0 pts</span>
         </div>
-        <div class="bg-slate-900 h-2 rounded-full overflow-hidden">
-            <div id="q-timer-bar" class="h-full w-full timer-animate" style="background:#7c3aed"></div>
+        <!-- Timer bar (masqué pendant le countdown) -->
+        <div id="q-timer-wrap" class="bg-slate-900 h-2 rounded-full overflow-hidden opacity-0 transition-opacity duration-300">
+            <div id="q-timer-bar" class="h-full w-full timer-animate" style="background:var(--c-primary)"></div>
         </div>
     </div>
+
     <!-- Terme -->
-    <div class="px-4 py-3 flex-shrink-0">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-center">
-            <span class="text-[9px] font-black text-slate-600 uppercase tracking-widest block mb-2">Quelle est la définition ?</span>
-            <p id="q-term" class="text-white font-bold text-lg leading-snug"></p>
+    <div class="px-4 pt-1 pb-2 flex-shrink-0">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-center">
+            <p id="q-term" class="text-white font-bold text-xl leading-snug"></p>
         </div>
     </div>
-    <!-- Boutons A/B/C/D plein écran -->
-    <div id="q-choices" class="flex-grow grid grid-cols-2 gap-4 p-4">
-        <button class="choice-btn rounded-3xl flex items-center justify-center text-5xl font-black text-white active:scale-95 transition-all" style="background:#e74c3c" onclick="selectAnswer(0)">A</button>
-        <button class="choice-btn rounded-3xl flex items-center justify-center text-5xl font-black text-white active:scale-95 transition-all" style="background:#3498db" onclick="selectAnswer(1)">B</button>
-        <button class="choice-btn rounded-3xl flex items-center justify-center text-5xl font-black text-white active:scale-95 transition-all" style="background:#f39c12" onclick="selectAnswer(2)">C</button>
-        <button class="choice-btn rounded-3xl flex items-center justify-center text-5xl font-black text-white active:scale-95 transition-all" style="background:#27ae60" onclick="selectAnswer(3)">D</button>
+
+    <!-- Zone centrale : countdown OU boutons -->
+    <div class="flex-grow relative px-4 pb-2 flex flex-col overflow-hidden">
+        <!-- OVERLAY COUNTDOWN (3-2-1) -->
+        <div id="q-countdown-overlay" class="absolute inset-0 flex flex-col items-center justify-center z-20 hidden" style="background:rgba(2,6,23,.85);border-radius:1.5rem;margin:.5rem">
+            <p class="text-[10px] font-black text-slate-500 uppercase tracking-[.2em] mb-4">Prépare-toi !</p>
+            <p id="q-countdown-num" class="font-black text-white" style="font-size:6.5rem;line-height:1;text-shadow:0 0 60px rgba(124,58,237,.8)">3</p>
+            <p id="q-term-preview" class="text-slate-400 font-bold text-sm mt-6 text-center px-4 leading-snug"></p>
+        </div>
+        <!-- BOUTONS A/B/C/D -->
+        <div id="q-choices" class="flex-grow grid grid-cols-2 gap-3">
+            <button class="choice-btn rounded-3xl flex items-center justify-center text-5xl font-black text-white transition-all" style="background:#e74c3c" onclick="selectAnswer(0)">A</button>
+            <button class="choice-btn rounded-3xl flex items-center justify-center text-5xl font-black text-white transition-all" style="background:#3498db" onclick="selectAnswer(1)">B</button>
+            <button class="choice-btn rounded-3xl flex items-center justify-center text-5xl font-black text-white transition-all" style="background:#f39c12" onclick="selectAnswer(2)">C</button>
+            <button class="choice-btn rounded-3xl flex items-center justify-center text-5xl font-black text-white transition-all" style="background:#27ae60" onclick="selectAnswer(3)">D</button>
+        </div>
+    </div>
+
+    <!-- Score fixe en bas -->
+    <div class="px-4 pb-5 flex-shrink-0">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl px-5 py-3 flex items-center justify-between">
+            <div>
+                <p class="text-[8px] font-black text-slate-700 uppercase tracking-widest">Mon score</p>
+                <p id="q-score-bottom" class="text-violet-400 font-black text-2xl leading-none mt-0.5">0 pts</p>
+            </div>
+            <div id="q-player-dot" class="w-9 h-9 rounded-full border-2 border-white/10 flex-shrink-0"></div>
+        </div>
     </div>
 </div>
 
@@ -335,41 +357,45 @@ function listenToRoom(code) {
 }
 
 function handleRoomState(room) {
+    const onScreen = id => document.getElementById(id).classList.contains('active');
+
     switch(room.status) {
         case 'waiting':
-            // Ne revenir au waiting que si on n'est pas encore en jeu
-            if (!document.getElementById('screen-question').classList.contains('active') &&
-                !document.getElementById('screen-sent').classList.contains('active') &&
-                !document.getElementById('screen-result').classList.contains('active')) {
+            if (!onScreen('screen-question') && !onScreen('screen-sent') && !onScreen('screen-result')) {
                 showScreen('screen-waiting');
             }
             break;
+
         case 'question': {
             const serverQ = room.currentQ ?? -1;
-            // Déclencher si : nouvelle question OU si on sort d'un état intermédiaire
-            const notOnQuestion = !document.getElementById('screen-question').classList.contains('active');
-            const notOnSent     = !document.getElementById('screen-sent').classList.contains('active');
-            const isNewQ = serverQ !== currentQ || (notOnQuestion && notOnSent && !hasAnswered);
-            if (isNewQ) {
-                currentQ  = serverQ;
-                totalQ    = room.settings?.totalQ || 10;
-                qTime     = room.settings?.time || 20;
-                questions = room.questions || [];
+            const isNewQuestion = serverQ !== currentQ;
+            // Forcer le passage à la question si on n'est pas sur question/sent
+            // (ex: téléphone qui était sur le leaderboard de la manche précédente)
+            const notInPlay = !onScreen('screen-question') && !onScreen('screen-sent');
+            if (isNewQuestion || notInPlay) {
+                currentQ          = serverQ;
+                totalQ            = room.settings?.totalQ || 10;
+                qTime             = room.settings?.time   || 20;
+                questions         = room.questions        || [];
                 questionStartTime = room.questionStartTime || Date.now();
-                scoreUpdatedForQ  = -1; // reset pour cette nouvelle question
+                scoreUpdatedForQ  = -1;
                 showQuestion(room);
             }
             break;
         }
+
         case 'reveal':
-            // Appeler seulement si on est sur sent/question (pas déjà sur result)
-            if (!document.getElementById('screen-result').classList.contains('active')) {
+            // Mettre à jour le score depuis Firestore (sans re-déclencher si déjà sur result)
+            if (!onScreen('screen-result')) {
                 revealAnswer(room);
             }
             break;
+
         case 'leaderboard':
+            // Toujours afficher le leaderboard (même si déjà affiché → mise à jour)
             showLeaderboard(room);
             break;
+
         case 'finished':
         case 'cancelled':
             showFinalScreen(room);
@@ -378,51 +404,107 @@ function handleRoomState(room) {
 }
 
 // =====================================================================
-// QUESTION
+// QUESTION (avec timer synchronisé + countdown 3s)
 // =====================================================================
+const Q_COUNTDOWN = 3; // secondes de countdown avant que les boutons soient actifs
+let qCountdownInterval = null;
+
 function showQuestion(room) {
     hasAnswered = false;
     lastAnswerIdx = -1;
     clearTimeout(qTimerTimeout);
+    clearInterval(qCountdownInterval);
 
     const q = questions[currentQ];
     if (!q) return;
 
-    document.getElementById('q-round').textContent = `Q ${currentQ + 1}/${totalQ}`;
-    document.getElementById('q-score').textContent = playerScore + ' pts';
-    document.getElementById('q-term').textContent = q.term || q.question || '';
+    // Temps écoulé depuis que la question a été publiée par l'hôte
+    const elapsed = Math.max(0, (Date.now() - questionStartTime) / 1000);
+    const countdownLeft  = Math.max(0, Q_COUNTDOWN - elapsed);
+    const answerTimeLeft = Math.max(0, qTime - Math.max(0, elapsed - Q_COUNTDOWN));
 
-    // Réinitialiser l'état des boutons (taille/opacité)
+    // Si la question est déjà entièrement expirée, ne pas afficher
+    if (elapsed > Q_COUNTDOWN + qTime + 2) return;
+
+    // Textes
+    document.getElementById('q-round').textContent   = `Q ${currentQ + 1}/${totalQ}`;
+    document.getElementById('q-score').textContent   = playerScore + ' pts';
+    document.getElementById('q-term').textContent    = q.term || q.question || '';
+    document.getElementById('q-score-bottom').textContent = playerScore + ' pts';
+    document.getElementById('q-term-preview').textContent = q.term || q.question || '';
+
+    // Couleur du joueur
+    const dot = document.getElementById('q-player-dot');
+    if (dot) dot.style.background = playerColor;
+
+    // Reset boutons
     document.querySelectorAll('#q-choices .choice-btn').forEach(btn => {
-        btn.style.opacity = '1';
+        btn.disabled    = false;
+        btn.style.opacity   = '1';
         btn.style.transform = '';
     });
 
-    // Timer bar
-    const bar = document.getElementById('q-timer-bar');
+    // Timer bar : préparer sans animation
+    const bar  = document.getElementById('q-timer-bar');
+    const wrap = document.getElementById('q-timer-wrap');
+    const barPct = answerTimeLeft > 0 ? (answerTimeLeft / qTime * 100) : 0;
     bar.style.transition = 'none';
-    bar.style.width = '100%';
-    bar.style.background = 'var(--c-primary)';
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-        bar.style.transition = `width ${qTime}s linear`;
-        bar.style.width = '0%';
-    }));
+    bar.style.width      = barPct + '%';
+    wrap.style.opacity   = '0';
 
-    qTimerTimeout = setTimeout(() => {
-        if (!hasAnswered) {
-            // Temps écoulé sans réponse
-            hasAnswered = true;
-            db.collection('rooms').doc(roomCode).update({
-                [`answers.${playerId}.${currentQ}`]: { idx: -1, correct: false, points: 0, ts: Date.now() }
-            }).catch(e => console.warn(e));
-            showTimedOut();
+    const startAnswerPhase = () => {
+        // Rendre la barre visible et lancer l'animation
+        wrap.style.opacity = '1';
+        if (answerTimeLeft > 0.2) {
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                bar.style.transition = `width ${answerTimeLeft}s linear`;
+                bar.style.width = '0%';
+            }));
         }
-    }, qTime * 1000);
+        // Timeout joueur
+        qTimerTimeout = setTimeout(() => {
+            if (!hasAnswered) {
+                hasAnswered = true;
+                db.collection('rooms').doc(roomCode).update({
+                    [`answers.${playerId}.${currentQ}`]: { idx: -1, correct: false, points: 0, ts: Date.now() }
+                }).catch(e => console.warn(e));
+                showTimedOut();
+            }
+        }, answerTimeLeft * 1000);
+    };
+
+    if (countdownLeft > 0.1) {
+        // Afficher le countdown overlay
+        document.querySelectorAll('#q-choices .choice-btn').forEach(btn => { btn.disabled = true; });
+        const overlay  = document.getElementById('q-countdown-overlay');
+        const numEl    = document.getElementById('q-countdown-num');
+        overlay.classList.remove('hidden');
+        let countNum = Math.ceil(countdownLeft);
+        numEl.textContent = countNum;
+
+        qCountdownInterval = setInterval(() => {
+            countNum--;
+            if (countNum <= 0) {
+                clearInterval(qCountdownInterval);
+                overlay.classList.add('hidden');
+                document.querySelectorAll('#q-choices .choice-btn').forEach(btn => { btn.disabled = false; });
+                startAnswerPhase();
+            } else {
+                numEl.textContent = countNum;
+            }
+        }, 1000);
+    } else {
+        // Countdown déjà passé (mise à jour reçue en retard) → démarrer directement
+        document.getElementById('q-countdown-overlay').classList.add('hidden');
+        startAnswerPhase();
+    }
 
     showScreen('screen-question');
 }
 
 function showTimedOut() {
+    clearInterval(qCountdownInterval);
+    document.getElementById('q-countdown-overlay').classList.add('hidden');
     // Afficher écran "envoyé" en version temps écoulé
     document.getElementById('sent-color-badge').style.background = '#64748b';
     document.getElementById('sent-color-badge').textContent = '⏰';
@@ -441,11 +523,13 @@ function showTimedOut() {
 // =====================================================================
 function calcPoints(isCorrect) {
     if (!isCorrect) return 0;
-    const elapsed = (Date.now() - questionStartTime) / 1000;
-    if (elapsed <= 3) return 1000;
+    // Le temps de réponse commence après le countdown de Q_COUNTDOWN secondes
+    const answerWindowStart = questionStartTime + Q_COUNTDOWN * 1000;
+    const elapsed = Math.max(0, (Date.now() - answerWindowStart) / 1000);
+    if (elapsed <= 0) return 1000;
     const remaining = Math.max(0, qTime - elapsed);
-    if (qTime <= 3) return 1000;
-    return Math.round(500 + (500 * remaining / (qTime - 3)));
+    if (qTime <= 0) return 1000;
+    return Math.round(500 + (500 * remaining / qTime));
 }
 
 // =====================================================================
@@ -456,6 +540,8 @@ function selectAnswer(answerIdx) {
     hasAnswered = true;
     lastAnswerIdx = answerIdx;
     clearTimeout(qTimerTimeout);
+    clearInterval(qCountdownInterval);
+    document.getElementById('q-countdown-overlay').classList.add('hidden');
 
     const q = questions[currentQ];
     if (!q) return;
