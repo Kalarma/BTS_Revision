@@ -9,9 +9,10 @@
     <script src="firebase-config.js" onerror="console.log('Firebase non configuré.')"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        :root { --c-primary:#7c3aed; --c-orange:#f97316; --c-green:#10b981; }
         body { font-family:'Plus Jakarta Sans',sans-serif; background-color:#020617; color:#f8fafc; margin:0; min-height:100vh; }
         .glass-card { background:rgba(15,23,42,.6); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,.08); transition:all .3s cubic-bezier(.4,0,.2,1); }
-        .glass-card:hover { transform:translateY(-4px); border-color:#6366f1; box-shadow:0 10px 30px -10px rgba(99,102,241,.4); }
+        .glass-card:hover { transform:translateY(-4px); border-color:var(--c-primary); box-shadow:0 10px 30px -10px rgba(124,58,237,.4); }
         @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
         .fade-in { animation:fadeIn .5s ease forwards; }
         .progress-bar { transition:width 1s ease; }
@@ -25,7 +26,7 @@
         <header class="py-10 flex items-center justify-between gap-4 fade-in">
             <div>
                 <h1 class="text-4xl font-black text-white tracking-tighter uppercase italic">
-                    Hub <span class="text-indigo-500">Révision</span>
+                    Hub <span style="color:var(--c-primary)">Révision</span>
                 </h1>
                 <p class="text-slate-500 mt-1 text-sm font-medium italic">Tes outils de réussite à portée de clic</p>
             </div>
@@ -33,7 +34,7 @@
             <!-- Zone utilisateur -->
             <div id="user-area" class="flex-shrink-0">
                 <!-- État chargement -->
-                <div id="user-loading" class="w-8 h-8 rounded-full border-t-2 border-indigo-500 animate-spin"></div>
+                <div id="user-loading" class="w-8 h-8 rounded-full border-t-2 border-violet-500 animate-spin"></div>
 
                 <!-- Non connecté -->
                 <button id="btn-login" onclick="hubLogin()" class="hidden items-center gap-2 px-4 py-2.5 bg-white text-slate-900 font-black text-xs rounded-xl active:scale-95 transition-all hover:bg-slate-100">
@@ -49,8 +50,8 @@
                 <!-- Connecté -->
                 <div id="user-badge" class="hidden relative">
                     <button onclick="toggleUserMenu()" class="flex items-center gap-2.5 bg-slate-900 border border-slate-800 px-3 py-2 rounded-2xl hover:border-slate-700 transition-colors">
-                        <div id="user-avatar" class="w-7 h-7 rounded-full bg-indigo-500/20 flex items-center justify-center overflow-hidden flex-shrink-0">
-                            <span id="user-initial" class="text-indigo-400 font-black text-xs"></span>
+                        <div id="user-avatar" class="w-7 h-7 rounded-full bg-violet-500/20 flex items-center justify-center overflow-hidden flex-shrink-0">
+                            <span id="user-initial" class="text-violet-400 font-black text-xs"></span>
                         </div>
                         <span id="user-name" class="text-white font-bold text-sm max-w-[120px] truncate"></span>
                         <svg class="w-3 h-3 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -58,9 +59,25 @@
                         </svg>
                     </button>
                     <!-- Dropdown -->
-                    <div id="user-menu" class="hidden absolute right-0 top-full mt-2 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl shadow-black/50 p-2 min-w-[180px] z-50">
+                    <div id="user-menu" class="hidden absolute right-0 top-full mt-2 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl shadow-black/50 p-2 min-w-[200px] z-50">
                         <div class="px-3 py-2 mb-1 border-b border-slate-800">
                             <p id="user-email" class="text-[10px] text-slate-600 font-bold truncate"></p>
+                        </div>
+                        <!-- Tipeee Premium section -->
+                        <div id="hub-premium-section" class="hidden px-3 py-2 mb-1 border-b border-slate-800">
+                            <p class="text-[9px] font-black text-orange-400 uppercase tracking-widest mb-2">🧡 Premium Tipeee</p>
+                            <div class="flex items-center gap-2">
+                                <label class="text-[10px] text-slate-400 font-bold">Couleur du nom</label>
+                                <input id="hub-name-color" type="color" value="#ffffff"
+                                       class="w-7 h-7 rounded-lg border border-slate-700 cursor-pointer bg-transparent"
+                                       oninput="applyNameColor(this.value, true)">
+                            </div>
+                        </div>
+                        <div id="hub-non-premium" class="px-3 py-2 mb-1 border-b border-slate-800">
+                            <a href="https://fr.tipeee.com/zao" target="_blank"
+                               class="flex items-center gap-1.5 text-[10px] text-slate-600 hover:text-orange-400 transition-colors font-bold">
+                                🧡 Débloquer Premium (Tipeee)
+                            </a>
                         </div>
                         <button onclick="hubLogout()" class="w-full text-left px-3 py-2.5 text-rose-400 font-bold text-xs rounded-xl hover:bg-rose-500/10 transition-colors">
                             Se déconnecter
@@ -73,19 +90,32 @@
         <!-- Séparateur -->
         <div class="h-px bg-slate-900 mb-8"></div>
 
+        <!-- ===== REJOINDRE UNE PARTIE ===== -->
+        <div class="mb-8 flex items-center justify-between bg-gradient-to-r from-violet-600/10 to-orange-500/10 border border-violet-500/20 rounded-3xl px-6 py-4">
+            <div>
+                <p class="text-[10px] font-black text-violet-400 uppercase tracking-widest mb-0.5">Multijoueur</p>
+                <p class="text-white font-black text-base">Rejoindre une partie</p>
+                <p class="text-slate-500 text-[10px] font-medium mt-0.5">Utilise un code ou scanne le QR du prof</p>
+            </div>
+            <a href="room/" class="flex-shrink-0 flex items-center gap-2 px-5 py-3 bg-orange-500 hover:bg-orange-400 text-white font-black text-sm rounded-2xl active:scale-95 transition-all shadow-lg shadow-orange-500/25">
+                🎮 Rejoindre
+            </a>
+        </div>
+
         <!-- ===== LOADER ===== -->
         <div id="loader" class="flex flex-col items-center justify-center py-20">
-            <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-indigo-500 border-opacity-50"></div>
+            <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-violet-500 border-opacity-50"></div>
             <p class="text-slate-600 text-[10px] font-bold uppercase tracking-widest mt-4">Chargement des modules...</p>
         </div>
 
         <!-- ===== GRILLE DES COURS ===== -->
+        <p id="grid-label" class="hidden text-[10px] font-black text-slate-600 uppercase tracking-widest mb-5">Modules de cours</p>
         <div id="app-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 hidden pb-12"></div>
 
         <!-- ===== ERREUR ===== -->
         <div id="error-state" class="hidden text-center py-20">
             <p class="text-rose-400 font-bold">Impossible de charger les modules.</p>
-            <p class="text-slate-600 text-xs mt-2">Vérifiez que le dépôt est public et que <code class="text-indigo-400">courses.json</code> existe.</p>
+            <p class="text-slate-600 text-xs mt-2">Vérifiez que le dépôt est public et que <code class="text-violet-400">courses.json</code> existe.</p>
         </div>
     </div>
 
@@ -192,6 +222,35 @@ function showLoggedIn(user) {
     } else {
         document.getElementById('user-initial').textContent = name[0].toUpperCase();
     }
+
+    // Tipeee check + name color
+    checkTipeeePremium(user.uid);
+}
+
+async function checkTipeeePremium(uid) {
+    if (!fbDb || !uid) return;
+    try {
+        const snap = await fbDb.collection('users').doc(uid).get();
+        const data = snap.data() || {};
+        const isPremium = data.premium?.active === true;
+        const savedColor = data.settings?.nameColor || '#ffffff';
+
+        if (isPremium) {
+            document.getElementById('hub-premium-section').classList.remove('hidden');
+            document.getElementById('hub-non-premium').classList.add('hidden');
+            document.getElementById('hub-name-color').value = savedColor;
+            applyNameColor(savedColor, false);
+        }
+    } catch(e) { console.warn('Tipeee check failed:', e); }
+}
+
+function applyNameColor(color, save) {
+    document.getElementById('user-name').style.color = color;
+    if (save && hubUser && fbDb) {
+        fbDb.collection('users').doc(hubUser.uid).set(
+            { settings: { nameColor: color } }, { merge: true }
+        ).catch(() => {});
+    }
 }
 
 // =====================================================================
@@ -243,7 +302,7 @@ async function loadAllProgress(courses) {
 function progressColor(pct) {
     if (pct >= 80) return '#10b981'; // emerald
     if (pct >= 40) return '#f59e0b'; // amber
-    if (pct > 0)   return '#6366f1'; // indigo
+    if (pct > 0)   return '#7c3aed'; // deep purple
     return '#1e293b'; // slate (empty)
 }
 
@@ -270,7 +329,7 @@ function renderGrid(courses, allProgress) {
             : seen > 0
             ? `<div class="mt-5 mb-1">
                   <div class="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                      <div class="h-full rounded-full bg-indigo-500/40 progress-bar" style="width:${Math.min(seen*10,90)}%"></div>
+                      <div class="h-full rounded-full bg-violet-500/40 progress-bar" style="width:${Math.min(seen*10,90)}%"></div>
                   </div>
                   <span class="text-[10px] text-slate-600 font-bold block mt-1">${seen} carte(s) vues</span>
                </div>`
@@ -280,8 +339,8 @@ function renderGrid(courses, allProgress) {
         <a href="${appUrl}"
            class="glass-card p-7 rounded-[2.5rem] flex flex-col items-start group">
 
-            <div class="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-400 mb-5
-                        group-hover:bg-indigo-500 group-hover:text-white group-hover:rotate-6 transition-all duration-300">
+            <div class="w-12 h-12 bg-violet-500/10 rounded-2xl flex items-center justify-center text-violet-400 mb-5
+                        group-hover:bg-violet-500 group-hover:text-white group-hover:rotate-6 transition-all duration-300">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
@@ -293,7 +352,7 @@ function renderGrid(courses, allProgress) {
 
             ${progressBar}
 
-            <div class="mt-5 flex items-center text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em]">
+            <div class="mt-5 flex items-center text-violet-400 text-[10px] font-black uppercase tracking-[0.2em]">
                 Lancer
                 <svg class="w-3.5 h-3.5 ml-2 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
@@ -303,6 +362,7 @@ function renderGrid(courses, allProgress) {
     }).join('');
 
     document.getElementById('loader').classList.add('hidden');
+    document.getElementById('grid-label').classList.remove('hidden');
     grid.classList.remove('hidden');
 }
 
