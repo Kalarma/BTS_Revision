@@ -81,7 +81,10 @@
             <p class="text-[9px] text-slate-600 font-bold uppercase mb-1">Code de la salle</p>
             <p id="waiting-code" class="text-white font-black text-2xl tracking-[0.3em]"></p>
         </div>
-        <div class="mt-6">
+        <div class="mt-6 flex flex-col items-center gap-3">
+            <button onclick="location.reload()" class="text-indigo-500 font-bold text-xs uppercase hover:text-indigo-300 transition-colors">
+                ↺ Rafraîchir
+            </button>
             <button onclick="confirmQuitPlayer()" class="text-slate-700 font-bold text-xs uppercase hover:text-rose-400 transition-colors">
                 Quitter la partie
             </button>
@@ -204,6 +207,8 @@ let questionStartTime = 0;
 let lastAnswerIdx = -1;
 let prevRanks = {};
 let bookmarkedQuestions = JSON.parse(sessionStorage.getItem('kh_bookmarks') || '[]');
+// Anti-doublon points : on ne met à jour le score qu'une seule fois par question
+let scoreUpdatedForQ = -1;
 
 // Couleurs des boutons A/B/C/D
 const BTN_COLORS = ['#e74c3c', '#3498db', '#f39c12', '#27ae60'];
@@ -328,25 +333,35 @@ function listenToRoom(code) {
 function handleRoomState(room) {
     switch(room.status) {
         case 'waiting':
-            showScreen('screen-waiting');
+            // Ne revenir au waiting que si on n'est pas encore en jeu
+            if (!document.getElementById('screen-question').classList.contains('active') &&
+                !document.getElementById('screen-sent').classList.contains('active') &&
+                !document.getElementById('screen-result').classList.contains('active')) {
+                showScreen('screen-waiting');
+            }
             break;
         case 'question': {
-            const isNewQ = room.currentQ !== currentQ ||
-                document.getElementById('screen-waiting').classList.contains('active') ||
-                document.getElementById('screen-leaderboard').classList.contains('active') ||
-                document.getElementById('screen-result').classList.contains('active');
+            const serverQ = room.currentQ ?? -1;
+            // Déclencher si : nouvelle question OU si on sort d'un état intermédiaire
+            const notOnQuestion = !document.getElementById('screen-question').classList.contains('active');
+            const notOnSent     = !document.getElementById('screen-sent').classList.contains('active');
+            const isNewQ = serverQ !== currentQ || (notOnQuestion && notOnSent && !hasAnswered);
             if (isNewQ) {
-                currentQ = room.currentQ;
-                totalQ   = room.settings?.totalQ || 10;
-                qTime    = room.settings?.time || 20;
+                currentQ  = serverQ;
+                totalQ    = room.settings?.totalQ || 10;
+                qTime     = room.settings?.time || 20;
                 questions = room.questions || [];
                 questionStartTime = room.questionStartTime || Date.now();
+                scoreUpdatedForQ  = -1; // reset pour cette nouvelle question
                 showQuestion(room);
             }
             break;
         }
         case 'reveal':
-            revealAnswer(room);
+            // Appeler seulement si on est sur sent/question (pas déjà sur result)
+            if (!document.getElementById('screen-result').classList.contains('active')) {
+                revealAnswer(room);
+            }
             break;
         case 'leaderboard':
             showLeaderboard(room);
@@ -491,18 +506,21 @@ function revealAnswer(room) {
     const isCorrect = myAnswer.correct || false;
     const pts = myAnswer.points || 0;
 
-    // Mettre à jour le score local depuis Firestore (source de vérité)
-    playerScore = room.players?.[playerId]?.score || playerScore;
-
-    // Mettre à jour score dans Firestore si points calculés côté client
-    if (isCorrect && pts > 0) {
-        const newScore = (room.players?.[playerId]?.score || 0);
-        // Le score peut déjà avoir été mis à jour, on s'assure
-        db.collection('rooms').doc(roomCode).update({
-            [`players.${playerId}.score`]: newScore + pts
-        }).then(() => {
-            playerScore = newScore + pts;
-        }).catch(e => console.warn(e));
+    // Mettre à jour le score UNE SEULE FOIS par question (anti-boucle infinie)
+    if (scoreUpdatedForQ !== currentQ) {
+        scoreUpdatedForQ = currentQ;
+        if (isCorrect && pts > 0) {
+            const baseScore = room.players?.[playerId]?.score || 0;
+            const newScore  = baseScore + pts;
+            db.collection('rooms').doc(roomCode).update({
+                [`players.${playerId}.score`]: newScore
+            }).then(() => { playerScore = newScore; })
+              .catch(e => console.warn(e));
+            playerScore = newScore; // optimiste
+        }
+    } else {
+        // Score déjà mis à jour, juste lire depuis Firestore
+        playerScore = room.players?.[playerId]?.score || playerScore;
     }
 
     showResultScreen(isCorrect, pts);
