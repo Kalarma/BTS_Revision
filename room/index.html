@@ -8,7 +8,7 @@
     <script src="../firebase-config.js" onerror="console.log('no firebase')"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
-        :root { --app-h: 100dvh; }
+        :root { --app-h: 100dvh; --c-primary:#7c3aed; --c-orange:#f97316; --c-green:#10b981; }
         body { font-family:'Plus Jakarta Sans',sans-serif; background:#020617; height:var(--app-h); overflow:hidden; color:#f8fafc; margin:0; }
         #app { height:var(--app-h); display:flex; flex-direction:column; }
         .screen { display:none; flex:1; flex-direction:column; height:100%; overflow-y:auto; }
@@ -16,7 +16,7 @@
         @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
         @keyframes rankBounce { 0%{transform:translateX(-8px);opacity:.5} 100%{transform:translateX(0);opacity:1} }
-        @keyframes timerPulse { 0%,100%{background:#6366f1} 50%{background:#f43f5e} }
+        @keyframes timerPulse { 0%,100%{background:#7c3aed} 50%{background:#f43f5e} }
         .fade-up { animation:fadeUp .35s ease forwards; }
         .pulse { animation:pulse 1.5s infinite; }
         .choice-btn:active { transform:scale(.95) !important; }
@@ -31,26 +31,27 @@
 <div id="app">
 
 <!-- ============================================================ JOIN -->
-<div id="screen-join" class="screen active items-center justify-center p-6">
+<div id="screen-join" class="screen active items-center justify-center p-6 relative">
+    <a href="../" class="absolute top-4 left-4 text-slate-700 hover:text-slate-400 transition-colors text-xs font-bold uppercase flex items-center gap-1">← Hub</a>
     <div class="w-full max-w-sm fade-up">
         <div class="text-center mb-8">
             <div class="text-5xl mb-3">🎮</div>
-            <h1 class="text-3xl font-black text-white uppercase italic">Kahoot <span class="text-indigo-500">BTS</span></h1>
-            <p class="text-slate-600 text-[10px] font-bold uppercase tracking-widest mt-1">Rejoindre une partie</p>
+            <h1 class="text-3xl font-black text-white uppercase italic">Rejoindre <span class="text-violet-400">une partie</span></h1>
+            <p class="text-slate-600 text-[10px] font-bold uppercase tracking-widest mt-1">Saisis le code donné par ton prof</p>
         </div>
         <div class="space-y-3 mb-4">
             <input id="join-code" type="text" placeholder="Code de la salle (6 lettres)" maxlength="6"
-                   class="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-white font-black text-center text-xl uppercase tracking-[0.3em] placeholder-slate-700 outline-none focus:border-indigo-500 transition-colors"
+                   class="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-white font-black text-center text-xl uppercase tracking-[0.3em] placeholder-slate-700 outline-none focus:border-violet-500 transition-colors"
                    oninput="this.value=this.value.toUpperCase()">
             <input id="join-name" type="text" placeholder="Ton prénom" maxlength="20"
-                   class="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-white font-bold placeholder-slate-700 outline-none focus:border-indigo-500 transition-colors">
+                   class="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-white font-bold placeholder-slate-700 outline-none focus:border-violet-500 transition-colors">
         </div>
 
         <!-- Sélecteur de couleur -->
         <div class="mb-4">
             <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest text-center mb-3">Choisis ta couleur</p>
             <div class="flex gap-3 justify-center flex-wrap py-2">
-                <button onclick="selectColor('#6366f1')" class="color-btn w-10 h-10 rounded-full border-2 active:scale-90 transition-all" style="background:#6366f1;border-color:white;transform:scale(1.2)" data-color="#6366f1"></button>
+                <button onclick="selectColor('#7c3aed')" class="color-btn w-10 h-10 rounded-full border-2 active:scale-90 transition-all" style="background:#7c3aed;border-color:white;transform:scale(1.2)" data-color="#7c3aed"></button>
                 <button onclick="selectColor('#f43f5e')" class="color-btn w-10 h-10 rounded-full border-2 border-transparent active:scale-90 transition-all" style="background:#f43f5e" data-color="#f43f5e"></button>
                 <button onclick="selectColor('#10b981')" class="color-btn w-10 h-10 rounded-full border-2 border-transparent active:scale-90 transition-all" style="background:#10b981" data-color="#10b981"></button>
                 <button onclick="selectColor('#f59e0b')" class="color-btn w-10 h-10 rounded-full border-2 border-transparent active:scale-90 transition-all" style="background:#f59e0b" data-color="#f59e0b"></button>
@@ -64,7 +65,7 @@
         <div id="join-error" class="hidden mb-3 px-4 py-2 bg-rose-500/10 border border-rose-500/20 rounded-xl">
             <p class="text-rose-400 text-xs font-bold text-center"></p>
         </div>
-        <button onclick="joinRoom()" class="w-full py-4 bg-indigo-600 text-white font-black uppercase rounded-2xl active:scale-95 transition-all shadow-lg shadow-indigo-500/20">
+        <button onclick="joinRoom()" class="w-full py-4 bg-violet-700 text-white font-black uppercase rounded-2xl active:scale-95 transition-all shadow-lg shadow-violet-500/20">
             Rejoindre !
         </button>
     </div>
@@ -82,7 +83,7 @@
             <p id="waiting-code" class="text-white font-black text-2xl tracking-[0.3em]"></p>
         </div>
         <div class="mt-6 flex flex-col items-center gap-3">
-            <button onclick="location.reload()" class="text-indigo-500 font-bold text-xs uppercase hover:text-indigo-300 transition-colors">
+            <button onclick="location.reload()" class="text-violet-400 font-bold text-xs uppercase hover:text-violet-300 transition-colors">
                 ↺ Rafraîchir
             </button>
             <button onclick="confirmQuitPlayer()" class="text-slate-700 font-bold text-xs uppercase hover:text-rose-400 transition-colors">
@@ -97,11 +98,12 @@
     <!-- Header -->
     <div class="px-4 pt-safe pt-4 pb-2 flex-shrink-0">
         <div class="flex items-center justify-between mb-2">
+            <button onclick="confirmQuitPlayer()" class="text-slate-700 hover:text-rose-400 transition-colors text-xs font-bold uppercase flex items-center gap-1">✕</button>
             <span id="q-round" class="text-[10px] font-black text-slate-600 uppercase">Q 1/10</span>
-            <span id="q-score" class="text-sm font-black text-indigo-400">0 pts</span>
+            <span id="q-score" class="text-sm font-black text-violet-400">0 pts</span>
         </div>
         <div class="bg-slate-900 h-2 rounded-full overflow-hidden">
-            <div id="q-timer-bar" class="h-full w-full timer-animate" style="background:#6366f1"></div>
+            <div id="q-timer-bar" class="h-full w-full timer-animate" style="background:#7c3aed"></div>
         </div>
     </div>
     <!-- Terme -->
@@ -138,11 +140,12 @@
 </div>
 
 <!-- ============================================================ RESULT (après reveal du host) -->
-<div id="screen-result" class="screen items-center justify-center p-6 text-center">
+<div id="screen-result" class="screen items-center justify-center p-6 text-center relative">
+    <button onclick="confirmQuitPlayer()" class="absolute top-4 left-4 text-slate-700 hover:text-rose-400 transition-colors text-xs font-bold uppercase">✕ Quitter</button>
     <div class="fade-up w-full max-w-xs">
         <div id="result-big" class="text-8xl mb-4">✓</div>
         <h2 id="result-title" class="text-3xl font-black uppercase mb-3 text-white">Correct !</h2>
-        <div id="result-points" class="text-6xl font-black text-indigo-400 mb-1">+1000</div>
+        <div id="result-points" class="text-6xl font-black text-violet-400 mb-1">+1000</div>
         <p class="text-slate-500 text-sm font-bold mb-6">pts gagnés cette question</p>
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-center">
             <p class="text-[9px] font-black text-slate-600 uppercase mb-1">Score total</p>
@@ -153,7 +156,8 @@
 </div>
 
 <!-- ============================================================ LEADERBOARD -->
-<div id="screen-leaderboard" class="screen p-6">
+<div id="screen-leaderboard" class="screen p-6 relative">
+    <button onclick="confirmQuitPlayer()" class="absolute top-4 left-4 text-slate-700 hover:text-rose-400 transition-colors text-xs font-bold uppercase">✕ Quitter</button>
     <div class="max-w-sm mx-auto w-full">
         <h3 class="text-[10px] font-black text-slate-600 uppercase tracking-widest text-center mb-6">Classement</h3>
         <div id="lb-list" class="space-y-2 mb-4"></div>
@@ -166,7 +170,7 @@
     <div class="fade-up w-full max-w-sm">
         <div id="final-emoji" class="text-6xl mb-4">🏆</div>
         <h2 class="text-3xl font-black text-white uppercase italic mb-1">Fin de partie !</h2>
-        <p id="final-rank" class="text-indigo-400 font-bold text-lg mb-6"></p>
+        <p id="final-rank" class="text-violet-400 font-bold text-lg mb-6"></p>
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 mb-4">
             <p class="text-[9px] font-black text-slate-600 uppercase mb-1">Score final</p>
             <p id="final-score" class="text-4xl font-black text-white"></p>
@@ -188,7 +192,7 @@
     <div>
         <div class="text-5xl mb-4">⚠️</div>
         <p id="room-error-msg" class="text-rose-400 font-bold mb-4"></p>
-        <button onclick="location.reload()" class="text-indigo-400 font-bold text-sm">Réessayer</button>
+        <button onclick="location.reload()" class="text-violet-400 font-bold text-sm">Réessayer</button>
     </div>
 </div>
 
@@ -199,7 +203,7 @@
 // =====================================================================
 let db = null, useFirebase = false;
 let roomCode = '', playerId = '', playerName = '', playerScore = 0;
-let playerColor = '#6366f1';
+let playerColor = '#7c3aed';
 let currentQ = 0, totalQ = 10, qTime = 20;
 let questions = [], roomListener = null;
 let hasAnswered = false, qTimerTimeout = null;
@@ -398,7 +402,7 @@ function showQuestion(room) {
     const bar = document.getElementById('q-timer-bar');
     bar.style.transition = 'none';
     bar.style.width = '100%';
-    bar.style.background = '#6366f1';
+    bar.style.background = 'var(--c-primary)';
     requestAnimationFrame(() => requestAnimationFrame(() => {
         bar.style.transition = `width ${qTime}s linear`;
         bar.style.width = '0%';
@@ -530,7 +534,7 @@ function showResultScreen(isCorrect, pts) {
     document.getElementById('result-big').textContent    = isCorrect ? '🎉' : '😅';
     document.getElementById('result-title').textContent  = isCorrect ? 'Correct !' : 'Raté !';
     document.getElementById('result-points').textContent = isCorrect ? '+' + pts : '+0';
-    document.getElementById('result-points').style.color = isCorrect ? '#6366f1' : '#94a3b8';
+    document.getElementById('result-points').style.color = isCorrect ? '#7c3aed' : '#94a3b8';
     document.getElementById('result-total-score').textContent = playerScore + ' pts';
     showScreen('screen-result');
 }
@@ -550,16 +554,16 @@ function showLeaderboard(room) {
         const arrowColor = rankChange > 0 ? 'text-emerald-400' : rankChange < 0 ? 'text-rose-400' : '';
         prevRanks[p.name] = i;
 
-        return `<div class="flex items-center justify-between p-3 rounded-2xl border transition-all ${isMe ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-slate-900 border-slate-800'}"
+        return `<div class="flex items-center justify-between p-3 rounded-2xl border transition-all ${isMe ? 'bg-violet-500/10 border-violet-500/30' : 'bg-slate-900 border-slate-800'}"
                      style="${rankChange !== 0 ? 'animation:rankBounce .4s ease' : ''}">
             <div class="flex items-center gap-2">
                 <span class="font-black text-slate-600 text-sm w-5">${i + 1}</span>
-                <div class="w-3 h-3 rounded-full flex-shrink-0" style="background:${p.color || '#6366f1'}"></div>
-                <span class="font-bold text-sm" style="color:${isMe ? (p.color || '#6366f1') : 'white'}">${p.name}${isMe ? ' (toi)' : ''}</span>
+                <div class="w-3 h-3 rounded-full flex-shrink-0" style="background:${p.color || '#7c3aed'}"></div>
+                <span class="font-bold text-sm" style="color:${isMe ? (p.color || '#7c3aed') : 'white'}">${p.name}${isMe ? ' (toi)' : ''}</span>
             </div>
             <div class="flex items-center gap-2">
                 <span class="${arrowColor} text-xs font-black">${arrow}</span>
-                <span class="font-black text-sm" style="color:${isMe ? (p.color || '#6366f1') : '#94a3b8'}">${p.score || 0} pts</span>
+                <span class="font-black text-sm" style="color:${isMe ? (p.color || '#7c3aed') : '#94a3b8'}">${p.score || 0} pts</span>
             </div>
         </div>`;
     }).join('');
@@ -582,11 +586,11 @@ function showFinalScreen(room) {
 
     document.getElementById('final-leaderboard').innerHTML = sorted.map((p, i) => {
         const isMe = p.name === playerName;
-        return `<div class="flex items-center justify-between p-3 rounded-xl border ${isMe ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-slate-900 border-slate-800'}">
+        return `<div class="flex items-center justify-between p-3 rounded-xl border ${isMe ? 'bg-violet-500/10 border-violet-500/30' : 'bg-slate-900 border-slate-800'}">
             <div class="flex items-center gap-2">
                 <span class="font-black text-xs">${emojis[i] || (i + 1)}</span>
-                <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${p.color || '#6366f1'}"></div>
-                <span class="font-bold text-sm" style="color:${isMe ? (p.color || '#6366f1') : 'white'}">${p.name}</span>
+                <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${p.color || '#7c3aed'}"></div>
+                <span class="font-bold text-sm" style="color:${isMe ? (p.color || '#7c3aed') : 'white'}">${p.name}</span>
             </div>
             <span class="font-black text-slate-400 text-sm">${p.score || 0} pts</span>
         </div>`;
@@ -669,7 +673,7 @@ async function init() {
                 roomCode    = savedRoom;
                 playerId    = savedPid;
                 playerName  = savedName;
-                playerColor = savedColor || '#6366f1';
+                playerColor = savedColor || '#7c3aed';
                 playerScore = snap.data().players?.[savedPid]?.score || 0;
 
                 const nameEl = document.getElementById('waiting-name');
