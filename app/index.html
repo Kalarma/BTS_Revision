@@ -113,7 +113,7 @@
 
 <!-- ==================== HOME ==================== -->
 <div id="screen-home" class="screen overflow-y-auto">
-    <div class="flex flex-col max-w-md mx-auto w-full px-6 pb-10">
+    <div class="flex flex-col w-full px-6 pb-10">
         <!-- Header -->
         <div class="pt-8 pb-2 flex items-start justify-between gap-3">
             <div class="min-w-0">
@@ -310,7 +310,7 @@
 
 <!-- ==================== MULTI SETUP ==================== -->
 <div id="screen-multi-setup" class="screen overflow-y-auto">
-    <div class="flex flex-col max-w-md mx-auto w-full px-6 pb-8">
+    <div class="flex flex-col w-full px-6 pb-8">
         <div class="pt-6 pb-4 flex items-center gap-4">
             <button onclick="exitToHome()" class="text-slate-600 font-black text-lg leading-none">←</button>
             <h2 class="text-xl font-black text-white uppercase italic">Mode Multi</h2>
@@ -391,7 +391,7 @@
 
 <!-- ==================== PODIUM ==================== -->
 <div id="screen-podium" class="screen overflow-y-auto">
-    <div class="flex flex-col max-w-sm mx-auto w-full px-6 pb-8 items-center">
+    <div class="flex flex-col w-full px-6 pb-8 items-center">
         <div class="pt-8 pb-6 text-center">
             <h2 class="text-4xl font-black text-white uppercase italic">Résultats</h2>
             <p class="text-slate-600 text-[10px] font-black uppercase tracking-widest mt-1">Fin de partie</p>
@@ -404,7 +404,7 @@
 
 <!-- ==================== KAHOOT LOBBY (HOST) ==================== -->
 <div id="screen-kahoot-lobby" class="screen overflow-y-auto">
-    <div class="flex flex-col max-w-md mx-auto w-full px-6 pb-8">
+    <div class="flex flex-col w-full px-6 pb-8">
         <div class="pt-6 pb-4 flex items-center justify-between">
             <button onclick="cancelKahoot()" class="text-slate-600 font-black text-lg leading-none">←</button>
             <span class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Salle en attente</span>
@@ -489,7 +489,7 @@
 
 <!-- ==================== KAHOOT REVEAL (HOST) ==================== -->
 <div id="screen-kahoot-reveal" class="screen overflow-y-auto">
-    <div class="flex flex-col max-w-md mx-auto w-full px-6 pb-8">
+    <div class="flex flex-col w-full px-6 pb-8">
         <div class="pt-6 pb-4 flex items-center justify-between">
             <button onclick="confirmQuitKahoot()" class="text-slate-700 hover:text-rose-400 transition-colors text-xs font-bold uppercase">✕ Quitter</button>
             <h3 class="text-[10px] font-black text-slate-600 uppercase tracking-widest text-center">Résultats de la question</h3>
@@ -1252,7 +1252,7 @@ async function startKahoot() {
                 ? '<div class="col-span-2 text-center text-slate-700 text-xs font-bold py-4">En attente des joueurs...</div>'
                 : Object.values(players).map(p => `
                     <div class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0"></div>
+                        <div class="w-2 h-2 rounded-full flex-shrink-0" style="background:${p.color||'#10b981'}"></div>
                         <span class="text-white font-bold text-sm truncate">${p.name}</span>
                     </div>`).join('');
         }
@@ -1291,10 +1291,11 @@ function showKahootQuestion() {
     const colors = ['#e74c3c','#3498db','#f39c12','#27ae60'];
     const labels = ['A','B','C','D'];
 
-    // Cacher les réponses pendant 5s
+    // Cacher les réponses et le bouton révéler pendant 5s
     const choicesEl = document.getElementById('kh-choices-display');
     const countdownEl = document.getElementById('kh-countdown');
     choicesEl.classList.add('hidden');
+    document.getElementById('kh-reveal-btn').classList.add('hidden');
     choicesEl.innerHTML = q.choices.map((ch,i) => `
         <div class="rounded-2xl p-3 flex items-center gap-2" style="background:${colors[i]}20;border:1px solid ${colors[i]}40">
             <span class="font-black text-xs" style="color:${colors[i]}">${labels[i]}</span>
@@ -1329,6 +1330,7 @@ function showKahootQuestion() {
 
 function startKahootTimer() {
     clearTimeout(kahootTimerTimeout);
+    document.getElementById('kh-reveal-btn').classList.remove('hidden');
     const bar = document.getElementById('kh-timer-bar');
     bar.style.transition = 'none'; bar.style.width = '100%';
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
