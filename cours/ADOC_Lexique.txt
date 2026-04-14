@@ -1,6 +1,3 @@
-# Lexique ADOC
-# Format : Terme | Définition  (une paire par ligne)
-
 Accords de référencement | Matérialisent la relation entre le producteur et le distributeur concernant une offre déterminée dans le cadre du référencement conclu.
 Affichage digital | Affichage sur des écrans numériques permettant un affichage dynamique.
 Agencement | Consiste à aménager l'espace en mettant en place des zones et du mobilier pour optimiser l'ergonomie et la mise en valeur des produits.
