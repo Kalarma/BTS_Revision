@@ -91,7 +91,7 @@
         <div class="h-px bg-slate-900 mb-8"></div>
 
         <!-- ===== REJOINDRE UNE PARTIE ===== -->
-        <div class="mb-8 flex items-center justify-between bg-gradient-to-r from-violet-600/10 to-orange-500/10 border border-violet-500/20 rounded-3xl px-6 py-4">
+        <div class="mb-4 flex items-center justify-between bg-gradient-to-r from-violet-600/10 to-orange-500/10 border border-violet-500/20 rounded-3xl px-6 py-4">
             <div>
                 <p class="text-[10px] font-black text-violet-400 uppercase tracking-widest mb-0.5">Multijoueur</p>
                 <p class="text-white font-black text-base">Rejoindre une partie</p>
@@ -100,6 +100,29 @@
             <a href="room/" class="flex-shrink-0 flex items-center gap-2 px-5 py-3 bg-orange-500 hover:bg-orange-400 text-white font-black text-sm rounded-2xl active:scale-95 transition-all shadow-lg shadow-orange-500/25">
                 🎮 Rejoindre
             </a>
+        </div>
+        <!-- Leaderboard toggle -->
+        <div id="leaderboard-toggle-bar" class="hidden mb-8">
+            <button onclick="toggleLeaderboard()" class="w-full flex items-center justify-between px-5 py-3 bg-slate-900 border border-slate-800 rounded-2xl hover:border-slate-700 transition-colors group">
+                <span class="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                    🏆 Tableau des scores
+                    <span id="lb-total-users" class="hidden px-1.5 py-0.5 bg-violet-500/10 text-violet-400 rounded-md text-[9px]"></span>
+                </span>
+                <span id="lb-chevron" class="text-slate-700 text-xs transition-transform">▼</span>
+            </button>
+        </div>
+
+        <!-- ===== LEADERBOARD ===== -->
+        <div id="leaderboard-section" class="hidden mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <p class="text-[10px] font-black text-slate-600 uppercase tracking-widest">🏆 Tableau des scores</p>
+                <button onclick="toggleLeaderboard()" class="text-[9px] font-black text-slate-700 uppercase tracking-widest hover:text-slate-500 transition-colors">Masquer ▲</button>
+            </div>
+            <div id="leaderboard-list" class="space-y-2">
+                <div class="flex items-center justify-center py-6">
+                    <div class="w-5 h-5 border-t-2 border-violet-500 rounded-full animate-spin"></div>
+                </div>
+            </div>
         </div>
 
         <!-- ===== LOADER ===== -->
@@ -225,6 +248,7 @@ function showLoggedIn(user) {
 
     // Tipeee check + name color
     checkTipeeePremium(user.uid);
+    maybeShowLeaderboardBtn();
 }
 
 async function checkTipeeePremium(uid) {
@@ -316,47 +340,54 @@ function renderGrid(courses, allProgress) {
         const appUrl  = `${BASE_URL}/app/?course=${c.id}`;
         const seen    = Object.keys(prog).length;
 
-        const progressBar = mastery.total > 0
-            ? `<div class="mt-5 mb-1">
-                  <div class="flex justify-between items-center mb-1.5">
-                      <span class="text-[10px] font-black uppercase tracking-wider" style="color:${color}">${mastery.pct}% maîtrisé</span>
-                      <span class="text-[10px] text-slate-600 font-bold">${mastery.mastered}/${mastery.total}</span>
-                  </div>
-                  <div class="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                      <div class="h-full rounded-full progress-bar" style="width:${mastery.pct}%;background:${color}"></div>
-                  </div>
-               </div>`
+        // Bar width
+        const barW = mastery.total > 0 ? mastery.pct
+                   : seen > 0 ? Math.min(seen * 4, 60) : 0;
+        const barColor2 = mastery.total > 0 ? color : '#7c3aed';
+
+        // Score label
+        const scoreLabel = mastery.total > 0
+            ? `<span class="text-[10px] font-black tabular-nums" style="color:${color}">${mastery.pct} pts</span>`
             : seen > 0
-            ? `<div class="mt-5 mb-1">
-                  <div class="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                      <div class="h-full rounded-full bg-violet-500/40 progress-bar" style="width:${Math.min(seen*10,90)}%"></div>
-                  </div>
-                  <span class="text-[10px] text-slate-600 font-bold block mt-1">${seen} carte(s) vues</span>
-               </div>`
-            : `<p class="text-[10px] text-slate-700 font-bold uppercase tracking-wider mt-5">Pas encore commencé</p>`;
+            ? `<span class="text-[10px] font-bold text-slate-600">${seen} vues</span>`
+            : `<span class="text-[10px] font-bold text-slate-700">Nouveau</span>`;
+
+        // Status under title
+        const statusLine = mastery.total > 0
+            ? `<p class="text-[10px] font-black uppercase tracking-wider mt-2" style="color:${color}">${mastery.pct}% maîtrisé · ${mastery.mastered}/${mastery.total}</p>`
+            : seen > 0
+            ? `<p class="text-[10px] text-slate-600 font-bold mt-2">${seen} carte(s) vues · en cours</p>`
+            : `<p class="text-[10px] text-slate-700 font-bold uppercase tracking-wider mt-2">Pas encore commencé</p>`;
 
         return `
-        <a href="${appUrl}"
-           class="glass-card p-7 rounded-[2.5rem] flex flex-col items-start group">
+        <a href="${appUrl}" class="glass-card rounded-[2.5rem] flex flex-col overflow-hidden group">
+            <div class="p-6 flex flex-col flex-grow">
 
-            <div class="w-12 h-12 bg-violet-500/10 rounded-2xl flex items-center justify-center text-violet-400 mb-5
-                        group-hover:bg-violet-500 group-hover:text-white group-hover:rotate-6 transition-all duration-300">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                </svg>
+                <div class="flex items-start justify-between mb-4">
+                    <div class="w-11 h-11 bg-violet-500/10 rounded-2xl flex items-center justify-center text-violet-400
+                                group-hover:bg-violet-500 group-hover:text-white transition-all duration-300 flex-shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                        </svg>
+                    </div>
+                    ${scoreLabel}
+                </div>
+
+                <h3 class="text-lg font-extrabold text-white leading-snug">${c.title}</h3>
+                <p class="text-slate-600 text-[11px] font-medium mt-0.5">Flashcards · Quiz QCM · Mode Multi</p>
+                ${statusLine}
+
+                <div class="mt-auto pt-5 flex items-center text-violet-400 text-[10px] font-black uppercase tracking-[0.2em]">
+                    Lancer
+                    <svg class="w-3.5 h-3.5 ml-2 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                    </svg>
+                </div>
             </div>
-
-            <h3 class="text-xl font-extrabold text-white">${c.title}</h3>
-            <p class="text-slate-600 text-xs font-medium mt-1">Flashcards · Quiz QCM · Mode Multi</p>
-
-            ${progressBar}
-
-            <div class="mt-5 flex items-center text-violet-400 text-[10px] font-black uppercase tracking-[0.2em]">
-                Lancer
-                <svg class="w-3.5 h-3.5 ml-2 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                </svg>
+            <!-- Full-width progress bar at bottom edge -->
+            <div class="w-full h-2 bg-slate-800 flex-shrink-0">
+                <div class="h-full progress-bar" style="width:${barW}%;background:${barColor2}"></div>
             </div>
         </a>`;
     }).join('');
@@ -433,6 +464,75 @@ async function init() {
 }
 
 window.onload = init;
+
+// =====================================================================
+// LEADERBOARD
+// =====================================================================
+let lbVisible = false;
+let lbLoaded  = false;
+
+async function toggleLeaderboard() {
+    const section  = document.getElementById('leaderboard-section');
+    const chevron  = document.getElementById('lb-chevron');
+    lbVisible = !lbVisible;
+    section.classList.toggle('hidden', !lbVisible);
+    if (chevron) chevron.textContent = lbVisible ? '▲' : '▼';
+    if (lbVisible && !lbLoaded) await loadLeaderboard();
+}
+
+async function loadLeaderboard() {
+    const list = document.getElementById('leaderboard-list');
+    if (!fbDb || !hubUser) {
+        list.innerHTML = `<p class="text-slate-600 text-xs text-center py-4 font-bold">Connecte-toi pour voir le classement.</p>`;
+        return;
+    }
+    try {
+        const snap = await fbDb.collection('leaderboard').orderBy('updatedAt','desc').limit(30).get();
+        if (snap.empty) { list.innerHTML = `<p class="text-slate-600 text-xs text-center py-4">Aucun score enregistré.</p>`; return; }
+
+        const rows = snap.docs.map(d => {
+            const data = d.data();
+            const scores = data.scores || {};
+            const vals = Object.values(scores);
+            const avg = vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length) : 0;
+            return { name: data.name || 'Anonyme', photo: data.photoURL, avg, courses: vals.length };
+        }).sort((a,b) => b.avg - a.avg);
+
+        const totalEl = document.getElementById('lb-total-users');
+        if (totalEl) { totalEl.textContent = rows.length + ' joueurs'; totalEl.classList.remove('hidden'); }
+
+        list.innerHTML = rows.map((r, i) => {
+            const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`<span class="text-slate-600 font-black text-xs w-6 text-center">#${i+1}</span>`;
+            const barColor = r.avg>=80?'#10b981':r.avg>=40?'#f97316':'#7c3aed';
+            const avatar = r.photo
+                ? `<img src="${r.photo}" class="w-8 h-8 rounded-full object-cover flex-shrink-0" referrerpolicy="no-referrer">`
+                : `<div class="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0 text-violet-400 font-black text-xs">${(r.name[0]||'?').toUpperCase()}</div>`;
+            return `<div class="flex items-center gap-3 bg-slate-900/60 border border-slate-800 rounded-2xl px-4 py-3">
+                <span class="text-lg w-7 text-center flex-shrink-0">${medal}</span>
+                ${avatar}
+                <div class="flex-grow min-w-0">
+                    <div class="flex items-center justify-between mb-1">
+                        <p class="font-bold text-white text-sm truncate">${r.name}</p>
+                        <span class="font-black text-sm ml-2 flex-shrink-0" style="color:${barColor}">${r.avg} pts</span>
+                    </div>
+                    <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                        <div class="h-full rounded-full transition-all" style="width:${r.avg}%;background:${barColor}"></div>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+        lbLoaded = true;
+    } catch(e) {
+        list.innerHTML = `<p class="text-rose-400 text-xs text-center py-4 font-bold">Erreur chargement. Règles Firestore à mettre à jour.</p>`;
+    }
+}
+
+// Show leaderboard button once logged in + Firebase ready
+function maybeShowLeaderboardBtn() {
+    if (useFirebase && hubUser) {
+        document.getElementById('leaderboard-toggle-bar')?.classList.remove('hidden');
+    }
+}
 </script>
 </body>
 </html>
