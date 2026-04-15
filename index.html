@@ -79,6 +79,9 @@
                                 🧡 Débloquer Premium (Tipeee)
                             </a>
                         </div>
+                        <button id="hub-admin-btn" onclick="closeUserMenu();showAdminPanel()" class="hidden w-full text-left px-3 py-2.5 text-violet-400 font-bold text-xs rounded-xl hover:bg-violet-500/10 transition-colors mb-0.5">
+                            🛡️ Panel Admin
+                        </button>
                         <button onclick="hubLogout()" class="w-full text-left px-3 py-2.5 text-rose-400 font-bold text-xs rounded-xl hover:bg-rose-500/10 transition-colors">
                             Se déconnecter
                         </button>
@@ -135,6 +138,55 @@
         <div id="error-state" class="hidden text-center py-20">
             <p class="text-rose-400 font-bold">Impossible de charger les modules.</p>
             <p class="text-slate-600 text-xs mt-2">Vérifiez que le dépôt est public et que <code class="text-violet-400">courses.json</code> existe.</p>
+        </div>
+    </div>
+
+    <!-- ===== ADMIN MODAL ===== -->
+    <div id="admin-modal" class="hidden fixed inset-0 z-50 flex flex-col" style="background:rgba(2,6,23,.97);backdrop-filter:blur(8px)">
+        <div class="max-w-4xl mx-auto w-full flex flex-col flex-grow min-h-0 px-4 py-6">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-6 flex-shrink-0">
+                <div>
+                    <p class="text-[9px] font-black text-violet-400 uppercase tracking-widest mb-1">Accès Admin</p>
+                    <h2 class="text-2xl font-black text-white uppercase italic">🛡️ Panel Administrateur</h2>
+                </div>
+                <button onclick="closeAdminPanel()" class="w-10 h-10 flex items-center justify-center rounded-2xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 font-black text-lg transition-all">✕</button>
+            </div>
+
+            <!-- Stats summary bar -->
+            <div id="admin-summary" class="grid grid-cols-3 gap-3 mb-6 flex-shrink-0">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl px-4 py-3 text-center">
+                    <p id="adm-total-users" class="text-2xl font-black text-white">—</p>
+                    <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest mt-0.5">Utilisateurs</p>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl px-4 py-3 text-center">
+                    <p id="adm-total-minutes" class="text-2xl font-black text-orange-400">—</p>
+                    <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest mt-0.5">Min. de révision</p>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl px-4 py-3 text-center">
+                    <p id="adm-avg-score" class="text-2xl font-black text-emerald-400">—</p>
+                    <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest mt-0.5">Score moyen</p>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="flex items-center gap-2 mb-4 flex-shrink-0">
+                <input id="adm-search" type="text" placeholder="Rechercher un utilisateur..." oninput="filterAdminUsers()"
+                       class="flex-grow bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm font-medium placeholder-slate-700 outline-none focus:border-violet-500 transition-colors">
+                <button onclick="toggleAnonUsers()" id="adm-anon-btn" class="flex-shrink-0 px-3 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-[10px] font-black text-slate-600 uppercase tracking-wide hover:border-slate-700 hover:text-slate-400 transition-all">
+                    👤 Anonymes <span id="adm-anon-count" class="text-slate-700"></span>
+                </button>
+                <button onclick="loadAdminData()" class="flex-shrink-0 px-3 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-[10px] font-black text-violet-500 uppercase tracking-wide hover:border-violet-500/40 transition-all">
+                    ↺ Recharger
+                </button>
+            </div>
+
+            <!-- User list -->
+            <div id="admin-user-list" class="flex-grow overflow-y-auto space-y-2 pr-1">
+                <div class="flex items-center justify-center py-12">
+                    <div class="w-6 h-6 border-t-2 border-violet-500 rounded-full animate-spin"></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -213,6 +265,12 @@ document.addEventListener('click', e => {
     const badge = document.getElementById('user-badge');
     if (badge && !badge.contains(e.target)) closeUserMenu();
 });
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('admin-modal');
+        if (modal && !modal.classList.contains('hidden')) closeAdminPanel();
+    }
+});
 
 // =====================================================================
 // AUTH UI
@@ -223,6 +281,7 @@ function showLoggedOut() {
     const btn = document.getElementById('btn-login');
     if (useFirebase) btn.classList.remove('hidden'), btn.classList.add('flex');
     else btn.classList.add('hidden');
+    document.getElementById('hub-admin-btn')?.classList.add('hidden');
 }
 
 function showLoggedIn(user) {
@@ -245,6 +304,7 @@ function showLoggedIn(user) {
     // Tipeee check + name color
     checkTipeeePremium(user.uid);
     maybeShowLeaderboardBtn();
+    maybeShowAdminBtn();
 }
 
 async function checkTipeeePremium(uid) {
@@ -528,6 +588,181 @@ function maybeShowLeaderboardBtn() {
     if (useFirebase && hubUser) {
         document.getElementById('leaderboard-toggle-bar')?.classList.remove('hidden');
     }
+}
+
+// =====================================================================
+// ADMIN PANEL (hub-level)
+// =====================================================================
+let _adminAllUsers = [];
+let _adminShowAnon = false;
+
+function showAdminPanel() {
+    if (!hubUser || hubUser.email !== 'zaogirardot@gmail.com') return;
+    document.getElementById('admin-modal').classList.remove('hidden');
+    loadAdminData();
+}
+
+function closeAdminPanel() {
+    document.getElementById('admin-modal').classList.add('hidden');
+}
+
+async function loadAdminData() {
+    const listEl = document.getElementById('admin-user-list');
+    listEl.innerHTML = `<div class="flex items-center justify-center py-12"><div class="w-6 h-6 border-t-2 border-violet-500 rounded-full animate-spin"></div></div>`;
+
+    if (!fbDb) {
+        listEl.innerHTML = `<p class="text-rose-400 text-sm text-center py-8 font-bold">Firebase non disponible.</p>`;
+        return;
+    }
+
+    try {
+        // Load users collection
+        const usersSnap = await fbDb.collection('users').get();
+        // Load leaderboard for scores
+        const lbSnap = await fbDb.collection('leaderboard').get();
+        const lbMap = {};
+        lbSnap.forEach(d => { lbMap[d.id] = d.data(); });
+
+        const users = [];
+        usersSnap.forEach(doc => {
+            const d = doc.data();
+            const lb = lbMap[doc.id] || {};
+            const scores = lb.scores || {};
+            const scoreVals = Object.values(scores);
+            const avgScore = scoreVals.length ? Math.round(scoreVals.reduce((a,b)=>a+b,0)/scoreVals.length) : 0;
+            const coursesCount = scoreVals.length;
+            users.push({
+                uid: doc.id,
+                name: lb.name || d.name || 'Anonyme',
+                email: d.email || '',
+                photo: lb.photoURL || d.photoURL || null,
+                studyMinutes: d.studyMinutes || 0,
+                streak: d.streak || 0,
+                lastLogin: d.lastLoginDate || '',
+                avgScore,
+                coursesCount,
+                scores,
+                premium: d.premium?.active === true,
+            });
+        });
+
+        // Add leaderboard users not in users collection
+        lbSnap.forEach(doc => {
+            if (!users.find(u => u.uid === doc.id)) {
+                const d = doc.data();
+                const scores = d.scores || {};
+                const scoreVals = Object.values(scores);
+                const avgScore = scoreVals.length ? Math.round(scoreVals.reduce((a,b)=>a+b,0)/scoreVals.length) : 0;
+                users.push({
+                    uid: doc.id,
+                    name: d.name || 'Anonyme',
+                    email: '',
+                    photo: d.photoURL || null,
+                    studyMinutes: 0,
+                    streak: 0,
+                    lastLogin: '',
+                    avgScore,
+                    coursesCount: scoreVals.length,
+                    scores,
+                    premium: false,
+                });
+            }
+        });
+
+        users.sort((a,b) => b.avgScore - a.avgScore);
+        _adminAllUsers = users;
+
+        // Summary stats
+        const totalMinutes = users.reduce((s,u) => s+(u.studyMinutes||0), 0);
+        const avgScoreAll = users.length ? Math.round(users.reduce((s,u)=>s+u.avgScore,0)/users.length) : 0;
+        const anonCount = users.filter(u => !u.email).length;
+
+        document.getElementById('adm-total-users').textContent = users.length;
+        document.getElementById('adm-total-minutes').textContent = totalMinutes + ' min';
+        document.getElementById('adm-avg-score').textContent = avgScoreAll + ' pts';
+        document.getElementById('adm-anon-count').textContent = `(${anonCount})`;
+
+        renderAdminUsers();
+    } catch(e) {
+        listEl.innerHTML = `<p class="text-rose-400 text-sm text-center py-8 font-bold">Erreur : ${e.message}</p>`;
+    }
+}
+
+function filterAdminUsers() {
+    renderAdminUsers();
+}
+
+function toggleAnonUsers() {
+    _adminShowAnon = !_adminShowAnon;
+    const btn = document.getElementById('adm-anon-btn');
+    btn.classList.toggle('text-violet-400', _adminShowAnon);
+    btn.classList.toggle('text-slate-600', !_adminShowAnon);
+    renderAdminUsers();
+}
+
+function renderAdminUsers() {
+    const listEl = document.getElementById('admin-user-list');
+    const search = (document.getElementById('adm-search')?.value || '').toLowerCase();
+
+    let users = _adminAllUsers.filter(u => {
+        const hasEmail = !!u.email;
+        if (!hasEmail && !_adminShowAnon) return false;
+        if (search) {
+            const match = (u.name+u.email).toLowerCase().includes(search);
+            if (!match) return false;
+        }
+        return true;
+    });
+
+    if (!users.length) {
+        listEl.innerHTML = `<p class="text-slate-600 text-sm text-center py-8 font-bold">Aucun utilisateur trouvé.</p>`;
+        return;
+    }
+
+    const medals = ['🥇','🥈','🥉'];
+    listEl.innerHTML = users.map((u, i) => {
+        const medal = medals[i] || `<span class="text-slate-700 font-black text-xs">#${i+1}</span>`;
+        const scoreColor = u.avgScore>=80?'#10b981':u.avgScore>=40?'#f97316':'#7c3aed';
+        const avatar = u.photo
+            ? `<img src="${u.photo}" class="w-9 h-9 rounded-full object-cover flex-shrink-0" referrerpolicy="no-referrer">`
+            : `<div class="w-9 h-9 rounded-full bg-violet-500/10 flex items-center justify-center flex-shrink-0 text-violet-400 font-black text-sm">${(u.name[0]||'?').toUpperCase()}</div>`;
+        const emailLine = u.email ? `<p class="text-[9px] text-slate-600 font-medium truncate">${u.email}</p>` : `<p class="text-[9px] text-slate-700 font-medium">Non connecté</p>`;
+        const premiumBadge = u.premium ? `<span class="text-[8px] font-black text-orange-400 bg-orange-400/10 px-1.5 py-0.5 rounded-md ml-1">Premium</span>` : '';
+        const streakBadge = u.streak > 1 ? `<span class="text-[9px] font-black text-orange-400">🔥${u.streak}</span>` : '';
+        const coursesList = Object.entries(u.scores||{}).map(([k,v])=>`<span class="inline-flex items-center gap-1 text-[9px] bg-slate-800 rounded-lg px-1.5 py-0.5 font-bold" style="color:${v>=80?'#10b981':v>=40?'#f59e0b':'#7c3aed'}">${k.replace(/_/g,' ')}: ${v}pts</span>`).join(' ');
+
+        return `<div class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3 hover:border-slate-700 transition-colors">
+            <div class="flex items-center gap-3">
+                <span class="text-base w-7 text-center flex-shrink-0">${medal}</span>
+                ${avatar}
+                <div class="flex-grow min-w-0">
+                    <div class="flex items-center gap-1 flex-wrap">
+                        <p class="font-black text-white text-sm truncate">${u.name}</p>
+                        ${premiumBadge}
+                        ${streakBadge}
+                    </div>
+                    ${emailLine}
+                </div>
+                <div class="flex-shrink-0 text-right">
+                    <p class="font-black text-base" style="color:${scoreColor}">${u.avgScore} pts</p>
+                    <p class="text-[9px] text-slate-600 font-bold">${u.coursesCount} cours</p>
+                </div>
+            </div>
+            <!-- Mini stats row -->
+            <div class="flex items-center gap-4 mt-2.5 pt-2.5 border-t border-slate-800">
+                <span class="text-[10px] text-slate-500 font-bold">⏱ ${u.studyMinutes} min</span>
+                <span class="text-[10px] text-slate-500 font-bold">📅 ${u.lastLogin || 'jamais'}</span>
+                ${u.avgScore > 0 ? `<div class="flex-grow h-1 bg-slate-800 rounded-full overflow-hidden"><div class="h-full rounded-full" style="width:${u.avgScore}%;background:${scoreColor}"></div></div>` : ''}
+            </div>
+            ${coursesList ? `<div class="flex flex-wrap gap-1 mt-2">${coursesList}</div>` : ''}
+        </div>`;
+    }).join('');
+}
+
+// Show admin button if logged in as admin
+function maybeShowAdminBtn() {
+    const btn = document.getElementById('hub-admin-btn');
+    if (btn && hubUser?.email === 'zaogirardot@gmail.com') btn.classList.remove('hidden');
 }
 </script>
 </body>
