@@ -113,12 +113,12 @@
 
 <!-- ==================== HOME ==================== -->
 <div id="screen-home" class="screen overflow-y-auto">
-    <div class="flex flex-col w-full px-6 pb-10">
+    <div class="flex flex-col w-full px-5 pb-10">
         <!-- Header -->
-        <div class="pt-8 pb-2 flex items-start justify-between gap-3">
+        <div class="pt-7 pb-3 flex items-start justify-between gap-3">
             <div class="min-w-0">
                 <p id="home-subject" class="text-[10px] font-black text-violet-400 uppercase tracking-widest">Module</p>
-                <h1 id="home-title" class="text-3xl font-black text-white mt-1 leading-tight truncate">Chargement...</h1>
+                <h1 id="home-title" class="text-3xl font-black text-white mt-0.5 leading-tight truncate">Chargement...</h1>
             </div>
             <a href="../" class="mt-1 flex-shrink-0 text-slate-700 hover:text-slate-400 transition-colors" title="Retour">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -126,77 +126,95 @@
         </div>
 
         <!-- User badge -->
-        <div id="home-user-badge" class="hidden mb-2 flex items-center justify-between bg-violet-600/10 border border-violet-500/20 rounded-2xl px-4 py-2.5">
+        <div id="home-user-badge" class="hidden mb-3 flex items-center justify-between bg-violet-600/10 border border-violet-500/20 rounded-2xl px-4 py-2.5">
             <div class="flex items-center gap-2.5">
-                <div id="user-avatar-hub" class="w-7 h-7 bg-violet-600/20 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
-                </div>
+                <div id="user-avatar-hub" class="w-7 h-7 bg-violet-600/20 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"></div>
                 <span id="home-user-name" class="text-sm font-bold text-white"></span>
             </div>
             <div class="flex items-center gap-2">
-                <!-- Premium: color picker for username -->
                 <input id="app-name-color" type="color" value="#ffffff" title="Couleur du nom (Premium)"
                        class="hidden w-6 h-6 rounded-lg border border-slate-700 cursor-pointer bg-transparent flex-shrink-0"
                        oninput="applyAppNameColor(this.value, true)">
-                <button onclick="logout()" class="text-[9px] font-black text-slate-600 uppercase tracking-widest hover:text-rose-400 transition-colors">
-                    Déco
-                </button>
+                <button onclick="logout()" class="text-[9px] font-black text-slate-600 uppercase tracking-widest hover:text-rose-400 transition-colors">Déco</button>
             </div>
         </div>
-        <div id="home-guest-badge" class="hidden mb-2 flex items-center justify-between bg-slate-900/50 border border-slate-800 rounded-2xl px-4 py-2.5">
+        <div id="home-guest-badge" class="hidden mb-3 flex items-center justify-between bg-slate-900/50 border border-slate-800 rounded-2xl px-4 py-2.5">
             <span class="text-[10px] text-slate-600 font-bold">Mode invité — progression locale</span>
-            <button onclick="showScreen('screen-auth')" class="text-[9px] font-black text-violet-500 uppercase tracking-widest hover:text-violet-400 transition-colors">
-                Connexion
-            </button>
+            <button onclick="showScreen('screen-auth')" class="text-[9px] font-black text-violet-500 uppercase tracking-widest hover:text-violet-400 transition-colors">Connexion</button>
         </div>
 
-        <!-- Mastery ring -->
-        <div class="flex items-center justify-center py-5">
-            <div class="relative w-36 h-36">
-                <svg width="144" height="144" viewBox="0 0 144 144">
-                    <circle class="ring-bg" cx="72" cy="72" r="60"/>
-                    <circle id="mastery-ring" class="ring-fill" cx="72" cy="72" r="60" stroke-dasharray="377" stroke-dashoffset="377"/>
+        <!-- Ring + Stats côte à côte -->
+        <div class="flex items-center gap-5 mb-4 bg-slate-900 border border-slate-800 rounded-3xl px-5 py-4">
+            <div class="relative flex-shrink-0" style="width:90px;height:90px">
+                <svg width="90" height="90" viewBox="0 0 90 90">
+                    <circle class="ring-bg" cx="45" cy="45" r="37"/>
+                    <circle id="mastery-ring" class="ring-fill" cx="45" cy="45" r="37" stroke-dasharray="232" stroke-dashoffset="232"/>
                 </svg>
                 <div class="absolute inset-0 flex flex-col items-center justify-center">
-                    <span id="mastery-pct" class="text-4xl font-black text-white">0%</span>
-                    <span class="text-[9px] text-slate-500 font-black uppercase tracking-widest">Maîtrise</span>
+                    <span id="mastery-pct" class="text-2xl font-black text-white leading-none">0%</span>
+                    <span class="text-[7px] text-slate-500 font-black uppercase tracking-widest mt-1">Maîtrise</span>
                 </div>
             </div>
+            <div id="home-stats" class="flex-grow space-y-1.5"></div>
         </div>
 
-        <!-- Mini stats -->
-        <div id="home-stats" class="grid grid-cols-3 gap-3 mb-5"></div>
-
         <!-- Mode buttons -->
-        <div class="space-y-2.5">
-            <!-- Solo -->
-            <p class="text-[9px] font-black text-slate-700 uppercase tracking-widest px-1 pt-1">Solo</p>
-            <button onclick="startFlashcards()" class="w-full py-5 bg-violet-700 hover:bg-violet-600 rounded-3xl font-black uppercase text-white text-sm tracking-wider active:scale-95 transition-all shadow-lg shadow-violet-500/20 flex items-center justify-center gap-2">
-                🃏 Flashcards
+        <div class="space-y-2">
+            <p class="text-[9px] font-black text-slate-700 uppercase tracking-widest px-1">Mode Solo</p>
+            <button onclick="openFcModal()" class="w-full py-[18px] bg-violet-700 hover:bg-violet-600 rounded-3xl font-black uppercase text-white text-sm tracking-wider active:scale-95 transition-all shadow-lg shadow-violet-500/20">
+                Flashcards (Mode Classique)
             </button>
-            <button onclick="startQuiz()" class="w-full py-4 bg-slate-900 border border-slate-800 hover:border-violet-500/40 rounded-3xl font-black uppercase text-white text-sm tracking-wider active:scale-95 transition-all flex items-center justify-center gap-2">
-                📝 Quiz QCM
+            <button onclick="startQuiz()" class="w-full py-4 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-3xl font-black uppercase text-white text-sm tracking-wider active:scale-95 transition-all">
+                Quizz QCM
+            </button>
+
+            <p class="text-[9px] font-black text-slate-700 uppercase tracking-widest px-1 pt-2">Mode Multi</p>
+            <button onclick="startKahoot()" class="w-full py-[18px] bg-orange-500 hover:bg-orange-400 rounded-3xl font-black uppercase text-white text-sm tracking-wider active:scale-95 transition-all shadow-lg shadow-orange-500/20">
+                Mode Kahoot — QCM
             </button>
             <div class="grid grid-cols-2 gap-2.5">
-                <button onclick="showScreen('screen-multi-setup')" class="py-4 bg-slate-900 border border-slate-800 hover:border-orange-500/40 rounded-2xl font-black uppercase text-white text-xs tracking-wider active:scale-95 transition-all">
-                    🏆 Multi équipes
+                <button onclick="showScreen('screen-multi-setup')" class="py-4 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl font-black uppercase text-white text-xs tracking-wider active:scale-95 transition-all">
+                    Équipes
                 </button>
-                <button onclick="showProgressScreen()" class="py-4 bg-slate-900 border border-slate-800 hover:border-slate-600 rounded-2xl font-black uppercase text-slate-400 text-xs tracking-wider active:scale-95 transition-all">
-                    📊 Mes stats
+                <button onclick="showProgressScreen()" class="py-4 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl font-black uppercase text-slate-400 text-xs tracking-wider active:scale-95 transition-all">
+                    📊 Stats
                 </button>
             </div>
-            <!-- Multiplayer -->
-            <p class="text-[9px] font-black text-slate-700 uppercase tracking-widest px-1 pt-2">Multijoueur</p>
-            <button onclick="startKahoot()" class="w-full py-5 bg-gradient-to-r from-violet-700 to-orange-500 rounded-3xl font-black uppercase text-white text-sm tracking-wider active:scale-95 transition-all shadow-lg shadow-violet-500/20 flex items-center justify-center gap-2">
-                🎮 Lancer un Kahoot
-            </button>
             <a href="../room/" class="w-full flex items-center justify-center gap-2 py-4 bg-orange-500/10 border border-orange-500/30 text-orange-400 hover:bg-orange-500/20 rounded-3xl font-black uppercase text-sm tracking-wider active:scale-95 transition-all">
                 🕹️ Rejoindre une partie
             </a>
         </div>
 
-        <button onclick="confirmReset()" class="mt-6 text-[10px] font-bold text-slate-800 uppercase tracking-widest hover:text-slate-600 transition-colors">
+        <!-- Bouton Admin (visible seulement zaogirardot) -->
+        <button id="btn-admin" onclick="showAdminStats()" class="hidden mt-4 w-full py-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 font-black text-xs uppercase rounded-2xl active:scale-95 transition-all">
+            🔑 Admin — Toutes les stats
+        </button>
+
+        <button onclick="confirmReset()" class="mt-5 text-[10px] font-bold text-slate-800 uppercase tracking-widest hover:text-slate-600 transition-colors">
             Réinitialiser la progression
         </button>
+    </div>
+</div>
+
+<!-- ==================== MODAL MODE FLASHCARD ==================== -->
+<div id="fc-mode-modal" class="hidden fixed inset-0 z-50 flex items-end justify-center" style="background:rgba(2,6,23,.85);backdrop-filter:blur(4px)">
+    <div class="w-full bg-slate-900 border-t border-slate-800 rounded-t-3xl p-6 fade-up" style="max-width:520px">
+        <div class="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-5"></div>
+        <h3 class="text-base font-black text-white uppercase tracking-widest text-center mb-1">Flashcards</h3>
+        <p class="text-[10px] text-slate-500 font-bold text-center mb-5 uppercase tracking-widest">Choisis ton mode</p>
+        <div class="space-y-3 mb-3">
+            <button onclick="startFlashcards('classic');closeFcModal()"
+                    class="w-full py-5 bg-violet-700 hover:bg-violet-600 text-white rounded-2xl active:scale-95 transition-all flex flex-col items-center gap-1">
+                <span class="font-black uppercase tracking-wider text-sm">🃏 Mode Classique</span>
+                <span class="text-violet-300/60 text-xs font-medium">On voit le Terme → on retrouve la Définition</span>
+            </button>
+            <button onclick="startFlashcards('inverse');closeFcModal()"
+                    class="w-full py-5 bg-slate-800 border border-slate-700 hover:border-slate-600 text-white rounded-2xl active:scale-95 transition-all flex flex-col items-center gap-1">
+                <span class="font-black uppercase tracking-wider text-sm">🔄 Mode Inversé</span>
+                <span class="text-slate-400 text-xs font-medium">On voit la Définition → on retrouve le Terme</span>
+            </button>
+        </div>
+        <button onclick="closeFcModal()" class="w-full py-3 text-slate-700 font-bold text-xs uppercase hover:text-slate-500 transition-colors">Annuler</button>
     </div>
 </div>
 
@@ -217,10 +235,10 @@
         <div id="fc-card" class="swipe-card relative w-full bg-slate-900 border-2 border-slate-800 rounded-[2.5rem] px-8 py-10 flex flex-col items-center justify-center text-center" style="min-height:55vh;max-height:72vh">
             <!-- Badge historique succès/échecs -->
             <div id="fc-stats-badge" class="hidden absolute top-5 right-5 flex items-center gap-1 bg-slate-800 rounded-xl px-2.5 py-1 text-[10px] font-bold pointer-events-none"></div>
-            <span class="text-[9px] font-black text-slate-700 uppercase tracking-widest mb-5">Terme</span>
+            <span id="fc-front-label" class="text-[9px] font-black text-slate-700 uppercase tracking-widest mb-5">Terme</span>
             <h2 id="fc-term" class="text-[1.9rem] font-extrabold text-white leading-snug"></h2>
             <div id="fc-def-area" class="hidden w-full mt-6 pt-6 border-t border-slate-800 fade-up">
-                <span class="text-[9px] font-black text-slate-600 uppercase tracking-widest block mb-3">Définition</span>
+                <span id="fc-back-label" class="text-[9px] font-black text-slate-600 uppercase tracking-widest block mb-3">Définition</span>
                 <p id="fc-def" class="text-violet-400 text-[1.2rem] leading-relaxed font-medium"></p>
             </div>
             <p id="fc-tap-hint" class="text-[10px] text-slate-700 font-bold uppercase tracking-widest mt-6 pulse">Appuyer pour révéler</p>
@@ -255,8 +273,27 @@
     <!-- Récap scrollable -->
     <div id="fc-recap-list" class="scroll-area px-6 pb-4 space-y-2 flex-shrink-0" style="max-height:35vh;overflow-y:auto"></div>
     <div class="px-6 pb-8 pt-2 space-y-3 flex-shrink-0">
-        <button onclick="startFlashcards()" class="w-full py-5 bg-violet-700 text-white font-black uppercase rounded-2xl active:scale-95 transition-all">Rejouer</button>
+        <button onclick="exitToHome();setTimeout(openFcModal,150)" class="w-full py-5 bg-violet-700 text-white font-black uppercase rounded-2xl active:scale-95 transition-all">Rejouer</button>
         <button onclick="exitToHome()" class="w-full py-4 text-slate-500 font-black uppercase text-xs tracking-widest">Retour accueil</button>
+    </div>
+</div>
+
+<!-- ==================== ADMIN ==================== -->
+<div id="screen-admin" class="screen">
+    <div class="px-6 pt-6 pb-3 flex items-center gap-3 flex-shrink-0">
+        <button onclick="exitToHome()" class="text-slate-600 hover:text-slate-400 font-black text-lg leading-none">✕</button>
+        <h2 class="text-lg font-black text-white flex-grow">🔑 Admin Stats</h2>
+        <span class="text-[9px] font-black text-rose-400 uppercase tracking-widest">zaogirardot</span>
+    </div>
+    <div class="px-5 pb-3 flex-shrink-0">
+        <div class="bg-rose-500/10 border border-rose-500/20 rounded-2xl px-4 py-2 text-center">
+            <p class="text-rose-400 text-[10px] font-black uppercase tracking-widest">Progression de tous les utilisateurs — <span id="admin-course-name" class="text-white"></span></p>
+        </div>
+    </div>
+    <div id="admin-content" class="scroll-area px-5 pb-8 space-y-3">
+        <div class="flex items-center justify-center py-12">
+            <div class="w-8 h-8 border-t-2 border-rose-400 rounded-full animate-spin"></div>
+        </div>
     </div>
 </div>
 
@@ -555,7 +592,7 @@ const QUIZ_TIME   = 15;
 
 let C = null, courseName = '', progress = {};
 let fcDeck = [], fcIdx = 0, fcFlipped = false, fcSessionCorrect = 0, fcSessionWrong = 0;
-let fcSessionResults = [];
+let fcSessionResults = [], fcMode = 'classic';
 let quizDeck = [], quizIdx = 0, quizScore = 0, quizCorrect = 0, quizWrong = 0, quizTimer = null;
 let teams = [], multiPool = [], multiRound = 0, multiTeamIdx = 0, multiSettings = {}, multiTimerTimeout = null;
 
@@ -825,24 +862,22 @@ function updateHome() {
 
     const pct = getMasteryPct();
     document.getElementById('mastery-pct').textContent = pct + '%';
-    document.getElementById('mastery-ring').style.strokeDashoffset = 377 - (377*pct/100);
+    document.getElementById('mastery-ring').style.strokeDashoffset = 232 - (232*pct/100);
 
     const mastered = C.cards.filter((_,i)=>isMastered(i)).length;
     const learning = C.cards.filter((_,i)=>isSeen(i)&&!isMastered(i)).length;
     const newCards  = C.cards.length - mastered - learning;
     document.getElementById('home-stats').innerHTML = `
-        <div class="bg-slate-900 rounded-2xl p-3 text-center border border-slate-800">
-            <span class="text-xl font-black text-slate-400">${newCards}</span>
-            <p class="text-[8px] text-slate-600 font-black uppercase mt-1">Nouvelles</p>
-        </div>
-        <div class="bg-slate-900 rounded-2xl p-3 text-center border border-slate-800">
-            <span class="text-xl font-black text-amber-400">${learning}</span>
-            <p class="text-[8px] text-slate-600 font-black uppercase mt-1">En cours</p>
-        </div>
-        <div class="bg-slate-900 rounded-2xl p-3 text-center border border-slate-800">
-            <span class="text-xl font-black text-emerald-400">${mastered}</span>
-            <p class="text-[8px] text-slate-600 font-black uppercase mt-1">Maîtrisées</p>
-        </div>`;
+        <p class="font-black text-slate-300 text-xl leading-none">${newCards} <span class="text-xs font-black uppercase text-slate-600 ml-1">Nouvelles</span></p>
+        <p class="font-black text-orange-400 text-xl leading-none">${learning} <span class="text-xs font-black uppercase text-orange-400/50 ml-1">En cours</span></p>
+        <p class="font-black text-emerald-400 text-xl leading-none">${mastered} <span class="text-xs font-black uppercase text-emerald-400/50 ml-1">Maîtrisées</span></p>`;
+
+    // Admin button
+    const adminBtn = document.getElementById('btn-admin');
+    if (adminBtn) {
+        if (currentUser?.email === 'zaogirardot@gmail.com') adminBtn.classList.remove('hidden');
+        else adminBtn.classList.add('hidden');
+    }
 
     // User badge
     const userBadge  = document.getElementById('home-user-badge');
@@ -876,9 +911,98 @@ function confirmReset() {
 }
 
 // =====================================================================
+// ADMIN STATS
+// =====================================================================
+async function showAdminStats() {
+    if (currentUser?.email !== 'zaogirardot@gmail.com') return;
+    showScreen('screen-admin');
+    document.getElementById('admin-course-name').textContent = C?.title || courseName || '—';
+    const container = document.getElementById('admin-content');
+    container.innerHTML = `<div class="flex items-center justify-center py-12"><div class="w-8 h-8 border-t-2 border-rose-400 rounded-full animate-spin"></div></div>`;
+
+    if (!fbDb) {
+        container.innerHTML = `<p class="text-slate-600 text-xs text-center py-8 font-bold">Firebase non configuré</p>`;
+        return;
+    }
+
+    try {
+        const usersSnap = await fbDb.collection('users').get();
+        const rows = [];
+
+        for (const userDoc of usersSnap.docs) {
+            const uid = userDoc.id;
+            const userData = userDoc.data() || {};
+            const name = userData.displayName || userData.email || uid.slice(0,8);
+            const email = userData.email || '';
+
+            // Load progress for this course
+            let prog = {};
+            try {
+                const progSnap = await fbDb.collection('users').doc(uid).collection('progress').doc(courseName).get();
+                if (progSnap.exists) prog = progSnap.data() || {};
+            } catch(e) { /* skip */ }
+
+            const totalCards = C?.cards?.length || 0;
+            const keys = Object.keys(prog);
+            const seen = keys.length;
+            const mastered = keys.filter(k => {
+                const p = prog[k] || {};
+                const total = (p.c||0) + (p.w||0);
+                if (total === 0) return false;
+                return (p.c||0) / total >= 0.8;
+            }).length;
+            const pct = totalCards > 0 ? Math.round(mastered / totalCards * 100) : 0;
+
+            rows.push({ name, email, seen, mastered, pct, totalCards });
+        }
+
+        // Sort by mastery desc
+        rows.sort((a,b) => b.pct - a.pct);
+
+        if (rows.length === 0) {
+            container.innerHTML = `<p class="text-slate-600 text-xs text-center py-8 font-bold">Aucun utilisateur trouvé</p>`;
+            return;
+        }
+
+        container.innerHTML = rows.map((r, i) => {
+            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `<span class="text-slate-600 font-black text-xs">#${i+1}</span>`;
+            const barColor = r.pct >= 80 ? 'bg-emerald-500' : r.pct >= 40 ? 'bg-orange-500' : 'bg-slate-700';
+            return `<div class="bg-slate-900 border border-slate-800 rounded-2xl px-4 py-3">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="text-lg w-7 text-center flex-shrink-0">${medal}</span>
+                    <div class="flex-grow min-w-0">
+                        <p class="font-black text-white text-sm truncate">${r.name}</p>
+                        <p class="text-[9px] text-slate-600 truncate">${r.email}</p>
+                    </div>
+                    <span class="font-black text-lg ${r.pct >= 80 ? 'text-emerald-400' : r.pct >= 40 ? 'text-orange-400' : 'text-slate-500'}">${r.pct}%</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="flex-grow bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                        <div class="${barColor} h-full rounded-full transition-all" style="width:${r.pct}%"></div>
+                    </div>
+                    <span class="text-[9px] text-slate-600 font-bold flex-shrink-0">${r.mastered}/${r.totalCards} maîtrisées</span>
+                </div>
+            </div>`;
+        }).join('');
+
+    } catch(e) {
+        console.error('Admin stats error:', e);
+        container.innerHTML = `<p class="text-rose-400 text-xs text-center py-8 font-bold">Erreur : ${e.message}</p>`;
+    }
+}
+
+// =====================================================================
 // FLASHCARD MODE
 // =====================================================================
-function startFlashcards() {
+function openFcModal() {
+    document.getElementById('fc-mode-modal').classList.remove('hidden');
+}
+function closeFcModal() {
+    document.getElementById('fc-mode-modal').classList.add('hidden');
+}
+
+function startFlashcards(mode) {
+    fcMode = mode || 'classic';
     const order = C.cards.map((_,i)=>i).sort((a,b) => {
         const ma=isMastered(a), mb=isMastered(b);
         if(ma!==mb) return ma?1:-1;
@@ -898,8 +1022,11 @@ function showFlashcard() {
     const cardIdx = fcDeck[fcIdx];
     const card = C.cards[cardIdx];
     fcFlipped = false;
-    document.getElementById('fc-term').textContent = card.term;
-    document.getElementById('fc-def').textContent  = card.def;
+    const inverse = fcMode === 'inverse';
+    document.getElementById('fc-front-label').textContent = inverse ? 'Définition' : 'Terme';
+    document.getElementById('fc-back-label').textContent  = inverse ? 'Terme' : 'Définition';
+    document.getElementById('fc-term').textContent = inverse ? card.def  : card.term;
+    document.getElementById('fc-def').textContent  = inverse ? card.term : card.def;
     document.getElementById('fc-def-area').classList.add('hidden');
     document.getElementById('fc-tap-hint').classList.remove('hidden');
     document.getElementById('fc-actions').classList.add('hidden');
