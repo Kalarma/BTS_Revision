@@ -39,26 +39,24 @@
             <h1 class="text-3xl font-black text-white uppercase italic">Rejoindre <span class="text-violet-400">une partie</span></h1>
             <p class="text-slate-600 text-[10px] font-bold uppercase tracking-widest mt-1">Saisis le code donné par ton prof</p>
         </div>
-        <div class="space-y-3 mb-4">
-            <input id="join-code" type="text" placeholder="Code de la salle (6 lettres)" maxlength="6"
-                   class="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-white font-black text-center text-xl uppercase tracking-[0.3em] placeholder-slate-700 outline-none focus:border-violet-500 transition-colors"
-                   oninput="this.value=this.value.toUpperCase()">
+        <div class="space-y-3 mb-5">
+            <div class="flex justify-center">
+                <input id="join-code" type="text" placeholder="XXXXXX" maxlength="6"
+                       class="w-40 bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-white font-black text-center text-2xl uppercase tracking-[0.4em] placeholder-slate-700 outline-none focus:border-violet-500 transition-colors"
+                       oninput="this.value=this.value.toUpperCase()">
+            </div>
             <input id="join-name" type="text" placeholder="Ton prénom" maxlength="20"
                    class="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-white font-bold placeholder-slate-700 outline-none focus:border-violet-500 transition-colors">
         </div>
 
-        <!-- Sélecteur de couleur -->
-        <div class="mb-4">
+        <!-- Sélecteur de couleur — 4 couleurs -->
+        <div class="mb-5">
             <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest text-center mb-3">Choisis ta couleur</p>
-            <div class="flex gap-3 justify-center flex-wrap py-2">
-                <button onclick="selectColor('#7c3aed')" class="color-btn w-10 h-10 rounded-full border-2 active:scale-90 transition-all" style="background:#7c3aed;border-color:white;transform:scale(1.2)" data-color="#7c3aed"></button>
-                <button onclick="selectColor('#f43f5e')" class="color-btn w-10 h-10 rounded-full border-2 border-transparent active:scale-90 transition-all" style="background:#f43f5e" data-color="#f43f5e"></button>
-                <button onclick="selectColor('#10b981')" class="color-btn w-10 h-10 rounded-full border-2 border-transparent active:scale-90 transition-all" style="background:#10b981" data-color="#10b981"></button>
-                <button onclick="selectColor('#f59e0b')" class="color-btn w-10 h-10 rounded-full border-2 border-transparent active:scale-90 transition-all" style="background:#f59e0b" data-color="#f59e0b"></button>
-                <button onclick="selectColor('#a855f7')" class="color-btn w-10 h-10 rounded-full border-2 border-transparent active:scale-90 transition-all" style="background:#a855f7" data-color="#a855f7"></button>
-                <button onclick="selectColor('#06b6d4')" class="color-btn w-10 h-10 rounded-full border-2 border-transparent active:scale-90 transition-all" style="background:#06b6d4" data-color="#06b6d4"></button>
-                <button onclick="selectColor('#ec4899')" class="color-btn w-10 h-10 rounded-full border-2 border-transparent active:scale-90 transition-all" style="background:#ec4899" data-color="#ec4899"></button>
-                <button onclick="selectColor('#84cc16')" class="color-btn w-10 h-10 rounded-full border-2 border-transparent active:scale-90 transition-all" style="background:#84cc16" data-color="#84cc16"></button>
+            <div class="flex gap-4 justify-center">
+                <button onclick="selectColor('#7c3aed')" class="color-btn w-12 h-12 rounded-full border-2 active:scale-90 transition-all" style="background:#7c3aed;border-color:white;transform:scale(1.15)" data-color="#7c3aed"></button>
+                <button onclick="selectColor('#f43f5e')" class="color-btn w-12 h-12 rounded-full border-2 border-transparent active:scale-90 transition-all" style="background:#f43f5e" data-color="#f43f5e"></button>
+                <button onclick="selectColor('#10b981')" class="color-btn w-12 h-12 rounded-full border-2 border-transparent active:scale-90 transition-all" style="background:#10b981" data-color="#10b981"></button>
+                <button onclick="selectColor('#f97316')" class="color-btn w-12 h-12 rounded-full border-2 border-transparent active:scale-90 transition-all" style="background:#f97316" data-color="#f97316"></button>
             </div>
         </div>
 
