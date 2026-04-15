@@ -37,11 +37,9 @@
         .glow-green { box-shadow:0 0 30px rgba(16,185,129,.35),inset 0 0 30px rgba(16,185,129,.05); border-color:rgb(16,185,129)!important; }
         .glow-red   { box-shadow:0 0 30px rgba(239,68,68,.35),inset 0 0 30px rgba(239,68,68,.05); border-color:rgb(239,68,68)!important; }
         input:-webkit-autofill { -webkit-box-shadow:0 0 0 50px #0f172a inset!important; -webkit-text-fill-color:#fff!important; }
-        /* Long-press quit button */
-        .quit-btn { position:relative; overflow:hidden; isolation:isolate; cursor:pointer; touch-action:none; -webkit-user-select:none; user-select:none; }
-        .quit-btn::before { content:''; position:absolute; left:0; bottom:0; width:100%; height:0%; background:rgba(239,68,68,.35); transition:none; pointer-events:none; z-index:-1; border-radius:inherit; }
-        .quit-btn.filling::before { height:100%; transition:height 1s linear; }
-        .quit-btn.filling { color:#fca5a5!important; }
+        /* Quit button */
+        .quit-btn { cursor:pointer; transition:color .15s,background .15s; }
+        .quit-btn:hover { color:#f87171!important; }
     </style>
 </head>
 <body>
@@ -135,6 +133,7 @@
             <div class="flex items-center gap-2.5">
                 <div id="user-avatar-hub" class="w-7 h-7 bg-violet-600/20 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"></div>
                 <span id="home-user-name" class="text-sm font-bold text-white"></span>
+                <span id="home-streak" class="hidden text-[11px] font-black text-orange-400"></span>
             </div>
             <div class="flex items-center gap-2">
                 <input id="app-name-color" type="color" value="#ffffff" title="Couleur du nom (Premium)"
@@ -148,8 +147,8 @@
             <button onclick="showScreen('screen-auth')" class="text-[9px] font-black text-violet-500 uppercase tracking-widest hover:text-violet-400 transition-colors">Connexion</button>
         </div>
 
-        <!-- Ring + Stats côte à côte -->
-        <div class="flex items-center gap-5 mb-4 bg-slate-900 border border-slate-800 rounded-3xl px-5 py-4">
+        <!-- Ring + Stats côte à côte (cliquable → stats) -->
+        <div class="flex items-center gap-5 mb-4 bg-slate-900 border border-slate-800 rounded-3xl px-5 py-4 cursor-pointer active:opacity-75 transition-opacity" onclick="showProgressScreen()">
             <div class="relative flex-shrink-0" style="width:90px;height:90px">
                 <svg width="90" height="90" viewBox="0 0 90 90">
                     <circle class="ring-bg" cx="45" cy="45" r="37"/>
@@ -167,24 +166,22 @@
         <div class="space-y-2">
             <p class="text-[9px] font-black text-slate-700 uppercase tracking-widest px-1">Mode Solo</p>
             <button onclick="openFcModal()" class="w-full py-[18px] bg-violet-700 hover:bg-violet-600 rounded-3xl font-black uppercase text-white text-sm tracking-wider active:scale-95 transition-all shadow-lg shadow-violet-500/20">
-                Flashcards (Mode Classique)
+                🃏 Flashcards
             </button>
-            <button onclick="startQuiz()" class="w-full py-4 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-3xl font-black uppercase text-white text-sm tracking-wider active:scale-95 transition-all">
-                Quizz QCM
+            <button onclick="openQuizModal()" class="w-full py-4 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-3xl font-black uppercase text-white text-sm tracking-wider active:scale-95 transition-all">
+                📝 Quizz QCM
             </button>
 
             <p class="text-[9px] font-black text-slate-700 uppercase tracking-widest px-1 pt-2">Mode Multi</p>
             <button onclick="startKahoot()" class="w-full py-[18px] bg-orange-500 hover:bg-orange-400 rounded-3xl font-black uppercase text-white text-sm tracking-wider active:scale-95 transition-all shadow-lg shadow-orange-500/20">
-                Mode Kahoot — QCM
+                🎮 Mode Kahoot — QCM
             </button>
-            <div class="grid grid-cols-2 gap-2.5">
-                <button onclick="showScreen('screen-multi-setup')" class="py-4 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl font-black uppercase text-white text-xs tracking-wider active:scale-95 transition-all">
-                    Équipes
-                </button>
-                <button onclick="showProgressScreen()" class="py-4 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl font-black uppercase text-slate-400 text-xs tracking-wider active:scale-95 transition-all">
-                    📊 Stats
-                </button>
-            </div>
+            <button onclick="showScreen('screen-multi-setup')" class="w-full py-4 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl font-black uppercase text-white text-sm tracking-wider active:scale-95 transition-all">
+                🏆 Mode Équipes
+            </button>
+            <button onclick="showScreen('screen-presenter-setup')" class="w-full py-4 bg-slate-900 border border-slate-800 hover:border-violet-500/30 rounded-2xl font-black uppercase text-white text-sm tracking-wider active:scale-95 transition-all">
+                🖥️ Mode Présentateur
+            </button>
             <a href="../room/" class="w-full flex items-center justify-center gap-2 py-4 bg-orange-500/10 border border-orange-500/30 text-orange-400 hover:bg-orange-500/20 rounded-3xl font-black uppercase text-sm tracking-wider active:scale-95 transition-all">
                 🕹️ Rejoindre une partie
             </a>
@@ -202,7 +199,7 @@
 </div>
 
 <!-- ==================== MODAL MODE FLASHCARD ==================== -->
-<div id="fc-mode-modal" class="hidden fixed inset-0 z-50 flex items-end justify-center" style="background:rgba(2,6,23,.85);backdrop-filter:blur(4px)">
+<div id="fc-mode-modal" data-modal-backdrop class="hidden fixed inset-0 z-50 flex items-end justify-center" style="background:rgba(2,6,23,.85);backdrop-filter:blur(4px)">
     <div class="w-full bg-slate-900 border-t border-slate-800 rounded-t-3xl p-6 fade-up" style="max-width:520px">
         <div class="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-5"></div>
         <h3 class="text-base font-black text-white uppercase tracking-widest text-center mb-1">Flashcards</h3>
@@ -220,6 +217,52 @@
             </button>
         </div>
         <button onclick="closeFcModal()" class="w-full py-3 text-slate-700 font-bold text-xs uppercase hover:text-slate-500 transition-colors">Annuler</button>
+    </div>
+</div>
+
+<!-- ==================== MODAL MODE QUIZ ==================== -->
+<div id="quiz-mode-modal" data-modal-backdrop class="hidden fixed inset-0 z-50 flex items-end justify-center" style="background:rgba(2,6,23,.85);backdrop-filter:blur(4px)">
+    <div class="w-full bg-slate-900 border-t border-slate-800 rounded-t-3xl p-6 fade-up" style="max-width:520px">
+        <div class="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-5"></div>
+        <h3 class="text-base font-black text-white uppercase tracking-widest text-center mb-1">Quiz QCM</h3>
+        <p class="text-[10px] text-slate-500 font-bold text-center mb-5 uppercase tracking-widest">Choisis ton mode</p>
+        <div class="space-y-3 mb-3">
+            <button onclick="startQuiz('classic');closeQuizModal()"
+                    class="w-full py-5 bg-violet-700 hover:bg-violet-600 text-white rounded-2xl active:scale-95 transition-all flex flex-col items-center gap-1">
+                <span class="font-black uppercase tracking-wider text-sm">📝 Mode Classique</span>
+                <span class="text-violet-300/60 text-xs font-medium">On voit le Terme → on choisit la Définition</span>
+            </button>
+            <button onclick="startQuiz('inverse');closeQuizModal()"
+                    class="w-full py-5 bg-slate-800 border border-slate-700 hover:border-slate-600 text-white rounded-2xl active:scale-95 transition-all flex flex-col items-center gap-1">
+                <span class="font-black uppercase tracking-wider text-sm">🔄 Mode Inversé</span>
+                <span class="text-slate-400 text-xs font-medium">On voit la Définition → on retrouve le Terme</span>
+            </button>
+        </div>
+        <button onclick="closeQuizModal()" class="w-full py-3 text-slate-700 font-bold text-xs uppercase hover:text-slate-500 transition-colors">Annuler</button>
+    </div>
+</div>
+
+<!-- ==================== RAPPORT DE CARTE ==================== -->
+<div id="report-modal" data-modal-backdrop class="hidden fixed inset-0 z-50 flex items-end justify-center" style="background:rgba(2,6,23,.85);backdrop-filter:blur(4px)">
+    <div class="w-full bg-slate-900 border-t border-slate-800 rounded-t-3xl p-6 fade-up" style="max-width:520px">
+        <div class="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-5"></div>
+        <h3 class="text-sm font-black text-white uppercase tracking-widest text-center mb-1">Signaler un problème</h3>
+        <p id="report-card-term" class="text-[10px] text-slate-500 text-center mb-5 italic truncate"></p>
+        <div class="space-y-2 mb-3">
+            <button onclick="submitReport('wrong_def')" class="w-full py-4 bg-slate-800 border border-slate-700 hover:border-rose-500/40 text-slate-300 rounded-2xl active:scale-95 transition-all text-left px-5">
+                <p class="font-black text-sm">❌ Mauvaise définition</p>
+                <p class="text-[10px] text-slate-600 mt-0.5">La définition affichée est incorrecte</p>
+            </button>
+            <button onclick="submitReport('wrong_term')" class="w-full py-4 bg-slate-800 border border-slate-700 hover:border-rose-500/40 text-slate-300 rounded-2xl active:scale-95 transition-all text-left px-5">
+                <p class="font-black text-sm">⚠️ Mauvais terme</p>
+                <p class="text-[10px] text-slate-600 mt-0.5">Le terme ne correspond pas à la définition</p>
+            </button>
+            <button onclick="submitReport('duplicate')" class="w-full py-4 bg-slate-800 border border-slate-700 hover:border-rose-500/40 text-slate-300 rounded-2xl active:scale-95 transition-all text-left px-5">
+                <p class="font-black text-sm">🔁 Doublon</p>
+                <p class="text-[10px] text-slate-600 mt-0.5">Cette carte est déjà présente</p>
+            </button>
+        </div>
+        <button onclick="closeReportModal()" class="w-full py-3 text-slate-700 font-bold text-xs uppercase hover:text-slate-500 transition-colors">Annuler</button>
     </div>
 </div>
 
@@ -243,7 +286,10 @@
             <span id="fc-front-label" class="text-[9px] font-black text-slate-700 uppercase tracking-widest mb-5">Terme</span>
             <h2 id="fc-term" class="text-[1.9rem] font-extrabold text-white leading-snug"></h2>
             <div id="fc-def-area" class="hidden w-full mt-6 pt-6 border-t border-slate-800 fade-up">
-                <span id="fc-back-label" class="text-[9px] font-black text-slate-600 uppercase tracking-widest block mb-3">Définition</span>
+                <div class="flex items-center justify-between mb-3">
+                    <span id="fc-back-label" class="text-[9px] font-black text-slate-600 uppercase tracking-widest">Définition</span>
+                    <button onclick="openReportModal(event)" class="text-slate-700 hover:text-slate-400 font-black text-base leading-none px-1 transition-colors" title="Signaler">···</button>
+                </div>
                 <p id="fc-def" class="text-violet-400 text-[1.2rem] leading-relaxed font-medium"></p>
             </div>
             <p id="fc-tap-hint" class="text-[10px] text-slate-700 font-bold uppercase tracking-widest mt-6 pulse">Appuyer pour révéler</p>
@@ -300,6 +346,129 @@
             <div class="flex items-center justify-center py-12">
                 <div class="w-8 h-8 border-t-2 border-rose-400 rounded-full animate-spin"></div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== PRÉSENTATEUR SETUP ==================== -->
+<div id="screen-presenter-setup" class="screen overflow-y-auto">
+    <div class="flex flex-col mx-auto w-full px-5 pb-10" style="max-width:480px">
+        <div class="pt-6 pb-4 flex items-center gap-3">
+            <button onclick="exitToHome()" class="quit-btn w-9 h-9 flex items-center justify-center rounded-xl text-slate-500 font-black text-base">✕</button>
+            <h2 class="text-xl font-black text-white uppercase italic flex-grow">🖥️ Mode Présentateur</h2>
+        </div>
+        <p class="text-[10px] text-slate-500 font-bold mb-5 leading-relaxed">Le téléphone gère la partie. L'ordi/TV affiche les questions et scores en grand. Ouvre <span class="text-violet-400 font-black">kalarma.github.io/BTS_Revision/presenter</span> sur l'écran de projection.</p>
+
+        <!-- Équipes -->
+        <div class="mb-5">
+            <label class="text-[9px] font-black text-slate-500 uppercase block mb-3">Équipes (2 à 6)</label>
+            <div id="pres-teams-list" class="space-y-2 mb-3"></div>
+            <button onclick="addPresTeam()" class="w-full py-3 border-2 border-dashed border-slate-800 rounded-xl text-slate-500 font-bold text-xs uppercase hover:border-violet-500 transition-colors active:scale-95">
+                + Ajouter une équipe
+            </button>
+        </div>
+
+        <!-- Paramètres -->
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 mb-5 space-y-4">
+            <label class="text-[9px] font-black text-slate-500 uppercase block">Paramètres</label>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <span class="text-[9px] text-slate-500 block mb-1 uppercase">Nb questions</span>
+                    <input id="pres-nb-q" type="number" value="15" min="1" max="100" class="w-full bg-slate-950 p-2.5 rounded-xl text-white font-bold border border-slate-800 text-center">
+                </div>
+                <div>
+                    <span class="text-[9px] text-slate-500 block mb-1 uppercase">Pts / bonne réponse</span>
+                    <input id="pres-pts-q" type="number" value="100" min="10" max="500" step="10" class="w-full bg-slate-950 p-2.5 rounded-xl text-white font-bold border border-slate-800 text-center">
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <span class="text-[9px] text-slate-500 block mb-1 uppercase">Temps / question (s)</span>
+                    <input id="pres-time-q" type="number" value="20" min="5" max="120" class="w-full bg-slate-950 p-2.5 rounded-xl text-white font-bold border border-slate-800 text-center">
+                </div>
+                <div>
+                    <span class="text-[9px] text-slate-500 block mb-1 uppercase">Pts perdus si faux</span>
+                    <select id="pres-neg" class="w-full bg-slate-950 p-2.5 rounded-xl text-white font-bold border border-slate-800 text-center">
+                        <option value="0">Non</option>
+                        <option value="50" selected>50%</option>
+                        <option value="100">100%</option>
+                    </select>
+                </div>
+            </div>
+            <!-- Double points -->
+            <div>
+                <span class="text-[9px] text-slate-500 block mb-2 uppercase">Questions double points ?</span>
+                <div class="grid grid-cols-4 gap-2">
+                    <button onclick="selectDoubleMode('none',this)" class="pres-double-btn py-2 text-[9px] font-black rounded-xl bg-violet-600 text-white">Non</button>
+                    <button onclick="selectDoubleMode('few',this)"  class="pres-double-btn py-2 text-[9px] font-black rounded-xl bg-slate-800 text-slate-400">Peu</button>
+                    <button onclick="selectDoubleMode('normal',this)" class="pres-double-btn py-2 text-[9px] font-black rounded-xl bg-slate-800 text-slate-400">Normal</button>
+                    <button onclick="selectDoubleMode('many',this)" class="pres-double-btn py-2 text-[9px] font-black rounded-xl bg-slate-800 text-slate-400">Beaucoup</button>
+                </div>
+            </div>
+            <!-- Show question on screen -->
+            <label class="flex items-center justify-between cursor-pointer">
+                <span class="text-[10px] font-bold text-slate-400">Afficher la question sur l'écran</span>
+                <input id="pres-show-q" type="checkbox" checked class="w-4 h-4 accent-violet-500">
+            </label>
+        </div>
+
+        <button onclick="launchPresenter()" class="w-full py-5 bg-violet-700 hover:bg-violet-600 text-white font-black uppercase rounded-3xl shadow-2xl active:scale-95 transition-all">
+            Créer la salle 🚀
+        </button>
+    </div>
+</div>
+
+<!-- ==================== PRÉSENTATEUR HOST ==================== -->
+<div id="screen-presenter-host" class="screen flex flex-col">
+    <!-- Top bar -->
+    <div class="px-5 pt-5 pb-3 flex items-center justify-between flex-shrink-0">
+        <div class="flex items-center gap-2">
+            <button onclick="confirmQuitPresenter()" class="quit-btn w-9 h-9 flex items-center justify-center rounded-xl text-slate-600 font-black text-base">✕</button>
+            <span id="ph-code" class="text-[10px] font-black text-violet-400 uppercase tracking-widest"></span>
+        </div>
+        <div class="flex items-center gap-2">
+            <span id="ph-round" class="text-slate-600 text-[10px] font-black">Q 1/15</span>
+            <div id="ph-screen-dot" class="w-2 h-2 rounded-full bg-slate-700" title="Écran connecté"></div>
+        </div>
+    </div>
+    <!-- Timer bar -->
+    <div class="px-5 pb-3 flex-shrink-0">
+        <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+            <div id="ph-timer-bar" class="bg-violet-500 h-full w-full timer-animate rounded-full"></div>
+        </div>
+    </div>
+    <!-- Question card -->
+    <div class="flex-grow flex flex-col px-5 pb-3 gap-3 min-h-0 overflow-hidden">
+        <div class="flex-grow bg-slate-900 border-2 border-slate-800 rounded-3xl p-6 flex flex-col justify-center text-center min-h-0">
+            <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-3">Question</p>
+            <h2 id="ph-term" class="text-2xl font-black text-white leading-snug mb-4"></h2>
+            <div class="mt-2 pt-4 border-t border-slate-800">
+                <p class="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-2">✓ Réponse</p>
+                <p id="ph-def" class="text-emerald-400 text-base leading-relaxed font-medium"></p>
+            </div>
+        </div>
+    </div>
+    <!-- Score drawer toggle -->
+    <div id="ph-scores-drawer" class="hidden flex-shrink-0 px-5 pb-3">
+        <div id="ph-scores-list" class="bg-slate-900 border border-slate-800 rounded-2xl p-3 space-y-2 max-h-48 overflow-y-auto"></div>
+    </div>
+    <!-- Controls -->
+    <div class="px-5 pb-5 space-y-2 flex-shrink-0">
+        <div class="grid grid-cols-2 gap-2">
+            <button onclick="togglePresScores()" class="py-3 bg-slate-800 border border-slate-700 text-white font-black text-xs uppercase rounded-2xl active:scale-95 transition-all">
+                📊 Scores
+            </button>
+            <button id="ph-reveal-btn" onclick="togglePresAnswer()" class="py-3 bg-violet-700 text-white font-black text-xs uppercase rounded-2xl active:scale-95 transition-all">
+                👁 Révéler
+            </button>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+            <button onclick="showPresScoresScreen()" class="py-3 bg-slate-900 border border-slate-800 text-slate-400 font-black text-xs uppercase rounded-2xl active:scale-95 transition-all">
+                🏆 Afficher scores
+            </button>
+            <button id="ph-next-btn" onclick="nextPresQuestion()" class="py-4 bg-emerald-600 text-white font-black text-sm uppercase rounded-2xl active:scale-95 transition-all shadow-lg">
+                Suivant →
+            </button>
         </div>
     </div>
 </div>
@@ -412,12 +581,15 @@
 
 <!-- ==================== MULTI GAME ==================== -->
 <div id="screen-multi-game" class="screen">
-    <div class="px-6 pt-6 pb-3 flex items-center justify-between flex-shrink-0">
+    <div class="px-5 pt-5 pb-3 flex items-center justify-between flex-shrink-0">
         <div class="flex items-center gap-3 min-w-0">
             <div id="mg-team-dot" class="w-4 h-4 rounded-full flex-shrink-0"></div>
-            <span id="mg-team-name" class="font-black text-white uppercase italic text-lg truncate max-w-[160px]">Équipe</span>
+            <span id="mg-team-name" class="font-black text-white uppercase italic text-lg truncate max-w-[140px]">Équipe</span>
         </div>
-        <span id="mg-round" class="text-slate-600 text-[10px] font-black uppercase flex-shrink-0">1/10</span>
+        <div class="flex items-center gap-3">
+            <span id="mg-round" class="text-slate-600 text-[10px] font-black uppercase">1/10</span>
+            <button onclick="if(confirm('Quitter la partie en cours ?')) exitToHome()" class="quit-btn w-8 h-8 flex items-center justify-center rounded-xl text-slate-600 font-black text-base">✕</button>
+        </div>
     </div>
     <div class="px-6 mb-4 flex-shrink-0">
         <div class="bg-slate-900 h-2 rounded-full overflow-hidden">
@@ -607,6 +779,8 @@ let C = null, courseName = '', progress = {};
 let fcDeck = [], fcIdx = 0, fcFlipped = false, fcSessionCorrect = 0, fcSessionWrong = 0;
 let fcSessionResults = [], fcMode = 'classic';
 let quizDeck = [], quizIdx = 0, quizScore = 0, quizCorrect = 0, quizWrong = 0, quizTimer = null, quizCountInterval = null;
+let quizMode = 'classic';
+let reportCardIdx = -1;
 let teams = [], multiPool = [], multiRound = 0, multiTeamIdx = 0, multiSettings = {}, multiTimerTimeout = null;
 
 // =====================================================================
@@ -653,6 +827,7 @@ async function signInWithGoogle() {
         const provider = new firebase.auth.GoogleAuthProvider();
         const cred = await fbAuth.signInWithPopup(provider);
         currentUser = cred.user;
+        const streak = await updateStreak(currentUser.uid);
         await fbDb.collection('users').doc(currentUser.uid).set({
             username:  currentUser.displayName,
             email:     currentUser.email,
@@ -660,6 +835,9 @@ async function signInWithGoogle() {
             lastLogin: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
         checkTipeeePremium(currentUser.uid);
+        if (streak >= 2) showStreakToast(streak);
+        await mergeProgressOnLogin();
+        startStudyTimer();
         await loadCourseAndStart();
     } catch(e) {
         btn.disabled = false;
@@ -688,7 +866,10 @@ function continueWithoutAccount() {
 }
 
 async function logout() {
+    stopStudyTimer();
     if (fbAuth) await fbAuth.signOut();
+    // Clear local progress (saved on Firebase)
+    Object.keys(localStorage).filter(k => k.startsWith('prog_')).forEach(k => localStorage.removeItem(k));
     currentUser = null;
     progress = {};
     if (useFirebase) {
@@ -905,6 +1086,15 @@ function updateHome() {
     const guestBadge = document.getElementById('home-guest-badge');
     if (currentUser) {
         const uname = currentUser.displayName || currentUser.email || 'Utilisateur';
+        // Show streak if available
+        const streakEl = document.getElementById('home-streak');
+        if (streakEl && fbDb) {
+            fbDb.collection('users').doc(currentUser.uid).get().then(snap => {
+                const s = snap.data()?.streak || 0;
+                if (s >= 2) { streakEl.textContent = `${s}🔥`; streakEl.classList.remove('hidden'); }
+                else streakEl.classList.add('hidden');
+            }).catch(()=>{});
+        }
         document.getElementById('home-user-name').textContent = uname;
         const avatarEl = document.getElementById('user-avatar-hub');
         if (avatarEl) {
@@ -929,6 +1119,107 @@ function confirmReset() {
         saveProgress();
         updateHome();
     }
+}
+
+// =====================================================================
+// MODAL UTILS
+// =====================================================================
+function closeAllModals() {
+    ['fc-mode-modal','quiz-mode-modal','report-modal'].forEach(id => {
+        document.getElementById(id)?.classList.add('hidden');
+    });
+}
+function openQuizModal()  { document.getElementById('quiz-mode-modal').classList.remove('hidden'); }
+function closeQuizModal() { document.getElementById('quiz-mode-modal').classList.add('hidden'); }
+
+function openReportModal(e) {
+    e?.stopPropagation();
+    reportCardIdx = fcDeck[fcIdx] ?? -1;
+    if (reportCardIdx >= 0) {
+        const card = C.cards[reportCardIdx];
+        document.getElementById('report-card-term').textContent = card.term;
+    }
+    document.getElementById('report-modal').classList.remove('hidden');
+}
+function closeReportModal() { document.getElementById('report-modal').classList.add('hidden'); }
+function submitReport(type) {
+    closeReportModal();
+    if (reportCardIdx < 0 || !C) return;
+    const card = C.cards[reportCardIdx];
+    const report = { type, term: card.term, def: card.def, course: courseName, reporter: currentUser?.email || 'anonymous', ts: Date.now() };
+    if (fbDb) fbDb.collection('reports').add(report).catch(()=>{});
+    // Visual feedback
+    const badge = document.getElementById('fc-stats-badge');
+    if (badge) { badge.innerHTML = '⚠️ Signalé'; badge.classList.remove('hidden'); }
+    setTimeout(() => showFlashcard(), 1500);
+}
+
+// =====================================================================
+// STREAK SYSTEM
+// =====================================================================
+async function updateStreak(uid) {
+    if (!fbDb || !uid) return 0;
+    try {
+        const ref = fbDb.collection('users').doc(uid);
+        const snap = await ref.get();
+        const data = snap.data() || {};
+        const today = new Date().toDateString();
+        const lastDate = data.lastLoginDate || '';
+        const yesterday = new Date(Date.now() - 86400000).toDateString();
+        let streak = data.streak || 0;
+        if (lastDate === today) { /* already counted */ }
+        else if (lastDate === yesterday) { streak++; }
+        else { streak = 1; }
+        await ref.set({ streak, lastLoginDate: today, studyMinutes: data.studyMinutes || 0 }, { merge: true });
+        return streak;
+    } catch(e) { return 0; }
+}
+
+function showStreakToast(streak) {
+    const toast = document.createElement('div');
+    toast.className = 'fixed top-6 left-1/2 -translate-x-1/2 z-[100] bg-orange-500 text-white font-black text-sm px-5 py-3 rounded-2xl shadow-2xl fade-up flex items-center gap-2';
+    toast.innerHTML = `<span class="text-xl">🔥</span> ${streak} jours d'affilée !`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3500);
+}
+
+let _studyStart = null;
+function startStudyTimer() { _studyStart = Date.now(); }
+function stopStudyTimer() {
+    if (!_studyStart || !fbDb || !currentUser) return;
+    const mins = Math.round((Date.now() - _studyStart) / 60000);
+    _studyStart = null;
+    if (mins < 1) return;
+    fbDb.collection('users').doc(currentUser.uid).set(
+        { studyMinutes: firebase.firestore.FieldValue.increment(mins) }, { merge: true }
+    ).catch(()=>{});
+}
+
+// =====================================================================
+// DATA SYNC (merge local → Firebase on login, clear local on logout)
+// =====================================================================
+async function mergeProgressOnLogin() {
+    if (!fbDb || !currentUser || !courseName) return;
+    const localProg = JSON.parse(localStorage.getItem('prog_' + courseName) || '{}');
+    if (!Object.keys(localProg).length) return;
+    try {
+        const ref = fbDb.collection('users').doc(currentUser.uid).collection('progress').doc(courseName);
+        const snap = await ref.get();
+        const fbProg = snap.exists ? (snap.data() || {}) : {};
+        const merged = { ...fbProg };
+        for (const [key, lp] of Object.entries(localProg)) {
+            const fp = fbProg[key] || { c:0, w:0, pct:0 };
+            merged[key] = {
+                c:   Math.max(lp.c||0, fp.c||0),
+                w:   (lp.w||0) + (fp.w||0),
+                pct: Math.max(lp.pct||0, fp.pct||0),
+            };
+        }
+        await ref.set(merged);
+        progress = merged;
+        localStorage.removeItem('prog_' + courseName);
+        updateHome();
+    } catch(e) { console.warn('Merge failed:', e); }
 }
 
 // =====================================================================
@@ -1167,7 +1458,8 @@ function initSwipe() {
 // =====================================================================
 // QUIZ QCM
 // =====================================================================
-function startQuiz() {
+function startQuiz(mode) {
+    quizMode = mode || 'classic';
     const allIdx = [...C.cards.map((_,i)=>i)].sort(()=>Math.random()-.5);
     // Limiter à 25 questions max
     quizDeck = allIdx.slice(0, 25);
@@ -1182,7 +1474,8 @@ function showQuizQuestion() {
     document.getElementById('quiz-progress').style.width = Math.round(quizIdx/quizDeck.length*100)+'%';
     document.getElementById('quiz-counter').textContent = `${quizIdx+1}/${quizDeck.length}`;
     document.getElementById('quiz-score-display').innerHTML = `${quizScore} <span class="text-slate-600 text-sm font-bold">pts</span>`;
-    document.getElementById('quiz-question').textContent = card.term;
+    const inverse = (typeof quizMode !== 'undefined' && quizMode === 'inverse');
+    document.getElementById('quiz-question').textContent = cleanText(inverse ? card.def : card.term);
     const choices = generateChoices(idx);
     document.getElementById('quiz-choices').innerHTML = choices.map((ch,i)=>`
         <button class="choice-btn bg-slate-900 border border-slate-800 rounded-2xl p-4 text-left text-sm font-medium text-slate-300 active:scale-95 transition-all leading-snug min-h-[80px] flex flex-col justify-center"
@@ -1207,10 +1500,15 @@ function showQuizQuestion() {
     quizTimer=setTimeout(()=>selectAnswer(null,false), QUIZ_TIME*1000);
 }
 
+function cleanText(t) {
+    return (t||'').replace(/\[cite_start\]/gi,'').replace(/\[cite:\s*\d+\]/gi,'').replace(/\[cite\]/gi,'').replace(/\s{2,}/g,' ').trim();
+}
 function generateChoices(correctIdx) {
+    const inverse = (typeof quizMode !== 'undefined' && quizMode === 'inverse');
+    const getLabel = (i) => inverse ? cleanText(C.cards[i].term) : cleanText(C.cards[i].def);
     const wrong = C.cards.map((_,i)=>i).filter(i=>i!==correctIdx).sort(()=>Math.random()-.5).slice(0,3)
-        .map(i=>({text:C.cards[i].def, correct:false}));
-    return [...wrong,{text:C.cards[correctIdx].def,correct:true}].sort(()=>Math.random()-.5);
+        .map(i=>({text:getLabel(i), correct:false}));
+    return [...wrong,{text:getLabel(correctIdx),correct:true}].sort(()=>Math.random()-.5);
 }
 
 function selectAnswer(btn, isCorrect) {
@@ -1418,6 +1716,171 @@ function showPodium() {
         </div>`).join('');
     showScreen('screen-podium');
 }
+
+// =====================================================================
+// MODE PRÉSENTATEUR (HOST)
+// =====================================================================
+const PRES_COLORS = ['#7c3aed','#f43f5e','#10b981','#f97316','#a855f7','#06b6d4'];
+let presSettings  = {}, presTeams = [], presQuestions = [], presCurrentQ = 0;
+let presRoomCode  = '', presUnsubRoom = null, presDoubleMode = 'none';
+let presTimerInterval = null, presShowAnswer = false;
+
+function addPresTeam() {
+    const list = document.getElementById('pres-teams-list');
+    if (list.children.length >= 6) return;
+    const i = list.children.length;
+    const div = document.createElement('div');
+    div.className = 'flex items-center gap-3 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5';
+    div.innerHTML = `
+        <div class="w-4 h-4 rounded-full flex-shrink-0" style="background:${PRES_COLORS[i]}"></div>
+        <input type="text" placeholder="Équipe ${i+1}" class="bg-transparent flex-grow text-white font-bold outline-none pres-team-input placeholder-slate-700" maxlength="20">
+        <button onclick="this.parentElement.remove()" class="text-slate-700 hover:text-rose-500 font-black text-sm">✕</button>`;
+    list.appendChild(div);
+}
+
+function selectDoubleMode(mode, btn) {
+    presDoubleMode = mode;
+    document.querySelectorAll('.pres-double-btn').forEach(b => {
+        b.className = b === btn
+            ? 'pres-double-btn py-2 text-[9px] font-black rounded-xl bg-violet-600 text-white'
+            : 'pres-double-btn py-2 text-[9px] font-black rounded-xl bg-slate-800 text-slate-400';
+    });
+}
+
+async function launchPresenter() {
+    const inputs = [...document.querySelectorAll('.pres-team-input')];
+    presTeams = inputs.map((inp,i) => ({ name: inp.value.trim()||`Équipe ${i+1}`, color: PRES_COLORS[i], score: 0 }));
+    if (presTeams.length < 2) { alert('Ajoute au moins 2 équipes !'); return; }
+
+    const nbQ   = parseInt(document.getElementById('pres-nb-q').value)  || 15;
+    const ptsQ  = parseInt(document.getElementById('pres-pts-q').value)  || 100;
+    const timeQ = parseInt(document.getElementById('pres-time-q').value) || 20;
+    const neg   = parseInt(document.getElementById('pres-neg').value)    || 0;
+    const showQ = document.getElementById('pres-show-q').checked;
+
+    // Build questions with double-point flags
+    const doubleRates = { none:0, few:.05, normal:.125, many:.3 };
+    const rate = doubleRates[presDoubleMode] || 0;
+    const allCards = C.cards.map((_,i)=>i).sort(()=>Math.random()-.5).slice(0,Math.min(nbQ,C.cards.length));
+    presQuestions = allCards.map(idx => ({
+        term: C.cards[idx].term,
+        def:  cleanText(C.cards[idx].def),
+        isDouble: Math.random() < rate
+    }));
+
+    presSettings = { teams: presTeams, nbQ, ptsQ, timeQ, neg, showQ, doubleMode: presDoubleMode };
+
+    // Generate room code
+    presRoomCode = Math.random().toString(36).slice(2,8).toUpperCase();
+    presCurrentQ = 0; presShowAnswer = false;
+
+    if (fbDb) {
+        await fbDb.collection('rooms').doc(presRoomCode).set({
+            type: 'presenter',
+            phase: 'waiting',
+            courseName: C.title || courseName,
+            hostId: currentUser?.uid || 'local',
+            settings: presSettings,
+            questions: presQuestions,
+            currentQ: 0,
+            showAnswer: false,
+            questionStartTime: null,
+        });
+        // Listen for screen connection
+        presUnsubRoom = fbDb.collection('rooms').doc(presRoomCode).onSnapshot(snap => {
+            const data = snap.data() || {};
+            const dot = document.getElementById('ph-screen-dot');
+            if (dot) dot.style.background = data.screenConnected ? '#10b981' : '#475569';
+        });
+    }
+    showPresQuestion();
+}
+
+function showPresQuestion() {
+    const q = presQuestions[presCurrentQ];
+    if (!q) { endPresenter(); return; }
+
+    document.getElementById('ph-term').textContent = q.term;
+    document.getElementById('ph-def').textContent  = q.def;
+    document.getElementById('ph-round').textContent = `Q ${presCurrentQ+1}/${presQuestions.length}`;
+    document.getElementById('ph-code').textContent = presRoomCode;
+    document.getElementById('ph-reveal-btn').textContent = '👁 Révéler';
+    presShowAnswer = false;
+
+    // Timer bar
+    clearInterval(presTimerInterval);
+    const timeQ = presSettings.timeQ || 20;
+    const start = Date.now();
+    const bar = document.getElementById('ph-timer-bar');
+    bar.style.transition = 'none'; bar.style.width = '100%';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        bar.style.transition = `width ${timeQ}s linear`; bar.style.width = '0%';
+    }));
+    presTimerInterval = setTimeout(() => {}, timeQ * 1000);
+
+    // Push to Firebase
+    if (fbDb) fbDb.collection('rooms').doc(presRoomCode).update({
+        phase: 'question',
+        currentQ: presCurrentQ,
+        showAnswer: false,
+        questionStartTime: Date.now(),
+    }).catch(()=>{});
+
+    showScreen('screen-presenter-host');
+}
+
+function togglePresAnswer() {
+    presShowAnswer = !presShowAnswer;
+    document.getElementById('ph-reveal-btn').textContent = presShowAnswer ? '🙈 Cacher' : '👁 Révéler';
+    if (fbDb) fbDb.collection('rooms').doc(presRoomCode).update({ showAnswer: presShowAnswer }).catch(()=>{});
+}
+
+function togglePresScores() {
+    const drawer = document.getElementById('ph-scores-drawer');
+    drawer.classList.toggle('hidden');
+    if (!drawer.classList.contains('hidden')) renderPresScoresList();
+}
+
+function renderPresScoresList() {
+    const sorted = [...presTeams].map((t,i)=>({...t,orig:i})).sort((a,b)=>b.score-a.score);
+    document.getElementById('ph-scores-list').innerHTML = sorted.map(t => `
+        <div class="flex items-center gap-2">
+            <div class="w-3 h-3 rounded-full flex-shrink-0" style="background:${t.color}"></div>
+            <span class="flex-grow text-white text-xs font-bold truncate">${t.name}</span>
+            <button onclick="adjPresScore(${t.orig},-${presSettings.ptsQ||100})" class="w-6 h-6 bg-rose-500/20 text-rose-400 rounded-lg text-xs font-black">−</button>
+            <span class="font-black text-sm w-12 text-center" style="color:${t.color}">${t.score}</span>
+            <button onclick="adjPresScore(${t.orig},${presSettings.ptsQ||100})" class="w-6 h-6 bg-emerald-500/20 text-emerald-400 rounded-lg text-xs font-black">+</button>
+        </div>`).join('');
+}
+
+function adjPresScore(idx, delta) {
+    presTeams[idx].score = Math.max(0, presTeams[idx].score + delta);
+    presSettings.teams = presTeams;
+    if (fbDb) fbDb.collection('rooms').doc(presRoomCode).update({ 'settings.teams': presTeams }).catch(()=>{});
+    renderPresScoresList();
+}
+
+function showPresScoresScreen() {
+    if (fbDb) fbDb.collection('rooms').doc(presRoomCode).update({ phase: 'scores' }).catch(()=>{});
+}
+
+function nextPresQuestion() {
+    presCurrentQ++;
+    if (presCurrentQ >= presQuestions.length) { endPresenter(); return; }
+    showPresQuestion();
+}
+
+function endPresenter() {
+    clearInterval(presTimerInterval);
+    if (fbDb) fbDb.collection('rooms').doc(presRoomCode).update({ phase: 'end' }).catch(()=>{});
+    if (presUnsubRoom) { presUnsubRoom(); presUnsubRoom = null; }
+    exitToHome();
+}
+
+function confirmQuitPresenter() {
+    if (confirm('Terminer la partie présentateur ?')) endPresenter();
+}
+
 
 // =====================================================================
 // KAHOOT HOST MODE
@@ -1688,49 +2151,28 @@ function initExitButtons() {
     document.querySelectorAll('.quit-btn').forEach(btn => {
         const originalAction = btn.getAttribute('onclick') || '';
         btn.removeAttribute('onclick');
-        let pressTimer = null;
-
-        const start = (e) => {
-            if (e.type === 'touchstart') e.preventDefault();
-            btn.classList.add('filling');
-            pressTimer = setTimeout(() => {
-                btn.classList.remove('filling');
-                try { eval(originalAction); } catch(err) {}
-            }, 1000);
-        };
-        const cancel = () => {
-            clearTimeout(pressTimer);
-            btn.classList.remove('filling');
-        };
-
-        btn.addEventListener('mousedown', start);
-        btn.addEventListener('touchstart', start, { passive: false });
-        btn.addEventListener('mouseup', cancel);
-        btn.addEventListener('mouseleave', cancel);
-        btn.addEventListener('touchend', cancel);
-        btn.addEventListener('touchcancel', cancel);
+        btn.addEventListener('click', () => { try { eval(originalAction); } catch(e) {} });
     });
-
-    // ESC key long-press (desktop)
-    let escTimer = null;
+    // ESC key instant quit
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !e.repeat) {
-            escTimer = setTimeout(() => {
-                const active = document.querySelector('.screen.active');
-                if (active && !['screen-home','screen-auth','screen-loading','screen-error'].includes(active.id)) {
-                    exitToHome();
-                }
-            }, 1000);
+        if (e.key === 'Escape') {
+            const active = document.querySelector('.screen.active');
+            if (active && !['screen-home','screen-auth','screen-loading','screen-error'].includes(active.id)) {
+                exitToHome();
+            }
         }
     });
-    document.addEventListener('keyup', (e) => {
-        if (e.key === 'Escape') clearTimeout(escTimer);
+    // Close modals on backdrop click
+    document.querySelectorAll('[data-modal-backdrop]').forEach(el => {
+        el.addEventListener('click', (e) => { if (e.target === el) closeAllModals(); });
     });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     const list=document.getElementById('teams-list');
     if(list.children.length===0){ addTeam(); addTeam(); }
+    const presList=document.getElementById('pres-teams-list');
+    if(presList && presList.children.length===0){ addPresTeam(); addPresTeam(); }
     initExitButtons();
     init();
 });
