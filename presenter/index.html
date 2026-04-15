@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Écran Présentateur — BTS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../firebase-config.js" onerror="console.log('Firebase non configuré.')"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap');
+        body { font-family:'Plus Jakarta Sans',sans-serif; background:#020617; color:#f8fafc; margin:0; overflow:hidden; }
+        @keyframes fadeIn  { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes popIn   { 0%{transform:scale(.85);opacity:0} 70%{transform:scale(1.03)} 100%{transform:scale(1);opacity:1} }
+        @keyframes pulse   { 0%,100%{opacity:1} 50%{opacity:.3} }
+        .fade-in { animation:fadeIn .5s ease forwards; }
+        .pop-in  { animation:popIn .4s cubic-bezier(.34,1.56,.64,1) forwards; }
+        .pulse   { animation:pulse 1.5s infinite; }
+        .screen  { display:none; position:fixed; inset:0; flex-direction:column; align-items:center; justify-content:center; }
+        .screen.active { display:flex; }
+    </style>
+</head>
+<body>
+
+<!-- ================ CONNEXION ================ -->
+<div id="screen-connect" class="screen active p-8 text-center">
+    <div class="fade-in" style="max-width:480px;width:100%">
+        <div class="text-6xl mb-6">🖥️</div>
+        <h1 class="text-4xl font-black text-white uppercase italic mb-2">Écran <span class="text-violet-400">Présentateur</span></h1>
+        <p class="text-slate-500 text-sm font-medium mb-10">Entre le code affiché sur le téléphone du présentateur</p>
+        <input id="pres-code" type="text" placeholder="XXXXXX" maxlength="6"
+               class="w-48 block mx-auto bg-slate-900 border-2 border-slate-700 rounded-2xl px-4 py-4 text-white font-black text-center text-3xl uppercase tracking-[0.4em] placeholder-slate-700 outline-none focus:border-violet-500 transition-colors mb-4"
+               oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')connect()">
+        <button onclick="connect()" class="w-full max-w-xs mx-auto block py-4 bg-violet-700 hover:bg-violet-600 text-white font-black uppercase rounded-2xl active:scale-95 transition-all shadow-lg">
+            Connecter l'écran
+        </button>
+        <p id="connect-error" class="hidden mt-4 text-rose-400 text-sm font-bold"></p>
+    </div>
+</div>
+
+<!-- ================ ATTENTE ================ -->
+<div id="screen-wait" class="screen p-8 text-center">
+    <div class="fade-in">
+        <div class="text-7xl mb-6 pulse">⏳</div>
+        <h2 class="text-2xl font-black text-white uppercase">En attente du présentateur...</h2>
+        <p id="wait-course" class="text-slate-500 text-sm mt-2"></p>
+        <div id="wait-code" class="mt-8 bg-slate-900 border border-slate-800 rounded-3xl px-8 py-4 inline-block">
+            <p class="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Code salle</p>
+            <p class="text-5xl font-black text-white tracking-[0.3em]"></p>
+        </div>
+    </div>
+</div>
+
+<!-- ================ QUESTION ================ -->
+<div id="screen-question" class="screen p-12 text-center">
+    <div class="w-full" style="max-width:900px">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8">
+            <div id="q-round-badge" class="bg-violet-700 text-white font-black text-sm px-4 py-2 rounded-full"></div>
+            <div id="q-double-badge" class="hidden bg-orange-500 text-white font-black text-sm px-4 py-2 rounded-full">✦ Double points</div>
+            <div id="q-timer-box" class="bg-slate-900 border border-slate-800 rounded-2xl px-5 py-2">
+                <span id="q-timer-num" class="text-3xl font-black text-violet-400 tabular-nums">—</span>
+            </div>
+        </div>
+        <!-- Question card -->
+        <div id="q-card" class="bg-slate-900 border-2 border-slate-800 rounded-[2.5rem] p-12 mb-6 fade-in">
+            <p class="text-[11px] font-black text-slate-600 uppercase tracking-widest mb-6">Question</p>
+            <h2 id="q-term" class="text-5xl font-black text-white leading-tight"></h2>
+            <!-- Answer (revealed by host) -->
+            <div id="q-answer-area" class="hidden mt-8 pt-8 border-t border-slate-800 fade-in">
+                <p class="text-[11px] font-black text-emerald-500 uppercase tracking-widest mb-4">✓ Réponse</p>
+                <p id="q-def" class="text-3xl font-bold text-emerald-400 leading-snug"></p>
+            </div>
+        </div>
+        <!-- Teams quick-score bar -->
+        <div id="q-teams-bar" class="flex gap-3 justify-center flex-wrap"></div>
+    </div>
+</div>
+
+<!-- ================ SCORES ================ -->
+<div id="screen-scores" class="screen p-12">
+    <div class="w-full fade-in" style="max-width:900px">
+        <div class="text-center mb-10">
+            <p class="text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">Tableau des scores</p>
+            <h2 class="text-4xl font-black text-white uppercase italic">Classement</h2>
+        </div>
+        <div id="sc-list" class="space-y-4"></div>
+    </div>
+</div>
+
+<!-- ================ FIN ================ -->
+<div id="screen-end" class="screen p-12 text-center">
+    <div class="fade-in" style="max-width:700px">
+        <div class="text-8xl mb-6">🏆</div>
+        <h2 class="text-5xl font-black text-white uppercase italic mb-2">Partie terminée !</h2>
+        <p class="text-slate-500 mb-10">Merci d'avoir joué</p>
+        <div id="end-podium" class="space-y-4 mb-8"></div>
+        <button onclick="location.reload()" class="px-8 py-4 bg-violet-700 text-white font-black uppercase rounded-2xl active:scale-95 transition-all">
+            Nouvelle partie
+        </button>
+    </div>
+</div>
+
+<script>
+// =====================================================================
+// FIREBASE
+// =====================================================================
+let fbApp = null, fbDb = null;
+let roomCode = '', unsubRoom = null;
+
+async function loadScript(src) {
+    return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = src; s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+    });
+}
+
+async function initFirebase() {
+    const cfg = window.FIREBASE_CONFIG;
+    if (!cfg || cfg.apiKey === 'VOTRE_API_KEY') { showError('Firebase non configuré'); return false; }
+    try {
+        const v = '10.12.0';
+        await loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-app-compat.js`);
+        await loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-firestore-compat.js`);
+        if (!firebase.apps.length) firebase.initializeApp(cfg);
+        fbDb = firebase.firestore();
+        return true;
+    } catch(e) { showError('Erreur Firebase : ' + e.message); return false; }
+}
+
+// =====================================================================
+// CONNECT
+// =====================================================================
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+function showError(msg) {
+    const el = document.getElementById('connect-error');
+    el.textContent = msg; el.classList.remove('hidden');
+}
+
+async function connect() {
+    const code = document.getElementById('pres-code').value.trim().toUpperCase();
+    if (code.length !== 6) { showError('Code à 6 lettres requis'); return; }
+
+    const ok = await initFirebase();
+    if (!ok) return;
+
+    const snap = await fbDb.collection('rooms').doc(code).get();
+    if (!snap.exists) { showError('Salle introuvable — vérifie le code'); return; }
+
+    roomCode = code;
+    // Mark screen connected
+    fbDb.collection('rooms').doc(code).set({ screenConnected: true }, { merge: true });
+
+    startListening();
+}
+
+// =====================================================================
+// REAL-TIME LISTENER
+// =====================================================================
+function startListening() {
+    if (unsubRoom) unsubRoom();
+    unsubRoom = fbDb.collection('rooms').doc(roomCode).onSnapshot(snap => {
+        if (!snap.exists) { showScreen('screen-connect'); return; }
+        const room = snap.data();
+        if (!room || room.type !== 'presenter') return;
+        handleRoomState(room);
+    });
+}
+
+let currentPhase = '', qTimerInterval = null;
+
+function handleRoomState(room) {
+    const phase = room.phase || 'waiting';
+
+    if (phase === 'waiting') {
+        showScreen('screen-wait');
+        document.getElementById('wait-course').textContent = room.courseName || '';
+        document.querySelector('#wait-code p:last-child').textContent = roomCode;
+        return;
+    }
+
+    if (phase === 'question') {
+        const q = (room.questions || [])[room.currentQ || 0];
+        if (!q) return;
+
+        if (phase !== currentPhase || room.currentQ !== parseInt(document.getElementById('q-round-badge').dataset.q||'-1')) {
+            renderQuestion(room, q);
+        }
+        // Show/hide answer
+        const ansArea = document.getElementById('q-answer-area');
+        if (room.showAnswer) ansArea.classList.remove('hidden');
+        else ansArea.classList.add('hidden');
+
+        // Update team score bar
+        renderTeamsBar(room.settings?.teams || []);
+    }
+
+    if (phase === 'scores') {
+        renderScores(room.settings?.teams || []);
+        showScreen('screen-scores');
+    }
+
+    if (phase === 'end') {
+        renderEnd(room.settings?.teams || []);
+        showScreen('screen-end');
+    }
+
+    currentPhase = phase;
+}
+
+function renderQuestion(room, q) {
+    document.getElementById('q-term').textContent = q.term || '';
+    document.getElementById('q-def').textContent  = q.def  || '';
+    document.getElementById('q-answer-area').classList.add('hidden');
+
+    const roundBadge = document.getElementById('q-round-badge');
+    const qNum = (room.currentQ || 0) + 1;
+    roundBadge.textContent = `Q ${qNum} / ${(room.questions||[]).length}`;
+    roundBadge.dataset.q = room.currentQ;
+
+    const doubleBadge = document.getElementById('q-double-badge');
+    if (q.isDouble) doubleBadge.classList.remove('hidden');
+    else doubleBadge.classList.add('hidden');
+
+    // Timer
+    clearInterval(qTimerInterval);
+    const timeLimit = room.settings?.timePerQ || 20;
+    const startTime = room.questionStartTime || Date.now();
+    const updateTimer = () => {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const left = Math.max(0, timeLimit - elapsed);
+        const numEl = document.getElementById('q-timer-num');
+        numEl.textContent = Math.ceil(left);
+        numEl.style.color = left <= 5 ? '#f97316' : '#7c3aed';
+        if (left <= 0) clearInterval(qTimerInterval);
+    };
+    updateTimer();
+    qTimerInterval = setInterval(updateTimer, 500);
+
+    // Refresh card animation
+    const card = document.getElementById('q-card');
+    card.classList.remove('fade-in'); void card.offsetWidth; card.classList.add('fade-in');
+    showScreen('screen-question');
+}
+
+function renderTeamsBar(teams) {
+    const bar = document.getElementById('q-teams-bar');
+    const sorted = [...teams].sort((a,b) => b.score - a.score);
+    bar.innerHTML = sorted.map(t => `
+        <div class="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5">
+            <div class="w-3 h-3 rounded-full flex-shrink-0" style="background:${t.color}"></div>
+            <span class="font-black text-white text-sm">${t.name}</span>
+            <span class="font-black text-sm ml-1" style="color:${t.color}">${t.score || 0}</span>
+        </div>`).join('');
+}
+
+function renderScores(teams) {
+    const sorted = [...teams].sort((a,b) => b.score - a.score);
+    const medals = ['🥇','🥈','🥉'];
+    document.getElementById('sc-list').innerHTML = sorted.map((t,i) => `
+        <div class="flex items-center gap-5 bg-slate-900 border-2 rounded-3xl px-8 py-5 pop-in" style="border-color:${t.color}20;animation-delay:${i*0.1}s">
+            <span class="text-4xl">${medals[i] || `#${i+1}`}</span>
+            <div class="w-5 h-5 rounded-full flex-shrink-0" style="background:${t.color}"></div>
+            <span class="font-black text-white text-2xl flex-grow">${t.name}</span>
+            <span class="font-black text-4xl" style="color:${t.color}">${t.score || 0}</span>
+            <span class="text-slate-600 font-bold text-sm">pts</span>
+        </div>`).join('');
+}
+
+function renderEnd(teams) {
+    renderScores(teams);
+    const sorted = [...teams].sort((a,b) => b.score - a.score);
+    document.getElementById('end-podium').innerHTML = sorted.slice(0,3).map((t,i) => `
+        <div class="flex items-center gap-4 fade-in" style="animation-delay:${i*0.15}s">
+            <span class="text-3xl">${['🥇','🥈','🥉'][i]}</span>
+            <span class="font-black text-white text-xl">${t.name}</span>
+            <span class="font-black ml-auto" style="color:${t.color}">${t.score} pts</span>
+        </div>`).join('');
+}
+
+// =====================================================================
+// INIT — check URL param
+// =====================================================================
+window.onload = async () => {
+    const params = new URLSearchParams(location.search);
+    const code = params.get('code');
+    if (code && code.length === 6) {
+        document.getElementById('pres-code').value = code.toUpperCase();
+        await connect();
+    }
+};
+</script>
+</body>
+</html>
