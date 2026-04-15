@@ -275,7 +275,7 @@ function renderEnd(teams) {
     const sorted = [...teams].sort((a,b) => b.score - a.score);
     document.getElementById('end-podium').innerHTML = sorted.slice(0,3).map((t,i) => `
         <div class="flex items-center gap-4 fade-in" style="animation-delay:${i*0.15}s">
-            <span class="text-3xl">${['🥇','🥈','🥉'][i]}</span> 
+            <span class="text-3xl">${['🥇','🥈','🥉'][i]}</span>
             <span class="font-black text-white text-xl">${t.name}</span>
             <span class="font-black ml-auto" style="color:${t.color}">${t.score} pts</span>
         </div>`).join('');
