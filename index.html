@@ -104,6 +104,16 @@
                 🎮 Rejoindre
             </a>
         </div>
+        <!-- Admin quick-access bar (admin only) -->
+        <div id="hub-admin-bar" class="hidden mb-4">
+            <button onclick="showAdminPanel()" class="w-full flex items-center justify-between px-5 py-3 bg-violet-600/10 border border-violet-500/30 rounded-2xl hover:border-violet-500/60 transition-colors group">
+                <span class="flex items-center gap-2 text-[10px] font-black text-violet-400 uppercase tracking-widest">
+                    🛡️ Panel Admin
+                </span>
+                <span class="text-violet-700 text-xs transition-transform group-hover:translate-x-1">→</span>
+            </button>
+        </div>
+
         <!-- Leaderboard toggle -->
         <div id="leaderboard-toggle-bar" class="hidden mb-8">
             <button onclick="toggleLeaderboard()" class="w-full flex items-center justify-between px-5 py-3 bg-slate-900 border border-slate-800 rounded-2xl hover:border-slate-700 transition-colors group">
@@ -282,6 +292,7 @@ function showLoggedOut() {
     if (useFirebase) btn.classList.remove('hidden'), btn.classList.add('flex');
     else btn.classList.add('hidden');
     document.getElementById('hub-admin-btn')?.classList.add('hidden');
+    document.getElementById('hub-admin-bar')?.classList.add('hidden');
 }
 
 function showLoggedIn(user) {
@@ -761,8 +772,9 @@ function renderAdminUsers() {
 
 // Show admin button if logged in as admin
 function maybeShowAdminBtn() {
-    const btn = document.getElementById('hub-admin-btn');
-    if (btn && hubUser?.email === 'zaogirardot@gmail.com') btn.classList.remove('hidden');
+    const isAdmin = hubUser?.email === 'zaogirardot@gmail.com';
+    document.getElementById('hub-admin-btn')?.classList.toggle('hidden', !isAdmin);
+    document.getElementById('hub-admin-bar')?.classList.toggle('hidden', !isAdmin);
 }
 </script>
 </body>
