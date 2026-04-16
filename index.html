@@ -191,6 +191,11 @@
                 </button>
             </div>
 
+            <!-- Bannière règles Firestore -->
+            <div id="adm-rules-banner" class="hidden mb-3 px-4 py-3 bg-orange-500/10 border border-orange-500/20 rounded-xl flex-shrink-0">
+                <p class="text-orange-400 text-xs font-bold">⚠️ Détails limités — les règles Firestore admin ne sont pas encore déployées. Minutes, streak et emails ne s'affichent pas.</p>
+            </div>
+
             <!-- User list -->
             <div id="admin-user-list" class="flex-grow overflow-y-auto space-y-2 pr-1">
                 <div class="flex items-center justify-center py-12">
@@ -627,71 +632,64 @@ async function loadAdminData() {
     }
 
     try {
-        // Load users collection
-        const usersSnap = await fbDb.collection('users').get();
-        // Load leaderboard for scores
+        // 1) Leaderboard — toujours accessible par les utilisateurs connectés
         const lbSnap = await fbDb.collection('leaderboard').get();
-        const lbMap = {};
-        lbSnap.forEach(d => { lbMap[d.id] = d.data(); });
-
         const users = [];
-        usersSnap.forEach(doc => {
+
+        lbSnap.forEach(doc => {
             const d = doc.data();
-            const lb = lbMap[doc.id] || {};
-            const scores = lb.scores || {};
+            const scores = d.scores || {};
             const scoreVals = Object.values(scores);
             const avgScore = scoreVals.length ? Math.round(scoreVals.reduce((a,b)=>a+b,0)/scoreVals.length) : 0;
-            const coursesCount = scoreVals.length;
             users.push({
                 uid: doc.id,
-                name: lb.name || d.name || 'Anonyme',
-                email: d.email || '',
-                photo: lb.photoURL || d.photoURL || null,
-                studyMinutes: d.studyMinutes || 0,
-                streak: d.streak || 0,
-                lastLogin: d.lastLoginDate || '',
+                name: d.name || 'Anonyme',
+                email: '',
+                photo: d.photoURL || null,
+                studyMinutes: 0,
+                streak: 0,
+                lastLogin: '',
                 avgScore,
-                coursesCount,
+                coursesCount: scoreVals.length,
                 scores,
-                premium: d.premium?.active === true,
+                premium: false,
             });
         });
 
-        // Add leaderboard users not in users collection
-        lbSnap.forEach(doc => {
-            if (!users.find(u => u.uid === doc.id)) {
-                const d = doc.data();
-                const scores = d.scores || {};
-                const scoreVals = Object.values(scores);
-                const avgScore = scoreVals.length ? Math.round(scoreVals.reduce((a,b)=>a+b,0)/scoreVals.length) : 0;
-                users.push({
-                    uid: doc.id,
-                    name: d.name || 'Anonyme',
-                    email: '',
-                    photo: d.photoURL || null,
-                    studyMinutes: 0,
-                    streak: 0,
-                    lastLogin: '',
-                    avgScore,
-                    coursesCount: scoreVals.length,
-                    scores,
-                    premium: false,
-                });
-            }
-        });
+        // 2) Enrichir avec les données users/{uid} — lecture individuelle (admin rule)
+        //    Si les règles Firestore ne sont pas déployées, on ignore silencieusement
+        let detailsAvailable = false;
+        for (const u of users) {
+            try {
+                const snap = await fbDb.collection('users').doc(u.uid).get();
+                if (snap.exists) {
+                    const d = snap.data() || {};
+                    u.email        = d.email || '';
+                    u.studyMinutes = d.studyMinutes || 0;
+                    u.streak       = d.streak || 0;
+                    u.lastLogin    = d.lastLoginDate || '';
+                    u.premium      = d.premium?.active === true;
+                    if (d.name && !u.name) u.name = d.name;
+                    detailsAvailable = true;
+                }
+            } catch { /* règles pas déployées — on continue */ }
+        }
+
+        // Bannière si pas de détails
+        const banner = document.getElementById('adm-rules-banner');
+        if (banner) banner.classList.toggle('hidden', detailsAvailable || users.length === 0);
 
         users.sort((a,b) => b.avgScore - a.avgScore);
         _adminAllUsers = users;
 
-        // Summary stats
         const totalMinutes = users.reduce((s,u) => s+(u.studyMinutes||0), 0);
-        const avgScoreAll = users.length ? Math.round(users.reduce((s,u)=>s+u.avgScore,0)/users.length) : 0;
-        const anonCount = users.filter(u => !u.email).length;
+        const avgScoreAll  = users.length ? Math.round(users.reduce((s,u)=>s+u.avgScore,0)/users.length) : 0;
+        const anonCount    = users.filter(u => !u.email).length;
 
-        document.getElementById('adm-total-users').textContent = users.length;
-        document.getElementById('adm-total-minutes').textContent = totalMinutes + ' min';
-        document.getElementById('adm-avg-score').textContent = avgScoreAll + ' pts';
-        document.getElementById('adm-anon-count').textContent = `(${anonCount})`;
+        document.getElementById('adm-total-users').textContent    = users.length;
+        document.getElementById('adm-total-minutes').textContent  = totalMinutes + ' min';
+        document.getElementById('adm-avg-score').textContent      = avgScoreAll + ' pts';
+        document.getElementById('adm-anon-count').textContent     = `(${anonCount})`;
 
         renderAdminUsers();
     } catch(e) {
