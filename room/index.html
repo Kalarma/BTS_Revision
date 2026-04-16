@@ -41,9 +41,9 @@
         </div>
         <div class="space-y-3 mb-5">
             <div class="flex justify-center">
-                <input id="join-code" type="text" placeholder="XXXXXX" maxlength="6"
-                       class="w-40 bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-white font-black text-center text-2xl uppercase tracking-[0.4em] placeholder-slate-700 outline-none focus:border-violet-500 transition-colors"
-                       oninput="this.value=this.value.toUpperCase()">
+                <input id="join-code" type="text" placeholder="00" maxlength="2" inputmode="numeric"
+                       class="w-28 bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-white font-black text-center text-3xl tracking-[0.4em] placeholder-slate-700 outline-none focus:border-violet-500 transition-colors"
+                       oninput="this.value=this.value.replace(/\D/g,'').slice(0,2)">
             </div>
             <input id="join-name" type="text" placeholder="Ton prénom" maxlength="20"
                    class="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-white font-bold placeholder-slate-700 outline-none focus:border-violet-500 transition-colors">
@@ -290,11 +290,11 @@ function showRoomError(msg) {
 // JOIN
 // =====================================================================
 async function joinRoom() {
-    const code = document.getElementById('join-code').value.trim().toUpperCase();
+    const code = document.getElementById('join-code').value.trim();
     const name = document.getElementById('join-name').value.trim();
     const errEl = document.getElementById('join-error');
 
-    if (code.length !== 6) { showJoinError('Code invalide (6 caractères)'); return; }
+    if (!/^\d{2}$/.test(code)) { showJoinError('Code invalide (2 chiffres)'); return; }
     if (!name) { showJoinError('Entre ton prénom'); return; }
     if (!useFirebase) { showJoinError('Connexion Firebase introuvable'); return; }
 
