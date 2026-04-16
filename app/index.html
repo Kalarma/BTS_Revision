@@ -40,6 +40,14 @@
         /* Quit button */
         .quit-btn { cursor:pointer; transition:color .15s,background .15s; }
         .quit-btn:hover { color:#f87171!important; }
+        /* Kahoot gamification */
+        @keyframes growBar { from{width:0} to{width:var(--w)} }
+        @keyframes scorePopIn { 0%{transform:scale(0) translateY(10px);opacity:0} 60%{transform:scale(1.15) translateY(-3px)} 100%{transform:scale(1) translateY(0);opacity:1} }
+        @keyframes confettiFall { 0%{transform:translateY(-10px) rotate(0deg);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
+        @keyframes rankSlide { from{transform:translateX(-12px);opacity:0} to{transform:translateX(0);opacity:1} }
+        .kh-score-bar { animation:growBar .9s cubic-bezier(.4,0,.2,1) forwards; }
+        .kh-score-pop { animation:scorePopIn .5s cubic-bezier(.34,1.56,.64,1) forwards; }
+        .kh-rank-row { animation:rankSlide .4s ease forwards; opacity:0; }
     </style>
 </head>
 <body>
@@ -147,19 +155,21 @@
             <button onclick="showScreen('screen-auth')" class="text-[9px] font-black text-violet-500 uppercase tracking-widest hover:text-violet-400 transition-colors">Connexion</button>
         </div>
 
-        <!-- Ring + Stats côte à côte (cliquable → stats) -->
-        <div class="flex items-center gap-5 mb-4 bg-slate-900 border border-slate-800 rounded-3xl px-5 py-4 cursor-pointer active:opacity-75 transition-opacity" onclick="showProgressScreen()">
-            <div class="relative flex-shrink-0" style="width:90px;height:90px">
-                <svg width="90" height="90" viewBox="0 0 90 90">
-                    <circle class="ring-bg" cx="45" cy="45" r="37"/>
-                    <circle id="mastery-ring" class="ring-fill" cx="45" cy="45" r="37" stroke-dasharray="232" stroke-dashoffset="232"/>
-                </svg>
-                <div class="absolute inset-0 flex flex-col items-center justify-center">
-                    <span id="mastery-pct" class="text-2xl font-black text-white leading-none">0%</span>
-                    <span class="text-[7px] text-slate-500 font-black uppercase tracking-widest mt-1">Maîtrise</span>
+        <!-- Ring centré + Stats en-dessous (cliquable → stats) -->
+        <div class="mb-4 bg-slate-900 border border-slate-800 rounded-3xl px-5 py-5 cursor-pointer active:opacity-75 transition-opacity" onclick="showProgressScreen()">
+            <div class="flex justify-center mb-3">
+                <div class="relative" style="width:96px;height:96px">
+                    <svg width="96" height="96" viewBox="0 0 96 96">
+                        <circle class="ring-bg" cx="48" cy="48" r="40"/>
+                        <circle id="mastery-ring" class="ring-fill" cx="48" cy="48" r="40" stroke-dasharray="251" stroke-dashoffset="251"/>
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <span id="mastery-pct" class="text-2xl font-black text-white leading-none">0%</span>
+                        <span class="text-[7px] text-slate-500 font-black uppercase tracking-widest mt-1">Maîtrise</span>
+                    </div>
                 </div>
             </div>
-            <div id="home-stats" class="flex-grow space-y-1.5"></div>
+            <div id="home-stats" class="grid grid-cols-3 text-center gap-1"></div>
         </div>
 
         <!-- ── MODE SOLO ── -->
@@ -183,7 +193,7 @@
                 <button onclick="showScreen('screen-multi-setup')" class="py-4 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl font-black uppercase text-white text-xs tracking-wider active:scale-95 transition-all">
                     🏆 Équipes
                 </button>
-                <button onclick="showScreen('screen-presenter-setup')" class="py-4 bg-slate-900 border border-slate-800 hover:border-violet-500/30 rounded-2xl font-black uppercase text-white text-xs tracking-wider active:scale-95 transition-all">
+                <button onclick="openPresenterChoiceModal()" class="py-4 bg-slate-900 border border-slate-800 hover:border-violet-500/30 rounded-2xl font-black uppercase text-white text-xs tracking-wider active:scale-95 transition-all">
                     🖥️ Présentateur
                 </button>
             </div>
@@ -241,6 +251,52 @@
             </button>
         </div>
         <button onclick="closeQuizModal()" class="w-full py-3 text-slate-700 font-bold text-xs uppercase hover:text-slate-500 transition-colors">Annuler</button>
+    </div>
+</div>
+
+<!-- ==================== MODAL CHOIX PRÉSENTATEUR ==================== -->
+<div id="presenter-choice-modal" data-modal-backdrop class="hidden fixed inset-0 z-50 flex items-end justify-center" style="background:rgba(2,6,23,.85);backdrop-filter:blur(4px)">
+    <div class="w-full bg-slate-900 border-t border-slate-800 rounded-t-3xl p-6 fade-up" style="max-width:520px">
+        <div class="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-5"></div>
+        <h3 class="text-base font-black text-white uppercase tracking-widest text-center mb-1">🖥️ Mode Présentateur</h3>
+        <p class="text-[10px] text-slate-500 font-bold text-center mb-5 uppercase tracking-widest">Quel est ton rôle ?</p>
+        <div class="space-y-3 mb-3">
+            <button onclick="closePresenterChoiceModal(); showScreen('screen-presenter-setup')"
+                    class="w-full py-5 bg-violet-700 hover:bg-violet-600 text-white rounded-2xl active:scale-95 transition-all flex flex-col items-center gap-1">
+                <span class="font-black uppercase tracking-wider text-sm">📱 Téléphone — Hôte</span>
+                <span class="text-violet-300/60 text-xs font-medium">Je crée et contrôle la partie depuis mon téléphone</span>
+            </button>
+            <button onclick="closePresenterChoiceModal(); showScreen('screen-presenter-tv')"
+                    class="w-full py-5 bg-slate-800 border border-slate-700 hover:border-violet-500/40 text-white rounded-2xl active:scale-95 transition-all flex flex-col items-center gap-1">
+                <span class="font-black uppercase tracking-wider text-sm">🖥️ Écran — Projecteur / TV</span>
+                <span class="text-slate-400 text-xs font-medium">Je connecte cet écran à une partie existante</span>
+            </button>
+        </div>
+        <button onclick="closePresenterChoiceModal()" class="w-full py-3 text-slate-600 font-bold text-xs uppercase hover:text-slate-400 transition-colors">Annuler</button>
+    </div>
+</div>
+
+<!-- ==================== ÉCRAN TV : CONNEXION PRÉSENTATEUR ==================== -->
+<div id="screen-presenter-tv" class="screen overflow-y-auto">
+    <div class="flex flex-col items-center justify-center min-h-full px-6 py-12">
+        <div class="w-full max-w-sm fade-up">
+            <div class="text-center mb-8">
+                <div class="text-5xl mb-3">🖥️</div>
+                <h2 class="text-2xl font-black text-white uppercase italic">Écran <span class="text-violet-400">Présentateur</span></h2>
+                <p class="text-slate-500 text-xs font-bold mt-2">Entre le code affiché sur le téléphone de l'hôte</p>
+            </div>
+            <div class="flex justify-center mb-4">
+                <input id="tv-code-input" type="text" placeholder="00" maxlength="2" inputmode="numeric"
+                       class="w-28 bg-slate-900 border-2 border-slate-700 rounded-2xl px-4 py-4 text-white font-black text-center text-4xl tracking-[0.4em] placeholder-slate-700 outline-none focus:border-violet-500 transition-colors"
+                       oninput="this.value=this.value.replace(/\D/g,'').slice(0,2)"
+                       onkeydown="if(event.key==='Enter')openPresenterTvScreen()">
+            </div>
+            <button onclick="openPresenterTvScreen()" class="w-full py-4 bg-violet-700 hover:bg-violet-600 text-white font-black uppercase rounded-2xl active:scale-95 transition-all mb-3">
+                Connecter l'écran
+            </button>
+            <p id="tv-code-error" class="hidden text-rose-400 text-xs font-bold text-center mb-3"></p>
+            <button onclick="exitToHome()" class="w-full py-3 text-slate-600 font-bold text-xs uppercase hover:text-slate-400 transition-colors">← Retour</button>
+        </div>
     </div>
 </div>
 
@@ -748,43 +804,62 @@
 
 <!-- ==================== KAHOOT REVEAL (HOST) ==================== -->
 <div id="screen-kahoot-reveal" class="screen overflow-y-auto">
-    <div class="flex flex-col w-full px-6 pb-8">
-        <div class="pt-6 pb-4 flex items-center justify-between">
-            <button onclick="confirmQuitKahoot()" class="quit-btn px-3 h-8 flex items-center rounded-xl text-slate-600 font-black text-xs uppercase gap-1">✕ Quitter</button>
-            <h3 class="text-[10px] font-black text-slate-600 uppercase tracking-widest text-center">Résultats de la question</h3>
+    <div class="flex flex-col w-full px-5 pb-8">
+        <div class="pt-5 pb-4 flex items-center justify-between">
+            <button onclick="confirmQuitKahoot()" class="quit-btn w-9 h-9 flex items-center justify-center rounded-xl text-slate-600 font-black text-base">✕</button>
+            <span id="kh-reveal-round" class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Q 1/10</span>
             <div></div>
         </div>
 
-        <!-- Bonne réponse -->
-        <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-3xl p-5 mb-4 text-center">
-            <p class="text-[9px] font-black text-emerald-400 uppercase mb-2">Bonne réponse</p>
-            <p id="kh-correct-answer" class="text-white font-bold text-base leading-snug"></p>
-        </div>
-
-        <!-- Stats -->
-        <div class="grid grid-cols-2 gap-3 mb-4">
-            <div class="bg-slate-900 rounded-2xl p-4 text-center border border-slate-800">
-                <span id="kh-nb-correct" class="text-3xl font-black text-emerald-400">0</span>
-                <p class="text-[9px] text-slate-500 font-black uppercase mt-1">Correct</p>
-            </div>
-            <div class="bg-slate-900 rounded-2xl p-4 text-center border border-slate-800">
-                <span id="kh-nb-wrong" class="text-3xl font-black text-rose-400">0</span>
-                <p class="text-[9px] text-slate-500 font-black uppercase mt-1">Faux</p>
+        <!-- Bonne réponse + stats -->
+        <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-3xl p-5 mb-3 text-center">
+            <p class="text-[9px] font-black text-emerald-400 uppercase mb-2">✓ Bonne réponse</p>
+            <p id="kh-correct-answer" class="text-white font-bold text-base leading-snug mb-3"></p>
+            <div class="flex justify-center gap-6">
+                <div><span id="kh-nb-correct" class="text-2xl font-black text-emerald-400">0</span><p class="text-[8px] text-slate-500 font-black uppercase mt-0.5">Correct</p></div>
+                <div><span id="kh-nb-wrong" class="text-2xl font-black text-rose-400">0</span><p class="text-[8px] text-slate-500 font-black uppercase mt-0.5">Faux</p></div>
             </div>
         </div>
 
         <!-- Choices breakdown -->
-        <div id="kh-choices-reveal" class="mb-4 space-y-2"></div>
+        <div id="kh-choices-reveal" class="mb-3 space-y-2"></div>
 
-        <!-- Classement partiel -->
-        <div class="mb-6">
-            <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-3">Classement</p>
+        <!-- 🎉 Classement animé -->
+        <div class="mb-4">
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest">Classement</p>
+                <button onclick="showKahootScoreAnimation()" class="text-[9px] font-black text-violet-400 uppercase tracking-widest hover:text-violet-300 px-2 py-1 rounded-lg hover:bg-violet-500/10 transition-all">🎉 Voir animation</button>
+            </div>
             <div id="kh-partial-leaderboard" class="space-y-2"></div>
         </div>
 
         <button id="kh-next-btn" onclick="nextKahootQuestion()"
-                class="w-full py-5 bg-violet-700 text-white font-black uppercase rounded-2xl active:scale-95 transition-all">
+                class="w-full py-5 bg-violet-700 text-white font-black uppercase rounded-3xl active:scale-95 transition-all shadow-lg shadow-violet-500/20">
             Question suivante →
+        </button>
+    </div>
+</div>
+
+<!-- ==================== KAHOOT SCORE ANIMATION OVERLAY ==================== -->
+<div id="kh-anim-overlay" class="hidden fixed inset-0 z-40 flex flex-col overflow-y-auto" style="background:#020617">
+    <div class="flex-grow flex flex-col px-5 py-6 max-w-lg mx-auto w-full">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <p class="text-[9px] font-black text-violet-400 uppercase tracking-widest mb-0.5">Kahoot</p>
+                <h2 class="text-2xl font-black text-white uppercase italic">🏆 Classement</h2>
+            </div>
+            <button onclick="document.getElementById('kh-anim-overlay').classList.add('hidden')" class="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-400 font-black">✕</button>
+        </div>
+        <!-- Score bars -->
+        <div id="kh-anim-list" class="space-y-3 mb-8"></div>
+        <!-- Confetti container -->
+        <div id="kh-confetti-area" class="pointer-events-none fixed inset-0 overflow-hidden z-50"></div>
+    </div>
+    <div class="px-5 pb-8">
+        <button onclick="document.getElementById('kh-anim-overlay').classList.add('hidden');nextKahootQuestion()"
+                class="w-full py-5 bg-violet-700 text-white font-black uppercase rounded-3xl active:scale-95 transition-all shadow-lg shadow-violet-500/20">
+            Continuer →
         </button>
     </div>
 </div>
@@ -1086,15 +1161,15 @@ function updateHome() {
 
     const pct = getMasteryPct();
     document.getElementById('mastery-pct').textContent = pct + '%';
-    document.getElementById('mastery-ring').style.strokeDashoffset = 232 - (232*pct/100);
+    document.getElementById('mastery-ring').style.strokeDashoffset = 251 - (251*pct/100);
 
     const mastered = C.cards.filter((_,i)=>isMastered(i)).length;
     const learning = C.cards.filter((_,i)=>isSeen(i)&&!isMastered(i)).length;
     const newCards  = C.cards.length - mastered - learning;
     document.getElementById('home-stats').innerHTML = `
-        <p class="font-black text-slate-300 text-xl leading-none">${newCards} <span class="text-xs font-black uppercase text-slate-600 ml-1">Nouvelles</span></p>
-        <p class="font-black text-orange-400 text-xl leading-none">${learning} <span class="text-xs font-black uppercase text-orange-400/50 ml-1">En cours</span></p>
-        <p class="font-black text-emerald-400 text-xl leading-none">${mastered} <span class="text-xs font-black uppercase text-emerald-400/50 ml-1">Maîtrisées</span></p>`;
+        <div><p class="font-black text-slate-300 text-xl leading-none">${newCards}</p><p class="text-[8px] font-black text-slate-600 uppercase tracking-widest mt-0.5">Nouvelles</p></div>
+        <div><p class="font-black text-orange-400 text-xl leading-none">${learning}</p><p class="text-[8px] font-black text-slate-600 uppercase tracking-widest mt-0.5">En cours</p></div>
+        <div><p class="font-black text-emerald-400 text-xl leading-none">${mastered}</p><p class="text-[8px] font-black text-slate-600 uppercase tracking-widest mt-0.5">Maîtrisées</p></div>`;
 
     // Admin button
     const adminBtn = document.getElementById('btn-admin');
@@ -1147,12 +1222,22 @@ function confirmReset() {
 // MODAL UTILS
 // =====================================================================
 function closeAllModals() {
-    ['fc-mode-modal','quiz-mode-modal','report-modal'].forEach(id => {
+    ['fc-mode-modal','quiz-mode-modal','report-modal','presenter-choice-modal'].forEach(id => {
         document.getElementById(id)?.classList.add('hidden');
     });
 }
 function openQuizModal()  { document.getElementById('quiz-mode-modal').classList.remove('hidden'); }
 function closeQuizModal() { document.getElementById('quiz-mode-modal').classList.add('hidden'); }
+function openPresenterChoiceModal()  { document.getElementById('presenter-choice-modal').classList.remove('hidden'); }
+function closePresenterChoiceModal() { document.getElementById('presenter-choice-modal').classList.add('hidden'); }
+function openPresenterTvScreen() {
+    const code = document.getElementById('tv-code-input').value.trim();
+    const errEl = document.getElementById('tv-code-error');
+    if (!/^\d{2}$/.test(code)) { errEl.textContent = 'Code à 2 chiffres'; errEl.classList.remove('hidden'); return; }
+    errEl.classList.add('hidden');
+    // Ouvrir la page présentateur avec le code
+    window.location.href = `https://kalarma.github.io/BTS_Revision/presenter/?code=${code}`;
+}
 
 function openReportModal(e) {
     e?.stopPropagation();
@@ -1935,8 +2020,7 @@ let kahootTimerTimeout = null;
 let kahootCountdownInterval = null;
 
 function generateRoomCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    return Array.from({length:6}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+    return (Math.floor(10 + Math.random() * 90)).toString(); // 2-digit code
 }
 
 async function startKahoot() {
@@ -2073,7 +2157,7 @@ function startKahootTimer() {
     kahootTimerTimeout = setTimeout(revealKahootAnswer, kahootSettings.time * 1000);
 }
 
-function revealKahootAnswer() {
+async function revealKahootAnswer() {
     clearTimeout(kahootTimerTimeout);
     clearInterval(kahootCountdownInterval);
     document.getElementById('kh-timer-bar').style.cssText = 'transition:none;width:0%';
@@ -2081,71 +2165,151 @@ function revealKahootAnswer() {
     const q = kahootQuestions[kahootCurrentQ];
     const correctChoice = q.choices.find(c => c.correct);
     document.getElementById('kh-correct-answer').textContent = correctChoice?.text || '';
+    document.getElementById('kh-reveal-round').textContent = `Q ${kahootCurrentQ+1}/${kahootSettings.totalQ}`;
 
     const colors = ['#e74c3c','#3498db','#f39c12','#27ae60'];
     const labels = ['A','B','C','D'];
 
     // Lire les réponses de Firestore
-    fbDb.collection('rooms').doc(kahootRoom).get().then(snap => {
-        const room = snap.data();
-        const answers = room.answers || {};
-        const players = room.players || {};
-        let nbCorrect = 0, nbWrong = 0;
-        const answerCounts = [0, 0, 0, 0];
+    const snap = await fbDb.collection('rooms').doc(kahootRoom).get();
+    const room = snap.data();
+    const answers = room.answers || {};
+    const players = { ...(room.players || {}) };
+    let nbCorrect = 0, nbWrong = 0;
+    const answerCounts = [0, 0, 0, 0];
+    const pointsThisQ = {};   // pid → pts gagnés cette question
 
-        Object.entries(answers).forEach(([pid, pAnswers]) => {
-            const ans = pAnswers[kahootCurrentQ];
-            if (ans !== undefined) {
-                // Support both old format (bool) and new format ({correct, idx})
-                const isCorrect = typeof ans === 'object' ? ans.correct : ans;
-                const ansIdx    = typeof ans === 'object' ? ans.idx    : null;
-                if (isCorrect === true) nbCorrect++;
-                else if (isCorrect === false) nbWrong++;
-                if (ansIdx !== null && ansIdx >= 0 && ansIdx < 4) answerCounts[ansIdx]++;
-            }
-        });
+    Object.entries(answers).forEach(([pid, pAnswers]) => {
+        const ans = pAnswers[kahootCurrentQ];
+        if (ans !== undefined) {
+            const isCorrect = typeof ans === 'object' ? ans.correct : ans;
+            const pts       = typeof ans === 'object' ? (ans.points || 0) : 0;
+            const ansIdx    = typeof ans === 'object' ? ans.idx : null;
+            if (isCorrect === true)  { nbCorrect++; pointsThisQ[pid] = pts; }
+            else if (isCorrect === false) nbWrong++;
+            if (ansIdx !== null && ansIdx >= 0 && ansIdx < 4) answerCounts[ansIdx]++;
+        }
+    });
 
-        document.getElementById('kh-nb-correct').textContent = nbCorrect;
-        document.getElementById('kh-nb-wrong').textContent = nbWrong;
+    // 🏆 HOST met à jour les scores → pas de race condition
+    const updates = {};
+    Object.entries(pointsThisQ).forEach(([pid, pts]) => {
+        if (pts > 0 && players[pid]) {
+            players[pid].score = (players[pid].score || 0) + pts;
+            updates[`players.${pid}.score`] = players[pid].score;
+        }
+    });
+    if (Object.keys(updates).length > 0) {
+        await fbDb.collection('rooms').doc(kahootRoom).update(updates);
+    }
 
-        // Affichage choix avec comptage
-        document.getElementById('kh-choices-reveal').innerHTML = q.choices.map((ch, i) => {
-            const count = answerCounts[i] || 0;
-            return `<div class="rounded-2xl p-3 flex items-center justify-between gap-2 border-2 ${ch.correct ? 'border-emerald-500 bg-emerald-500/20' : 'border-slate-700 bg-slate-900/50'}">
+    document.getElementById('kh-nb-correct').textContent = nbCorrect;
+    document.getElementById('kh-nb-wrong').textContent   = nbWrong;
+
+    // Affichage choix avec comptage + barres visuelles
+    const maxCount = Math.max(...answerCounts, 1);
+    document.getElementById('kh-choices-reveal').innerHTML = q.choices.map((ch, i) => {
+        const count = answerCounts[i] || 0;
+        const barPct = Math.round(count / maxCount * 100);
+        return `<div class="rounded-2xl p-3 border-2 ${ch.correct ? 'border-emerald-500 bg-emerald-500/15' : 'border-slate-800 bg-slate-900/50'}">
+            <div class="flex items-center justify-between gap-2 mb-1.5">
                 <div class="flex items-center gap-2">
-                    <span class="font-black text-xs" style="color:${colors[i]}">${labels[i]}</span>
+                    <span class="w-5 h-5 rounded-md flex items-center justify-center font-black text-[10px] text-white flex-shrink-0" style="background:${colors[i]}">${labels[i]}</span>
                     <span class="text-white text-xs font-medium leading-snug">${ch.text}</span>
                 </div>
-                <span class="font-black text-sm ${ch.correct ? 'text-emerald-400' : 'text-slate-500'} flex-shrink-0">${count}</span>
-            </div>`;
-        }).join('');
+                <span class="font-black text-sm flex-shrink-0 ${ch.correct ? 'text-emerald-400' : 'text-slate-500'}">${count}</span>
+            </div>
+            <div class="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                <div class="h-full rounded-full transition-all duration-700" style="width:${barPct}%;background:${ch.correct ? '#10b981' : colors[i]}40"></div>
+            </div>
+        </div>`;
+    }).join('');
 
-        // Classement
-        const sorted = Object.entries(players).sort((a,b) => (b[1].score||0) - (a[1].score||0));
-        document.getElementById('kh-partial-leaderboard').innerHTML = sorted.slice(0,5).map(([pid, p], i) => `
-            <div class="flex items-center justify-between bg-slate-900 p-3 rounded-xl border border-slate-800">
-                <div class="flex items-center gap-2">
-                    <span class="text-slate-600 font-black text-xs w-4">${i+1}</span>
-                    <span class="text-white font-bold text-sm">${p.name}</span>
-                </div>
-                <span class="font-black text-violet-400 text-sm">${p.score||0} pts</span>
-            </div>`).join('');
+    // Classement rapide
+    const sorted = Object.entries(players).sort((a,b) => (b[1].score||0) - (a[1].score||0));
+    const medals = ['🥇','🥈','🥉'];
+    document.getElementById('kh-partial-leaderboard').innerHTML = sorted.slice(0,5).map(([pid, p], i) => {
+        const gained = pointsThisQ[pid] ? `<span class="text-emerald-400 font-black text-xs ml-1">+${pointsThisQ[pid]}</span>` : '';
+        return `<div class="flex items-center justify-between bg-slate-900 px-3 py-2.5 rounded-xl border border-slate-800">
+            <div class="flex items-center gap-2">
+                <span class="text-base w-6 text-center">${medals[i] || (i+1)}</span>
+                <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${p.color||'#7c3aed'}"></div>
+                <span class="text-white font-bold text-sm">${p.name}</span>
+                ${gained}
+            </div>
+            <span class="font-black text-violet-400 text-sm">${p.score||0} pts</span>
+        </div>`;
+    }).join('');
 
-        // Changer bouton si dernière question
-        const isLast = kahootCurrentQ >= kahootSettings.totalQ - 1;
-        document.getElementById('kh-next-btn').textContent = isLast ? 'Voir le podium 🏆' : 'Question suivante →';
+    // Changer bouton si dernière question
+    const isLast = kahootCurrentQ >= kahootSettings.totalQ - 1;
+    document.getElementById('kh-next-btn').textContent = isLast ? '🏆 Voir le podium' : 'Question suivante →';
 
-        fbDb.collection('rooms').doc(kahootRoom).update({ status: 'reveal' });
+    // Notifier les joueurs (reveal + scores mis à jour)
+    await fbDb.collection('rooms').doc(kahootRoom).update({ status: 'reveal' });
+
+    // Auto-afficher l'animation si plus de 1 joueur
+    if (Object.keys(players).length >= 2) {
+        showKahootScoreAnimation(players, pointsThisQ);
+    } else {
         showScreen('screen-kahoot-reveal');
-    });
+    }
+}
+
+function showKahootScoreAnimation(playersOverride, pointsThisQ) {
+    const players = playersOverride || {};
+    const pts = pointsThisQ || {};
+    const sorted = Object.entries(players).sort((a,b) => (b[1].score||0) - (a[1].score||0));
+    const maxScore = Math.max(...sorted.map(([,p]) => p.score||0), 1);
+    const medals = ['🥇','🥈','🥉'];
+
+    document.getElementById('kh-anim-list').innerHTML = sorted.map(([pid, p], i) => {
+        const pct = Math.round((p.score||0) / maxScore * 100);
+        const gained = pts[pid] ? `+${pts[pid]}` : '';
+        const medal = medals[i] || `#${i+1}`;
+        return `<div class="kh-rank-row" style="animation-delay:${i*0.12}s">
+            <div class="flex items-center gap-2 mb-1">
+                <span class="text-lg w-7 text-center flex-shrink-0">${medal}</span>
+                <div class="w-3 h-3 rounded-full flex-shrink-0" style="background:${p.color||'#7c3aed'}"></div>
+                <span class="font-black text-white text-sm flex-grow">${p.name}</span>
+                ${gained ? `<span class="kh-score-pop text-xs font-black text-emerald-400 bg-emerald-400/15 px-2 py-0.5 rounded-lg" style="animation-delay:${i*0.12+0.4}s">${gained}</span>` : ''}
+                <span class="font-black text-sm tabular-nums" style="color:${p.color||'#7c3aed'}">${p.score||0} pts</span>
+            </div>
+            <div class="ml-9 h-3 bg-slate-800 rounded-full overflow-hidden">
+                <div class="kh-score-bar h-full rounded-full" style="--w:${pct}%;background:${p.color||'#7c3aed'};animation-delay:${i*0.12+0.2}s"></div>
+            </div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('kh-anim-overlay').classList.remove('hidden');
+    showScreen('screen-kahoot-reveal');
+    spawnKahootConfetti();
+}
+
+function spawnKahootConfetti() {
+    const colors = ['#7c3aed','#f97316','#10b981','#f43f5e','#f59e0b','#a855f7'];
+    const area = document.getElementById('kh-confetti-area');
+    if (!area) return;
+    area.innerHTML = '';
+    for (let i = 0; i < 40; i++) {
+        const el = document.createElement('div');
+        const size = 6 + Math.random() * 8;
+        el.style.cssText = `position:absolute;top:-20px;left:${Math.random()*100}%;width:${size}px;height:${size}px;background:${colors[i%colors.length]};border-radius:${Math.random()>0.5?'50%':'2px'};animation:confettiFall ${1.2+Math.random()*1.2}s ${Math.random()*0.6}s linear forwards`;
+        area.appendChild(el);
+    }
+    setTimeout(() => { if (area) area.innerHTML = ''; }, 3000);
 }
 
 function nextKahootQuestion() {
+    // Fermer l'overlay animation si ouvert
+    document.getElementById('kh-anim-overlay')?.classList.add('hidden');
+    // Passer le statut à 'leaderboard' brièvement pour que les joueurs voient le classement
+    fbDb.collection('rooms').doc(kahootRoom).update({ status: 'leaderboard' }).catch(()=>{});
     kahootCurrentQ++;
     if (kahootCurrentQ >= kahootSettings.totalQ) {
-        showKahootFinalPodium();
+        setTimeout(() => showKahootFinalPodium(), 1500);
     } else {
-        showKahootQuestion();
+        setTimeout(() => showKahootQuestion(), 1500);
     }
 }
 
