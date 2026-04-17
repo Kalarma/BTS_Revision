@@ -44,14 +44,21 @@
 </div>
 
 <!-- ================ ATTENTE ================ -->
-<div id="screen-wait" class="screen p-8 text-center">
-    <div class="fade-in">
-        <div class="text-7xl mb-6 pulse">⏳</div>
-        <h2 class="text-2xl font-black text-white uppercase">En attente du présentateur...</h2>
-        <p id="wait-course" class="text-slate-500 text-sm mt-2"></p>
-        <div id="wait-code" class="mt-8 bg-slate-900 border border-slate-800 rounded-3xl px-8 py-4 inline-block">
-            <p class="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Code salle</p>
-            <p class="text-5xl font-black text-white tracking-[0.3em]"></p>
+<div id="screen-wait" class="screen overflow-y-auto" style="position:relative">
+    <button onclick="if(confirm('Déconnecter cet écran ?')){location.reload()}" style="position:absolute;top:1rem;right:1rem;z-index:10" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-600 hover:text-white font-black text-sm transition-all">✕</button>
+    <div class="min-h-full flex flex-col items-center justify-center p-8 text-center">
+        <div class="fade-in w-full" style="max-width:700px">
+            <div class="text-7xl mb-6 pulse">⏳</div>
+            <h2 class="text-3xl font-black text-white uppercase">En attente du présentateur...</h2>
+            <p id="wait-course" class="text-slate-500 text-base mt-2 font-medium"></p>
+            <div id="wait-code" class="mt-6 bg-slate-900 border border-slate-800 rounded-3xl px-8 py-4 inline-block">
+                <p class="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Code salle</p>
+                <p class="text-5xl font-black text-white tracking-[0.3em]"></p>
+            </div>
+            <!-- Équipes en temps réel -->
+            <div id="wait-teams" class="mt-8 w-full grid grid-cols-2 gap-3" style="max-width:600px;margin-left:auto;margin-right:auto"></div>
+            <!-- Paramètres -->
+            <div id="wait-params" class="mt-5 flex flex-wrap items-center justify-center gap-3"></div>
         </div>
     </div>
 </div>
@@ -86,9 +93,12 @@
         </div>
     </div>
 
-    <!-- COLONNE DROITE : Scores live -->
+    <!-- COLONNE DROITE : Scores live + quit -->
     <div id="q-scores-panel" class="flex-shrink-0 flex flex-col p-6 border-l border-slate-800/60" style="width:280px;background:rgba(15,23,42,.8)">
-        <p class="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-4">🏆 Scores</p>
+        <div class="flex items-center justify-between mb-4">
+            <p class="text-[10px] font-black text-slate-600 uppercase tracking-widest">🏆 Scores</p>
+            <button onclick="if(confirm('Déconnecter cet écran ?')){location.reload()}" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 border border-slate-700 text-slate-500 hover:text-white font-black text-xs transition-all">✕</button>
+        </div>
         <div id="q-teams-live" class="space-y-3 flex-grow"></div>
     </div>
 </div>
@@ -202,6 +212,7 @@ function handleRoomState(room) {
         showScreen('screen-wait');
         document.getElementById('wait-course').textContent = room.courseName || '';
         document.querySelector('#wait-code p:last-child').textContent = roomCode;
+        renderWaitTeams(room.settings?.teams || [], room.settings || {});
         return;
     }
 
@@ -235,8 +246,37 @@ function handleRoomState(room) {
     currentPhase = phase;
 }
 
+function renderWaitTeams(teams, settings) {
+    const teamsEl = document.getElementById('wait-teams');
+    const paramsEl = document.getElementById('wait-params');
+    if (!teamsEl || !paramsEl) return;
+
+    if (teams.length === 0) {
+        teamsEl.innerHTML = '<p class="col-span-2 text-slate-700 text-sm font-bold">Aucune équipe configurée...</p>';
+    } else {
+        teamsEl.innerHTML = teams.map(t => `
+            <div class="flex items-center gap-3 bg-slate-900 border border-slate-800 rounded-2xl px-5 py-4 fade-in">
+                <div class="w-5 h-5 rounded-full flex-shrink-0" style="background:${t.color};box-shadow:0 0 8px ${t.color}60"></div>
+                <span class="font-black text-white text-xl truncate">${t.name}</span>
+                <span class="ml-auto font-black text-base" style="color:${t.color}">${t.score || 0} pts</span>
+            </div>`).join('');
+    }
+
+    const parts = [];
+    if (settings.nbQ)                      parts.push(`<span class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-slate-400 text-sm font-bold">📋 ${settings.nbQ} questions</span>`);
+    if (settings.ptsQ)                     parts.push(`<span class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-slate-400 text-sm font-bold">⭐ ${settings.ptsQ} pts/Q</span>`);
+    if (settings.timeQ && !settings.noTimer) parts.push(`<span class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-slate-400 text-sm font-bold">⏱ ${settings.timeQ}s</span>`);
+    if (settings.neg)                       parts.push(`<span class="bg-rose-500/10 border border-rose-500/20 rounded-xl px-3 py-1.5 text-rose-400 text-sm font-bold">⚠️ −${settings.neg}% si faux</span>`);
+    if (settings.noTimer)                   parts.push(`<span class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-slate-400 text-sm font-bold">⏸ Sans timer</span>`);
+    paramsEl.innerHTML = parts.join('');
+}
+
 function renderQuestion(room, q) {
-    document.getElementById('q-term').textContent = q.term || '';
+    // showQ = afficher le terme sur l'écran de projection
+    const showQ = room.settings?.showQ !== false;
+    document.getElementById('q-term').textContent = showQ ? (q.term || '') : '';
+    document.getElementById('q-term').style.opacity = showQ ? '' : '0';
+    document.getElementById('q-label').style.opacity = showQ ? '' : '0';
     document.getElementById('q-def').textContent  = q.def  || '';
     document.getElementById('q-answer-area').classList.add('hidden');
 
