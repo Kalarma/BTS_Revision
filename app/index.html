@@ -983,7 +983,6 @@ const QUIZ_TIME   = 15;
 let C = null, courseName = '', progress = {};
 let fcDeck = [], fcIdx = 0, fcFlipped = false, fcSessionCorrect = 0, fcSessionWrong = 0;
 let fcSessionResults = [], fcMode = 'classic';
-let fcAlreadyRequeued = new Set(); // cartes déjà repassées une fois ce tour
 let quizDeck = [], quizIdx = 0, quizScore = 0, quizCorrect = 0, quizWrong = 0, quizTimer = null, quizCountInterval = null;
 let quizMode = 'classic';
 let reportCardIdx = -1;
@@ -1200,13 +1199,18 @@ function saveProgress() {
             .set(progress)
             .catch(e => console.warn('Firestore save failed:', e));
         // Update leaderboard score for this course
+        // Guard: ne jamais écrire 0% — si la progression n'a pas chargé depuis Firestore
+        // (règles pas déployées), on ne veut pas écraser un vrai score avec 0.
         const pct = getMasteryPct();
-        fbDb.collection('leaderboard').doc(currentUser.uid).set({
-            name: currentUser.displayName || currentUser.email || 'Utilisateur',
-            photoURL: currentUser.photoURL || null,
-            scores: { [courseName]: pct },
-            updatedAt: Date.now()
-        }, { merge: true }).catch(() => {});
+        const hasAnyProgress = Object.values(progress).some(p => (p.c || 0) + (p.w || 0) > 0);
+        if (hasAnyProgress) {
+            fbDb.collection('leaderboard').doc(currentUser.uid).set({
+                name: currentUser.displayName || currentUser.email || 'Utilisateur',
+                photoURL: currentUser.photoURL || null,
+                scores: { [courseName]: pct },
+                updatedAt: Date.now()
+            }, { merge: true }).catch(() => {});
+        }
     }
 }
 
@@ -1633,7 +1637,6 @@ function startFlashcards(mode) {
     fcDeck = [...bookmarkCards, ...otherCards.slice(0, maxOthers)];
     fcIdx=0; fcSessionCorrect=0; fcSessionWrong=0;
     fcSessionResults = [];
-    fcAlreadyRequeued.clear();
     showScreen('screen-flashcard');
     showFlashcard();
     initSwipe();
@@ -1691,11 +1694,8 @@ function answerCard(correct) {
     setP(idx, correct, 'flash');
     fcSessionResults.push({ idx, correct });
     if (correct) fcSessionCorrect++; else fcSessionWrong++;
-    // Si faux : replacer la carte à la fin UNE seule fois par session
-    if (!correct && !fcAlreadyRequeued.has(idx)) {
-        fcAlreadyRequeued.add(idx);
-        fcDeck.push(idx); // à la fin, pas juste derrière
-    }
+    // Cartes fausses : PAS de repassage dans la session en cours.
+    // Le % de maîtrise a déjà baissé → elles remonteront naturellement dans la prochaine session.
     const el = document.getElementById('fc-card');
     el.classList.add('snapping', correct ? 'fly-right' : 'fly-left');
     setTimeout(() => { fcIdx++; showFlashcard(); }, 350);
