@@ -172,6 +172,30 @@
             <div id="home-stats" class="grid grid-cols-3 text-center gap-1"></div>
         </div>
 
+        <!-- ── TROPHÉES ── -->
+        <div id="trophy-widget" class="mb-4 bg-slate-900 border border-slate-800 rounded-3xl px-5 py-4">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <span id="trophy-rank-emoji" class="text-xl">🪵</span>
+                    <div>
+                        <p id="trophy-rank-name" class="text-sm font-black text-white leading-tight">Bois</p>
+                        <p class="text-[9px] font-bold text-slate-600 uppercase tracking-widest">Rang</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-[9px] font-bold text-slate-600 uppercase tracking-widest">Trophées</p>
+                    <p id="trophy-count" class="text-xl font-black text-amber-400 leading-tight">0 🏆</p>
+                </div>
+            </div>
+            <!-- XP bar vers prochain rang -->
+            <div class="flex items-center gap-2">
+                <div class="flex-grow h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                    <div id="trophy-xp-bar" class="h-full rounded-full transition-all duration-700" style="width:0%;background:#f59e0b"></div>
+                </div>
+                <span id="trophy-xp-label" class="text-[9px] font-black text-slate-600 tabular-nums flex-shrink-0">0 XP</span>
+            </div>
+        </div>
+
         <!-- ── MODE SOLO ── -->
         <p class="text-[9px] font-black text-slate-700 uppercase tracking-widest px-1 mb-2">Mode Solo</p>
         <div class="space-y-2 mb-4">
@@ -655,15 +679,10 @@
         <!-- Params -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-4">
             <label class="text-[9px] font-black text-slate-500 uppercase block mb-3">Paramètres</label>
-            <div class="grid grid-cols-3 gap-3">
+            <div class="grid grid-cols-2 gap-3 mb-3">
                 <div>
                     <span class="text-[9px] text-slate-500 font-black block mb-1.5 uppercase">Temps (s)</span>
                     <input id="multi-time" type="number" value="20" min="5" max="60"
-                           class="w-full bg-slate-950 px-2 py-2.5 rounded-xl text-white font-black text-sm border border-slate-800 text-center focus:border-violet-500 outline-none transition-colors">
-                </div>
-                <div>
-                    <span class="text-[9px] text-slate-500 font-black block mb-1.5 uppercase">Pts / Q</span>
-                    <input id="multi-pts" type="number" value="100" min="10" max="500" step="10"
                            class="w-full bg-slate-950 px-2 py-2.5 rounded-xl text-white font-black text-sm border border-slate-800 text-center focus:border-violet-500 outline-none transition-colors">
                 </div>
                 <div>
@@ -672,6 +691,20 @@
                            class="w-full bg-slate-950 px-2 py-2.5 rounded-xl text-white font-black text-sm border border-slate-800 text-center focus:border-violet-500 outline-none transition-colors">
                 </div>
             </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <span class="text-[9px] text-slate-500 font-black block mb-1.5 uppercase">Pts / bonne rép.</span>
+                    <input id="multi-pts" type="number" value="100" min="10" max="500" step="10"
+                           class="w-full bg-slate-950 px-2 py-2.5 rounded-xl text-white font-black text-sm border border-slate-800 text-center focus:border-violet-500 outline-none transition-colors">
+                </div>
+                <div>
+                    <span class="text-[9px] text-slate-500 font-black block mb-1.5 uppercase">Pénalité faux (%)</span>
+                    <input id="multi-neg" type="number" value="50" min="0" max="100" step="10"
+                           class="w-full bg-slate-950 px-2 py-2.5 rounded-xl text-white font-black text-sm border border-slate-800 text-center focus:border-violet-500 outline-none transition-colors"
+                           placeholder="0">
+                </div>
+            </div>
+            <p class="text-[9px] text-slate-700 font-medium mt-2">Pénalité : % des pts perdus sur mauvaise réponse (0 = pas de pénalité)</p>
         </div>
 
         <!-- Teams -->
@@ -695,7 +728,18 @@
 </div>
 
 <!-- ==================== MULTI GAME ==================== -->
-<div id="screen-multi-game" class="screen">
+<div id="screen-multi-game" class="screen" style="position:relative">
+
+    <!-- ——— TEAM INTRO OVERLAY (2 secondes avant chaque question) ——— -->
+    <div id="mg-team-intro" class="hidden absolute inset-0 z-20 flex flex-col items-center justify-center" style="background:#020617">
+        <div id="mg-intro-ring" class="w-24 h-24 rounded-full border-4 flex items-center justify-center mb-6" style="border-color:#7c3aed">
+            <div id="mg-intro-dot-big" class="w-16 h-16 rounded-full" style="background:#7c3aed"></div>
+        </div>
+        <p class="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] mb-2">C'est votre tour !</p>
+        <p id="mg-intro-name" class="text-5xl font-black text-white uppercase italic text-center px-8"></p>
+        <p id="mg-intro-score" class="text-slate-500 font-bold text-sm mt-3"></p>
+    </div>
+
     <div class="px-5 pt-5 pb-3 flex items-center justify-between flex-shrink-0">
         <div class="flex items-center gap-3 min-w-0">
             <div id="mg-team-dot" class="w-4 h-4 rounded-full flex-shrink-0"></div>
@@ -1229,6 +1273,9 @@ function updateHome() {
         <div><p class="font-black text-orange-400 text-xl leading-none">${learning}</p><p class="text-[8px] font-black text-slate-600 uppercase tracking-widest mt-0.5">En cours</p></div>
         <div><p class="font-black text-emerald-400 text-xl leading-none">${mastered}</p><p class="text-[8px] font-black text-slate-600 uppercase tracking-widest mt-0.5">Maîtrisées</p></div>`;
 
+    // Met à jour le widget trophées
+    updateTrophyWidget(false);
+
     // Admin button
     const adminBtn = document.getElementById('btn-admin');
     if (adminBtn) {
@@ -1266,6 +1313,84 @@ function updateHome() {
         userBadge.classList.add('hidden');
         guestBadge.classList.add('hidden');
     }
+}
+
+// =====================================================================
+// TROPHÉES / PROGRESSION (style Clash Royale)
+// =====================================================================
+const TROPHY_RANKS = [
+    { min:0,    max:99,   name:'Bois',      emoji:'🪵', color:'#92400e', barColor:'#d97706' },
+    { min:100,  max:249,  name:'Fer',       emoji:'⚙️', color:'#64748b', barColor:'#94a3b8' },
+    { min:250,  max:499,  name:'Bronze',    emoji:'🥉', color:'#b45309', barColor:'#f97316' },
+    { min:500,  max:999,  name:'Argent',    emoji:'🥈', color:'#475569', barColor:'#cbd5e1' },
+    { min:1000, max:1999, name:'Or',        emoji:'🥇', color:'#b45309', barColor:'#fbbf24' },
+    { min:2000, max:3999, name:'Diamant',   emoji:'💎', color:'#0e7490', barColor:'#22d3ee' },
+    { min:4000, max:Infinity, name:'Maître',emoji:'👑', color:'#7c3aed', barColor:'#a78bfa' },
+];
+
+function getTrophyXP() {
+    return parseInt(localStorage.getItem('trophy_xp_' + courseName) || '0');
+}
+function setTrophyXP(xp) {
+    localStorage.setItem('trophy_xp_' + courseName, Math.max(0, xp));
+}
+function getTrophyRank(xp) {
+    return TROPHY_RANKS.slice().reverse().find(r => xp >= r.min) || TROPHY_RANKS[0];
+}
+function getTrophyCount(xp) {
+    // 1 trophée toutes les 25 XP
+    return Math.floor(xp / 25);
+}
+
+function awardXP(amount, label) {
+    const prev = getTrophyXP();
+    const next = prev + amount;
+    setTrophyXP(next);
+    updateTrophyWidget(true, amount, label);
+    // Sync to Firestore
+    if (fbDb && currentUser) {
+        fbDb.collection('users').doc(currentUser.uid).set(
+            { trophyXP: { [courseName]: next } }, { merge: true }
+        ).catch(() => {});
+    }
+}
+
+function updateTrophyWidget(animate, xpGained, label) {
+    const xp = getTrophyXP();
+    const rank = getTrophyRank(xp);
+    const nextRank = TROPHY_RANKS.find(r => r.min > xp);
+    const trophies = getTrophyCount(xp);
+
+    document.getElementById('trophy-rank-emoji').textContent = rank.emoji;
+    document.getElementById('trophy-rank-name').textContent = rank.name;
+    document.getElementById('trophy-count').textContent = trophies + ' 🏆';
+
+    const barEl = document.getElementById('trophy-xp-bar');
+    if (barEl) {
+        const pct = nextRank
+            ? Math.round((xp - rank.min) / (nextRank.min - rank.min) * 100)
+            : 100;
+        barEl.style.width = pct + '%';
+        barEl.style.background = rank.barColor;
+    }
+    document.getElementById('trophy-xp-label').textContent =
+        nextRank ? `${xp} / ${nextRank.min} XP` : `${xp} XP · MAX`;
+
+    // Animation de gain de XP
+    if (animate && xpGained > 0) {
+        showXpPopup(xpGained, label);
+    }
+}
+
+function showXpPopup(amount, label) {
+    const widget = document.getElementById('trophy-widget');
+    if (!widget) return;
+    const pop = document.createElement('div');
+    pop.textContent = `+${amount} XP ${label || ''}`;
+    pop.style.cssText = `position:absolute;top:-8px;right:12px;background:#f59e0b;color:#000;font-weight:900;font-size:11px;padding:2px 8px;border-radius:20px;animation:fadeUp .6s ease forwards;pointer-events:none;z-index:10`;
+    widget.style.position = 'relative';
+    widget.appendChild(pop);
+    setTimeout(() => pop.remove(), 700);
 }
 
 function confirmReset() {
@@ -1532,7 +1657,7 @@ function showFlashcard() {
     const el = document.getElementById('fc-card');
     el.classList.remove('fly-right','fly-left','snapping','glow-green','glow-red');
     el.style.transform=''; el.style.opacity='';
-    el.classList.add('pop'); setTimeout(()=>el.classList.remove('pop'),400);
+    el.classList.add('fade-up'); setTimeout(()=>el.classList.remove('fade-up'),400);
     const pct = Math.round(fcIdx/fcDeck.length*100);
     document.getElementById('fc-progress').style.width = pct+'%';
     document.getElementById('fc-counter').textContent  = `${fcIdx}/${fcDeck.length}`;
@@ -1580,6 +1705,11 @@ function endFlashcards() {
         </div>`;
     }).join('');
 
+    // Trophées XP : +5 par bonne réponse, +20 bonus si taux ≥ 80%
+    const xpBase = fcSessionCorrect * 5;
+    const xpBonus = rate >= 0.8 ? 20 : rate >= 0.5 ? 5 : 0;
+    if (xpBase + xpBonus > 0) awardXP(xpBase + xpBonus, '🃏');
+
     updateHome();
     showScreen('screen-fc-end');
 }
@@ -1592,7 +1722,7 @@ function initSwipe() {
     let startX=0, startY=0, dragging=false, moved=false;
     const onStart=(x,y)=>{ startX=x; startY=y; dragging=true; moved=false; };
     const onMove=(x,y)=>{
-        if(!dragging||!fcFlipped) return;
+        if(!dragging) return;
         const dx=x-startX, dy=y-startY;
         if(!moved&&Math.abs(dx)<5&&Math.abs(dy)<5) return;
         if(!moved&&Math.abs(dy)>Math.abs(dx)){ dragging=false; return; }
@@ -1606,7 +1736,7 @@ function initSwipe() {
     const onEnd=(x)=>{
         if(!dragging) return; dragging=false;
         const dx=x-startX;
-        if(!fcFlipped||!moved){ el.style.transform=''; el.classList.remove('glow-green','glow-red'); return; }
+        if(!moved){ el.style.transform=''; el.classList.remove('glow-green','glow-red'); return; }
         if(dx>80) answerCard(true);
         else if(dx<-80) answerCard(false);
         else { el.classList.add('snapping'); el.style.transform=''; el.classList.remove('glow-green','glow-red'); setTimeout(()=>el.classList.remove('snapping'),350); }
@@ -1697,6 +1827,11 @@ function endQuiz() {
     const rate=quizCorrect/(quizCorrect+quizWrong||1);
     document.getElementById('qe-emoji').textContent=rate>=.8?'🏆':rate>=.5?'💪':'📚';
     document.getElementById('qe-score-txt').textContent=`${Math.round(rate*100)}% de bonnes réponses`;
+
+    // Trophées XP : 10-50 XP selon taux de réussite
+    const xpQuiz = rate >= 0.8 ? 50 : rate >= 0.6 ? 30 : rate >= 0.4 ? 15 : 5;
+    awardXP(xpQuiz, '📝');
+
     updateHome(); showScreen('screen-quiz-end');
 }
 
@@ -1804,13 +1939,42 @@ function launchMulti() {
     const inputs=[...document.querySelectorAll('.team-input')];
     teams=inputs.map((inp,i)=>({name:inp.value.trim()||`Équipe ${i+1}`,score:0,color:TEAM_COLORS[i]}));
     if(teams.length<2){ alert('Ajoute au moins 2 équipes !'); return; }
-    multiSettings={ time:parseInt(document.getElementById('multi-time').value)||20, pts:parseInt(document.getElementById('multi-pts').value)||100, nb:parseInt(document.getElementById('multi-nb').value)||15 };
+    const negPct = parseInt(document.getElementById('multi-neg')?.value || '50');
+    multiSettings={
+        time: parseInt(document.getElementById('multi-time').value)||20,
+        pts:  parseInt(document.getElementById('multi-pts').value)||100,
+        nb:   parseInt(document.getElementById('multi-nb').value)||15,
+        negPct: isNaN(negPct) ? 50 : Math.max(0, Math.min(100, negPct))
+    };
     multiPool=[...C.cards.map((_,i)=>i)].sort(()=>Math.random()-.5).slice(0,Math.min(multiSettings.nb,C.cards.length));
     multiRound=0; multiTeamIdx=0;
-    showScreen('screen-multi-game'); showMultiQuestion();
+    showScreen('screen-multi-game');
+    showMultiQuestion();
 }
 
 function showMultiQuestion() {
+    const team = teams[multiTeamIdx];
+
+    // Afficher l'intro de l'équipe pendant 2 secondes
+    const intro = document.getElementById('mg-team-intro');
+    const introDot = document.getElementById('mg-intro-dot-big');
+    const introRing = document.getElementById('mg-intro-ring');
+    const introName = document.getElementById('mg-intro-name');
+    const introScore = document.getElementById('mg-intro-score');
+    introDot.style.background = team.color;
+    introRing.style.borderColor = team.color;
+    introName.textContent = team.name;
+    introScore.textContent = `Score : ${team.score} pts`;
+    intro.classList.remove('hidden');
+
+    clearTimeout(multiTimerTimeout);
+    setTimeout(() => {
+        intro.classList.add('hidden');
+        startMultiQuestionDisplay();
+    }, 2000);
+}
+
+function startMultiQuestionDisplay() {
     const idx=multiPool[multiRound], card=C.cards[idx], team=teams[multiTeamIdx];
     document.getElementById('mg-team-dot').style.backgroundColor=team.color;
     document.getElementById('mg-team-name').textContent=team.name;
@@ -1820,11 +1984,18 @@ function showMultiQuestion() {
     document.getElementById('mg-def-area').classList.add('hidden');
     document.getElementById('mg-reveal-btn').classList.remove('hidden');
     document.getElementById('mg-validation').classList.add('hidden');
-    clearTimeout(multiTimerTimeout);
+
     const bar=document.getElementById('mg-timer-bar');
     bar.style.transition='none'; bar.style.width='100%'; bar.style.backgroundColor=team.color;
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{ bar.style.transition=`width ${multiSettings.time}s linear`; bar.style.width='0%'; }));
-    multiTimerTimeout=setTimeout(revealMultiAnswer, multiSettings.time*1000);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        bar.style.transition=`width ${multiSettings.time}s linear`;
+        bar.style.width='0%';
+    }));
+    // Timer expire → clignoter en rouge mais NE PAS révéler automatiquement
+    multiTimerTimeout=setTimeout(()=>{
+        bar.style.transition='none';
+        bar.style.backgroundColor='#f43f5e';
+    }, multiSettings.time*1000);
 }
 
 function revealMultiAnswer() {
@@ -1832,11 +2003,23 @@ function revealMultiAnswer() {
     document.getElementById('mg-timer-bar').style.cssText='transition:none;width:0%';
     document.getElementById('mg-def-area').classList.remove('hidden');
     document.getElementById('mg-reveal-btn').classList.add('hidden');
-    document.getElementById('mg-validation').classList.remove('hidden');
+    const validation = document.getElementById('mg-validation');
+    validation.classList.remove('hidden');
+    // Mettre à jour les labels avec les pts
+    const pts = multiSettings.pts || 100;
+    const neg = multiSettings.negPct > 0 ? Math.round(pts * multiSettings.negPct / 100) : 0;
+    const [btnFaux, btnJuste] = validation.querySelectorAll('button');
+    btnFaux.textContent  = neg > 0 ? `✗ Faux  −${neg} pts` : '✗ Faux';
+    btnJuste.textContent = `✓ Juste  +${pts} pts`;
 }
 
 function scoreMulti(correct) {
-    if(correct) teams[multiTeamIdx].score+=multiSettings.pts;
+    if (correct) {
+        teams[multiTeamIdx].score += multiSettings.pts;
+    } else if (multiSettings.negPct > 0) {
+        const loss = Math.round(multiSettings.pts * multiSettings.negPct / 100);
+        teams[multiTeamIdx].score = Math.max(0, teams[multiTeamIdx].score - loss);
+    }
     showMultiScores();
 }
 
