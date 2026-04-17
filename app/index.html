@@ -540,17 +540,22 @@
         </div>
     </div>
     <!-- Bandeau "connecte l'écran" si pas encore connecté -->
-    <div id="ph-connect-banner" class="mx-5 mb-3 bg-slate-900 border border-slate-800 rounded-2xl px-4 py-3 flex-shrink-0">
-        <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5">🖥️ Connecte l'écran de projection</p>
-        <p class="text-[10px] text-slate-600 font-medium mb-2">Ouvre cette URL sur l'ordi/TV et entre le code :</p>
-        <div class="flex items-center gap-2">
-            <div class="flex-grow bg-slate-950 rounded-xl px-3 py-2 border border-slate-800">
-                <p class="text-[9px] text-slate-700 font-bold mb-0.5">URL</p>
-                <p class="text-violet-400 text-[10px] font-black break-all">kalarma.github.io/BTS_Revision/presenter</p>
-            </div>
-            <div class="bg-slate-950 rounded-xl px-3 py-2 border border-violet-500/30 text-center flex-shrink-0">
-                <p class="text-[9px] text-slate-700 font-bold mb-0.5">Code</p>
-                <p id="ph-code-big" class="text-violet-400 text-lg font-black tracking-[0.2em]"></p>
+    <div id="ph-connect-banner" class="mx-5 mb-3 bg-slate-900 border border-slate-800 rounded-2xl flex-shrink-0 overflow-hidden">
+        <div class="flex items-center justify-between px-4 pt-3 pb-1.5">
+            <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest">🖥️ Connecte l'écran de projection</p>
+            <button onclick="toggleConnectBanner()" id="ph-banner-toggle" class="w-5 h-5 flex items-center justify-center text-slate-700 text-[10px] font-black hover:text-slate-500 transition-colors">▼</button>
+        </div>
+        <div id="ph-connect-banner-body" class="px-4 pb-3">
+            <p class="text-[10px] text-slate-600 font-medium mb-2">Ouvre cette URL sur l'ordi/TV et entre le code :</p>
+            <div class="flex items-center gap-2">
+                <div class="flex-grow bg-slate-950 rounded-xl px-3 py-2 border border-slate-800">
+                    <p class="text-[9px] text-slate-700 font-bold mb-0.5">URL</p>
+                    <p class="text-violet-400 text-[10px] font-black break-all">kalarma.github.io/BTS_Revision/presenter</p>
+                </div>
+                <div class="bg-slate-950 rounded-xl px-3 py-2 border border-violet-500/30 text-center flex-shrink-0">
+                    <p class="text-[9px] text-slate-700 font-bold mb-0.5">Code</p>
+                    <p id="ph-code-big" class="text-violet-400 text-lg font-black tracking-[0.2em]"></p>
+                </div>
             </div>
         </div>
     </div>
@@ -585,14 +590,9 @@
                 👁 Révéler
             </button>
         </div>
-        <div class="grid grid-cols-2 gap-2">
-            <button onclick="showPresScoresScreen()" class="py-3 bg-slate-900 border border-slate-800 text-slate-400 font-black text-xs uppercase rounded-2xl active:scale-95 transition-all">
-                🏆 Afficher scores
-            </button>
-            <button id="ph-next-btn" onclick="nextPresQuestion()" class="py-4 bg-emerald-600 text-white font-black text-sm uppercase rounded-2xl active:scale-95 transition-all shadow-lg">
-                Suivant →
-            </button>
-        </div>
+        <button id="ph-next-btn" onclick="nextPresQuestion()" class="w-full py-4 bg-emerald-600 text-white font-black text-sm uppercase rounded-2xl active:scale-95 transition-all shadow-lg">
+            Suivant →
+        </button>
     </div>
 </div>
 
@@ -2018,42 +2018,59 @@ function scoreMulti(correct) {
         teams[multiTeamIdx].score += multiSettings.pts;
     } else if (multiSettings.negPct > 0) {
         const loss = Math.round(multiSettings.pts * multiSettings.negPct / 100);
-        teams[multiTeamIdx].score = Math.max(0, teams[multiTeamIdx].score - loss);
+        teams[multiTeamIdx].score -= loss; // peut descendre sous 0
     }
     showMultiScores();
 }
 
+// Dense ranking : 1,1,2,2,3 (pas 1,1,3,3,5)
+function denseRanks(scores) {
+    const ranks = [];
+    let rank = 1;
+    for (let i = 0; i < scores.length; i++) {
+        if (i > 0 && scores[i] !== scores[i-1]) rank++;
+        ranks.push(rank);
+    }
+    return ranks;
+}
+
 function showMultiScores() {
     const sorted = [...teams].map((t,i) => ({...t, orig:i})).sort((a,b) => b.score - a.score);
+    // Bar : toujours relative au max absolu (peut être négatif)
     const maxScore = Math.max(...sorted.map(t => t.score), 1);
+    const minScore = Math.min(...sorted.map(t => t.score), 0);
+    const range = Math.max(maxScore - minScore, 1);
     const medals = ['🥇','🥈','🥉'];
+    const ranks = denseRanks(sorted.map(t => t.score));
     const roundLabel = document.getElementById('ms-round-label');
     if (roundLabel) roundLabel.textContent = `${Math.min(multiRound+1, multiPool.length)} / ${multiPool.length}`;
 
-    document.getElementById('ms-list').innerHTML = sorted.map((t, rank) => {
-        const pct = Math.round(t.score / maxScore * 100);
-        const medal = medals[rank] || `<span class="w-7 text-center text-slate-500 font-black text-sm flex-shrink-0">#${rank+1}</span>`;
+    document.getElementById('ms-list').innerHTML = sorted.map((t, i) => {
+        const pct = Math.max(5, Math.round((t.score - minScore) / range * 100));
+        const rankPos = ranks[i];
+        const medal = medals[rankPos-1] || `<span class="w-7 text-center text-slate-500 font-black text-sm flex-shrink-0">#${rankPos}</span>`;
         const scoreColor = t.color || '#7c3aed';
-        return `<div class="bg-slate-900 border border-slate-800 rounded-2xl px-4 py-3.5 hover:border-slate-700 transition-colors fade-up" style="animation-delay:${rank*0.06}s">
+        const scoreDisplay = t.score < 0 ? `<span style="color:#f43f5e">${t.score} pts</span>` : `<span style="color:${scoreColor}">${t.score} pts</span>`;
+        return `<div class="bg-slate-900 border border-slate-800 rounded-2xl px-4 py-3.5 hover:border-slate-700 transition-colors fade-up" style="animation-delay:${i*0.06}s">
             <div class="flex items-center gap-3 mb-2.5">
                 <span class="text-xl w-7 text-center flex-shrink-0">${medal}</span>
                 <div class="w-3 h-3 rounded-full flex-shrink-0" style="background:${scoreColor};box-shadow:0 0 6px ${scoreColor}60"></div>
                 <span class="text-white font-black text-sm flex-grow min-w-0 truncate">${t.name}</span>
                 <div class="flex items-center gap-1.5 flex-shrink-0">
                     <button onclick="adjustScore(${t.orig},-${multiSettings.pts})" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-600 hover:text-slate-300 hover:bg-slate-800 font-black transition-all">−</button>
-                    <span class="font-black tabular-nums text-base min-w-[64px] text-right" style="color:${scoreColor}">${t.score} pts</span>
+                    <span class="font-black tabular-nums text-base min-w-[64px] text-right">${scoreDisplay}</span>
                     <button onclick="adjustScore(${t.orig},${multiSettings.pts})" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-600 hover:text-slate-300 hover:bg-slate-800 font-black transition-all">+</button>
                 </div>
             </div>
             <div class="ml-10 h-2 bg-slate-800 rounded-full overflow-hidden">
-                <div class="h-full rounded-full" style="width:${pct}%;background:${scoreColor};transition:width .8s cubic-bezier(.4,0,.2,1)"></div>
+                <div class="h-full rounded-full" style="width:${pct}%;background:${t.score < 0 ? '#f43f5e' : scoreColor};transition:width .8s cubic-bezier(.4,0,.2,1)"></div>
             </div>
         </div>`;
     }).join('');
     showScreen('screen-multi-scores');
 }
 
-function adjustScore(origIdx, delta) { teams[origIdx].score=Math.max(0,teams[origIdx].score+delta); showMultiScores(); }
+function adjustScore(origIdx, delta) { teams[origIdx].score += delta; showMultiScores(); }
 
 function nextMultiRound() {
     multiRound++; multiTeamIdx=(multiTeamIdx+1)%teams.length;
@@ -2075,14 +2092,15 @@ function showPodium() {
             </div>
             <span class="text-[10px] font-bold text-slate-500 mt-2 uppercase text-center max-w-[80px] truncate">${t.name}</span>
         </div>`).join('');
+    const podiumRanks = denseRanks(sorted.map(t => t.score));
     document.getElementById('podium-list').innerHTML=sorted.map((t,i)=>`
         <div class="flex items-center justify-between bg-slate-900 p-4 rounded-2xl border border-slate-800 fade-up" style="animation-delay:${i*80}ms">
             <div class="flex items-center gap-3">
-                <span class="font-black text-slate-600 w-5 text-sm">${i+1}</span>
+                <span class="font-black text-slate-600 w-5 text-sm">#${podiumRanks[i]}</span>
                 <div class="w-3 h-3 rounded-full" style="background:${t.color}"></div>
                 <span class="font-bold text-white">${t.name}</span>
             </div>
-            <span class="font-black text-violet-400">${t.score} pts</span>
+            <span class="font-black ${t.score < 0 ? 'text-rose-400' : 'text-violet-400'}">${t.score} pts</span>
         </div>`).join('');
     showScreen('screen-podium');
 }
@@ -2094,6 +2112,9 @@ const PRES_COLORS = ['#7c3aed','#f43f5e','#10b981','#f97316','#a855f7','#06b6d4'
 let presSettings  = {}, presTeams = [], presQuestions = [], presCurrentQ = 0;
 let presRoomCode  = '', presUnsubRoom = null, presDoubleMode = 'none';
 let presTimerInterval = null, presShowAnswer = false;
+let presShowingScores = false;
+let activeSession = false;
+window.addEventListener('beforeunload', e => { if (activeSession) { e.preventDefault(); e.returnValue = ''; } });
 
 // Ouvre le setup présentateur et pré-génère le code immédiatement
 function openPresenterSetup() {
@@ -2243,6 +2264,10 @@ function showPresQuestion() {
     if (bigCode) bigCode.textContent = presRoomCode;
     document.getElementById('ph-reveal-btn').textContent = '👁 Révéler';
     presShowAnswer = false;
+    presShowingScores = false;
+    const nextBtn = document.getElementById('ph-next-btn');
+    if (nextBtn) nextBtn.textContent = 'Suivant →';
+    activeSession = true;
 
     // Timer bar
     clearInterval(presTimerInterval);
@@ -2288,18 +2313,26 @@ function togglePresScores() {
 
 function renderPresScoresList() {
     const sorted = [...presTeams].map((t,i)=>({...t,orig:i})).sort((a,b)=>b.score-a.score);
-    document.getElementById('ph-scores-list').innerHTML = sorted.map(t => `
-        <div class="flex items-center gap-2">
-            <div class="w-3 h-3 rounded-full flex-shrink-0" style="background:${t.color}"></div>
-            <span class="flex-grow text-white text-xs font-bold truncate">${t.name}</span>
-            <button onclick="adjPresScore(${t.orig},-${presSettings.ptsQ||100})" class="w-6 h-6 bg-rose-500/20 text-rose-400 rounded-lg text-xs font-black">−</button>
-            <span class="font-black text-sm w-12 text-center" style="color:${t.color}">${t.score}</span>
-            <button onclick="adjPresScore(${t.orig},${presSettings.ptsQ||100})" class="w-6 h-6 bg-emerald-500/20 text-emerald-400 rounded-lg text-xs font-black">+</button>
-        </div>`).join('');
+    const pts = presSettings.ptsQ || 100;
+    const neg = presSettings.neg > 0 ? Math.round(pts * presSettings.neg / 100) : pts;
+    // Dense ranking
+    const ranks = denseRanks(sorted.map(t => t.score));
+    const medals = ['🥇','🥈','🥉'];
+    document.getElementById('ph-scores-list').innerHTML = sorted.map((t, i) => {
+        const rankLabel = medals[ranks[i]-1] || `<span class="text-slate-600 font-black text-[10px]">#${ranks[i]}</span>`;
+        return `<div class="flex items-center gap-1.5">
+            <span class="w-5 text-center text-sm flex-shrink-0">${rankLabel}</span>
+            <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${t.color}"></div>
+            <span class="flex-grow text-white text-[11px] font-bold truncate">${t.name}</span>
+            <button onclick="adjPresScore(${t.orig},-${neg})" class="px-2 py-1 bg-rose-500/20 text-rose-400 rounded-lg text-[10px] font-black active:scale-95 transition-all">✗ −${neg}</button>
+            <span class="font-black text-sm w-10 text-center tabular-nums" style="color:${t.color}">${t.score}</span>
+            <button onclick="adjPresScore(${t.orig},${pts})" class="px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded-lg text-[10px] font-black active:scale-95 transition-all">✓ +${pts}</button>
+        </div>`;
+    }).join('');
 }
 
 function adjPresScore(idx, delta) {
-    presTeams[idx].score = Math.max(0, presTeams[idx].score + delta);
+    presTeams[idx].score = presTeams[idx].score + delta;
     presSettings.teams = presTeams;
     if (fbDb) fbDb.collection('rooms').doc(presRoomCode).update({ 'settings.teams': presTeams }).catch(()=>{});
     renderPresScoresList();
@@ -2310,6 +2343,17 @@ function showPresScoresScreen() {
 }
 
 function nextPresQuestion() {
+    if (!presShowingScores) {
+        // 1re pression : afficher les scores sur TV + ouvrir le drawer
+        presShowingScores = true;
+        showPresScoresScreen();
+        const btn = document.getElementById('ph-next-btn');
+        if (btn) btn.textContent = 'Continuer →';
+        const drawer = document.getElementById('ph-scores-drawer');
+        if (drawer && drawer.classList.contains('hidden')) togglePresScores();
+        return;
+    }
+    // 2e pression : passer à la question suivante
     presCurrentQ++;
     if (presCurrentQ >= presQuestions.length) { endPresenter(); return; }
     showPresQuestion();
@@ -2317,6 +2361,7 @@ function nextPresQuestion() {
 
 function endPresenter() {
     clearInterval(presTimerInterval);
+    activeSession = false;
     if (fbDb) fbDb.collection('rooms').doc(presRoomCode).update({ phase: 'end' }).catch(()=>{});
     if (presUnsubRoom) { presUnsubRoom(); presUnsubRoom = null; }
     exitToHome();
@@ -2336,6 +2381,15 @@ function copyPresCode() {
         btn.style.borderColor = 'rgba(16,185,129,.5)';
         setTimeout(() => { btn.style.background = ''; btn.style.borderColor = ''; }, 1500);
     }
+}
+
+let _bannerCollapsed = false;
+function toggleConnectBanner() {
+    _bannerCollapsed = !_bannerCollapsed;
+    const body = document.getElementById('ph-connect-banner-body');
+    const toggle = document.getElementById('ph-banner-toggle');
+    if (body) body.style.display = _bannerCollapsed ? 'none' : '';
+    if (toggle) toggle.textContent = _bannerCollapsed ? '▲' : '▼';
 }
 
 
@@ -2388,6 +2442,7 @@ async function startKahoot() {
     } while(attempts < 5);
 
     kahootRoom = code;
+    activeSession = true;
     document.getElementById('kahoot-room-code').textContent = code;
 
     const roomUrl = `https://kalarma.github.io/BTS_Revision/room/?code=${code}`;
@@ -2685,6 +2740,7 @@ function showKahootFinalPodium() {
 
 function cancelKahoot() {
     clearInterval(kahootCountdownInterval);
+    activeSession = false;
     if (kahootListener) { kahootListener(); kahootListener = null; }
     if (kahootRoom && fbDb) fbDb.collection('rooms').doc(kahootRoom).update({ status: 'cancelled' }).catch(()=>{});
     kahootRoom = null;
