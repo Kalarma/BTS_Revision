@@ -12,11 +12,17 @@
         @keyframes fadeIn  { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
         @keyframes popIn   { 0%{transform:scale(.85);opacity:0} 70%{transform:scale(1.03)} 100%{transform:scale(1);opacity:1} }
         @keyframes pulse   { 0%,100%{opacity:1} 50%{opacity:.3} }
+        @keyframes scoreGrow { from{width:0} to{width:var(--w)} }
+        @keyframes scoreCount { from{opacity:0;transform:scale(.7)} to{opacity:1;transform:scale(1)} }
+        @keyframes timerPulse { 0%,100%{color:#f97316} 50%{color:#f43f5e} }
         .fade-in { animation:fadeIn .5s ease forwards; }
         .pop-in  { animation:popIn .4s cubic-bezier(.34,1.56,.64,1) forwards; }
         .pulse   { animation:pulse 1.5s infinite; }
-        .screen  { display:none; position:fixed; inset:0; flex-direction:column; align-items:center; justify-content:center; }
+        .screen  { display:none; position:fixed; inset:0; flex-direction:column; }
         .screen.active { display:flex; }
+        .score-bar-fill { animation:scoreGrow .8s cubic-bezier(.4,0,.2,1) forwards; }
+        .score-val { animation:scoreCount .4s cubic-bezier(.34,1.56,.64,1) forwards; }
+        .timer-urgent { animation:timerPulse .6s infinite; }
     </style>
 </head>
 <body>
@@ -51,19 +57,26 @@
 </div>
 
 <!-- ================ QUESTION ================ -->
-<div id="screen-question" class="screen p-12 text-center">
-    <div class="w-full" style="max-width:900px">
-        <!-- Header -->
-        <div class="flex items-center justify-between mb-8">
-            <div id="q-round-badge" class="bg-violet-700 text-white font-black text-sm px-4 py-2 rounded-full"></div>
-            <div id="q-double-badge" class="hidden bg-orange-500 text-white font-black text-sm px-4 py-2 rounded-full">✦ Double points</div>
-            <div id="q-timer-box" class="bg-slate-900 border border-slate-800 rounded-2xl px-5 py-2">
-                <span id="q-timer-num" class="text-3xl font-black text-violet-400 tabular-nums">—</span>
+<div id="screen-question" class="screen" style="flex-direction:row">
+
+    <!-- COLONNE GAUCHE : Question principale -->
+    <div class="flex-grow flex flex-col p-10 min-w-0">
+        <!-- Top bar -->
+        <div class="flex items-center justify-between mb-6 flex-shrink-0">
+            <div id="q-round-badge" class="bg-violet-700/80 backdrop-blur text-white font-black text-sm px-4 py-2 rounded-full"></div>
+            <div id="q-double-badge" class="hidden bg-orange-500 text-white font-black text-sm px-4 py-2 rounded-full animate-pulse">✦ Double points</div>
+            <!-- Timer -->
+            <div id="q-timer-box" class="flex items-center gap-3 bg-slate-900/80 border border-slate-800 rounded-2xl px-5 py-2.5">
+                <span id="q-timer-num" class="text-3xl font-black text-violet-400 tabular-nums w-14 text-center">—</span>
             </div>
         </div>
+        <!-- Timer bar -->
+        <div id="q-timer-bar-wrap" class="h-1.5 bg-slate-800 rounded-full overflow-hidden mb-6 flex-shrink-0">
+            <div id="q-timer-bar" class="h-full bg-violet-500 w-full" style="transition:width linear"></div>
+        </div>
         <!-- Question card -->
-        <div id="q-card" class="bg-slate-900 border-2 border-slate-800 rounded-[2.5rem] p-12 mb-6 fade-in">
-            <p class="text-[11px] font-black text-slate-600 uppercase tracking-widest mb-6">Question</p>
+        <div id="q-card" class="flex-grow bg-slate-900/60 border-2 border-slate-800 rounded-[2.5rem] p-10 flex flex-col justify-center text-center fade-in">
+            <p class="text-[11px] font-black text-slate-600 uppercase tracking-widest mb-6" id="q-label">Terme</p>
             <h2 id="q-term" class="text-5xl font-black text-white leading-tight"></h2>
             <!-- Answer (revealed by host) -->
             <div id="q-answer-area" class="hidden mt-8 pt-8 border-t border-slate-800 fade-in">
@@ -71,17 +84,21 @@
                 <p id="q-def" class="text-3xl font-bold text-emerald-400 leading-snug"></p>
             </div>
         </div>
-        <!-- Teams quick-score bar -->
-        <div id="q-teams-bar" class="flex gap-3 justify-center flex-wrap"></div>
+    </div>
+
+    <!-- COLONNE DROITE : Scores live -->
+    <div id="q-scores-panel" class="flex-shrink-0 flex flex-col p-6 border-l border-slate-800/60" style="width:280px;background:rgba(15,23,42,.8)">
+        <p class="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-4">🏆 Scores</p>
+        <div id="q-teams-live" class="space-y-3 flex-grow"></div>
     </div>
 </div>
 
 <!-- ================ SCORES ================ -->
-<div id="screen-scores" class="screen p-12">
-    <div class="w-full fade-in" style="max-width:900px">
+<div id="screen-scores" class="screen items-center justify-center p-12">
+    <div class="w-full fade-in" style="max-width:800px">
         <div class="text-center mb-10">
-            <p class="text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">Tableau des scores</p>
-            <h2 class="text-4xl font-black text-white uppercase italic">Classement</h2>
+            <p class="text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">Classement intermédiaire</p>
+            <h2 class="text-5xl font-black text-white uppercase italic">🏆 Scores</h2>
         </div>
         <div id="sc-list" class="space-y-4"></div>
     </div>
@@ -141,7 +158,7 @@ function showError(msg) {
 }
 
 async function connect() {
-    const code = document.getElementById('pres-code').value.trim().toUpperCase();
+    const code = document.getElementById('pres-code').value.trim();
     if (!/^\d{2}$/.test(code)) { showError('Code à 2 chiffres requis'); return; }
 
     const ok = await initFirebase();
@@ -186,7 +203,8 @@ function handleRoomState(room) {
         const q = (room.questions || [])[room.currentQ || 0];
         if (!q) return;
 
-        if (phase !== currentPhase || room.currentQ !== parseInt(document.getElementById('q-round-badge').dataset.q||'-1')) {
+        const isNewQ = room.currentQ !== parseInt(document.getElementById('q-round-badge').dataset.q||'-1');
+        if (phase !== currentPhase || isNewQ) {
             renderQuestion(room, q);
         }
         // Show/hide answer
@@ -194,7 +212,7 @@ function handleRoomState(room) {
         if (room.showAnswer) ansArea.classList.remove('hidden');
         else ansArea.classList.add('hidden');
 
-        // Update team score bar
+        // Scores live (toujours mis à jour)
         renderTeamsBar(room.settings?.teams || []);
     }
 
@@ -227,18 +245,46 @@ function renderQuestion(room, q) {
 
     // Timer
     clearInterval(qTimerInterval);
-    const timeLimit = room.settings?.timePerQ || 20;
-    const startTime = room.questionStartTime || Date.now();
-    const updateTimer = () => {
-        const elapsed = (Date.now() - startTime) / 1000;
-        const left = Math.max(0, timeLimit - elapsed);
-        const numEl = document.getElementById('q-timer-num');
-        numEl.textContent = Math.ceil(left);
-        numEl.style.color = left <= 5 ? '#f97316' : '#7c3aed';
-        if (left <= 0) clearInterval(qTimerInterval);
-    };
-    updateTimer();
-    qTimerInterval = setInterval(updateTimer, 500);
+    const noTimer = room.settings?.noTimer || !room.questionStartTime;
+    const timeLimit = room.settings?.timePerQ || room.settings?.timeQ || 20;
+    const timerBox = document.getElementById('q-timer-box');
+    const timerBarWrap = document.getElementById('q-timer-bar-wrap');
+    const timerBar = document.getElementById('q-timer-bar');
+    const numEl = document.getElementById('q-timer-num');
+
+    if (noTimer || timeLimit === 0) {
+        numEl.textContent = '∞';
+        numEl.style.color = '#475569';
+        if (timerBarWrap) timerBarWrap.style.opacity = '0';
+        if (timerBar) { timerBar.style.transition='none'; timerBar.style.width='100%'; timerBar.style.background='#1e293b'; }
+    } else {
+        if (timerBarWrap) timerBarWrap.style.opacity = '1';
+        const startTime = room.questionStartTime || Date.now();
+        // Animate bar
+        const elapsed = Math.max(0, (Date.now() - startTime) / 1000);
+        const pctLeft = Math.max(0, (timeLimit - elapsed) / timeLimit * 100);
+        if (timerBar) {
+            timerBar.style.transition = 'none';
+            timerBar.style.width = pctLeft + '%';
+            timerBar.style.background = pctLeft > 30 ? '#7c3aed' : '#f97316';
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                const remaining = Math.max(0, timeLimit - elapsed);
+                timerBar.style.transition = `width ${remaining}s linear, background 1s`;
+                timerBar.style.width = '0%';
+                timerBar.style.background = '#f43f5e';
+            }));
+        }
+        const updateTimer = () => {
+            const e = (Date.now() - startTime) / 1000;
+            const left = Math.max(0, timeLimit - e);
+            numEl.textContent = Math.ceil(left);
+            const isUrgent = left <= 5;
+            numEl.className = isUrgent ? 'text-3xl font-black tabular-nums w-14 text-center timer-urgent' : 'text-3xl font-black text-violet-400 tabular-nums w-14 text-center';
+            if (left <= 0) clearInterval(qTimerInterval);
+        };
+        updateTimer();
+        qTimerInterval = setInterval(updateTimer, 250);
+    }
 
     // Refresh card animation
     const card = document.getElementById('q-card');
@@ -246,38 +292,65 @@ function renderQuestion(room, q) {
     showScreen('screen-question');
 }
 
+// Scores live dans la colonne droite — appelé à chaque update Firestore
 function renderTeamsBar(teams) {
-    const bar = document.getElementById('q-teams-bar');
-    const sorted = [...teams].sort((a,b) => b.score - a.score);
-    bar.innerHTML = sorted.map(t => `
-        <div class="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5">
-            <div class="w-3 h-3 rounded-full flex-shrink-0" style="background:${t.color}"></div>
-            <span class="font-black text-white text-sm">${t.name}</span>
-            <span class="font-black text-sm ml-1" style="color:${t.color}">${t.score || 0}</span>
-        </div>`).join('');
+    const panel = document.getElementById('q-teams-live');
+    if (!panel) return;
+    const sorted = [...teams].sort((a,b) => (b.score||0) - (a.score||0));
+    const maxScore = Math.max(...sorted.map(t => t.score||0), 1);
+    const medals = ['🥇','🥈','🥉'];
+
+    panel.innerHTML = sorted.map((t, i) => {
+        const pct = Math.round((t.score||0) / maxScore * 100);
+        const medal = medals[i] || `${i+1}`;
+        return `
+        <div class="group" style="animation:fadeIn .4s ${i*0.08}s ease both">
+            <div class="flex items-center justify-between mb-1.5">
+                <div class="flex items-center gap-2 min-w-0">
+                    <span class="text-base flex-shrink-0">${medal}</span>
+                    <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${t.color}"></div>
+                    <span class="font-black text-white text-sm truncate">${t.name}</span>
+                </div>
+                <span class="score-val font-black text-sm flex-shrink-0 ml-2" style="color:${t.color}">${t.score||0}</span>
+            </div>
+            <div class="h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                <div class="score-bar-fill h-full rounded-full" style="--w:${pct}%;background:${t.color};animation-delay:${i*0.1}s"></div>
+            </div>
+        </div>`;
+    }).join('');
 }
 
 function renderScores(teams) {
-    const sorted = [...teams].sort((a,b) => b.score - a.score);
+    const sorted = [...teams].sort((a,b) => (b.score||0) - (a.score||0));
+    const maxScore = Math.max(...sorted.map(t => t.score||0), 1);
     const medals = ['🥇','🥈','🥉'];
-    document.getElementById('sc-list').innerHTML = sorted.map((t,i) => `
-        <div class="flex items-center gap-5 bg-slate-900 border-2 rounded-3xl px-8 py-5 pop-in" style="border-color:${t.color}20;animation-delay:${i*0.1}s">
-            <span class="text-4xl">${medals[i] || `#${i+1}`}</span>
-            <div class="w-5 h-5 rounded-full flex-shrink-0" style="background:${t.color}"></div>
-            <span class="font-black text-white text-2xl flex-grow">${t.name}</span>
-            <span class="font-black text-4xl" style="color:${t.color}">${t.score || 0}</span>
-            <span class="text-slate-600 font-bold text-sm">pts</span>
-        </div>`).join('');
+    document.getElementById('sc-list').innerHTML = sorted.map((t,i) => {
+        const pct = Math.round((t.score||0) / maxScore * 100);
+        return `
+        <div class="pop-in" style="animation-delay:${i*0.1}s">
+            <div class="flex items-center gap-5 mb-2">
+                <span class="text-5xl flex-shrink-0">${medals[i] || `<span class='text-slate-500 font-black text-2xl'>#${i+1}</span>`}</span>
+                <div class="w-5 h-5 rounded-full flex-shrink-0" style="background:${t.color}"></div>
+                <span class="font-black text-white text-2xl flex-grow">${t.name}</span>
+                <span class="font-black text-4xl" style="color:${t.color}">${t.score||0}</span>
+                <span class="text-slate-600 font-bold">pts</span>
+            </div>
+            <div class="ml-16 h-3 bg-slate-800 rounded-full overflow-hidden">
+                <div class="score-bar-fill h-full rounded-full" style="--w:${pct}%;background:${t.color};animation-delay:${i*0.15+0.3}s"></div>
+            </div>
+        </div>`;
+    }).join('');
 }
 
 function renderEnd(teams) {
     renderScores(teams);
-    const sorted = [...teams].sort((a,b) => b.score - a.score);
+    const sorted = [...teams].sort((a,b) => (b.score||0) - (a.score||0));
     document.getElementById('end-podium').innerHTML = sorted.slice(0,3).map((t,i) => `
         <div class="flex items-center gap-4 fade-in" style="animation-delay:${i*0.15}s">
-            <span class="text-3xl">${['🥇','🥈','🥉'][i]}</span>
-            <span class="font-black text-white text-xl">${t.name}</span>
-            <span class="font-black ml-auto" style="color:${t.color}">${t.score} pts</span>
+            <span class="text-4xl">${['🥇','🥈','🥉'][i]}</span>
+            <div class="w-5 h-5 rounded-full flex-shrink-0" style="background:${t.color}"></div>
+            <span class="font-black text-white text-2xl">${t.name}</span>
+            <span class="font-black ml-auto text-2xl" style="color:${t.color}">${t.score} pts</span>
         </div>`).join('');
 }
 
