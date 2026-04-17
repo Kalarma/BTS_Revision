@@ -69,21 +69,26 @@
     <!-- COLONNE GAUCHE : Question principale -->
     <div class="flex-grow flex flex-col p-10 min-w-0">
         <!-- Top bar -->
-        <div class="flex items-center justify-between mb-6 flex-shrink-0">
-            <div id="q-round-badge" class="bg-violet-700/80 backdrop-blur text-white font-black text-sm px-4 py-2 rounded-full"></div>
+        <div class="flex items-center justify-between mb-4 flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <div id="q-round-badge" class="bg-violet-700/80 backdrop-blur text-white font-black text-sm px-4 py-2 rounded-full"></div>
+                <span id="q-remaining-badge" class="text-slate-500 text-sm font-bold"></span>
+            </div>
             <div id="q-double-badge" class="hidden bg-orange-500 text-white font-black text-sm px-4 py-2 rounded-full animate-pulse">✦ Double points</div>
             <!-- Timer -->
             <div id="q-timer-box" class="flex items-center gap-3 bg-slate-900/80 border border-slate-800 rounded-2xl px-5 py-2.5">
                 <span id="q-timer-num" class="text-3xl font-black text-violet-400 tabular-nums w-14 text-center">—</span>
             </div>
         </div>
-        <!-- Timer bar -->
-        <div id="q-timer-bar-wrap" class="h-1.5 bg-slate-800 rounded-full overflow-hidden mb-6 flex-shrink-0">
-            <div id="q-timer-bar" class="h-full bg-violet-500 w-full" style="transition:width linear"></div>
+        <!-- Timer bar — simple, sans animation CSS pour éviter les bugs -->
+        <div id="q-timer-bar-wrap" class="h-1.5 bg-slate-800 rounded-full overflow-hidden mb-4 flex-shrink-0">
+            <div id="q-timer-bar" class="h-full bg-violet-500 w-full"></div>
         </div>
         <!-- Question card -->
-        <div id="q-card" class="flex-grow bg-slate-900/60 border-2 border-slate-800 rounded-[2.5rem] p-10 flex flex-col justify-center text-center fade-in">
+        <div id="q-card" class="flex-grow bg-slate-900/60 border-2 border-slate-800 rounded-[2.5rem] p-10 flex flex-col justify-center text-center fade-in" style="position:relative">
             <p class="text-[11px] font-black text-slate-600 uppercase tracking-widest mb-6" id="q-label">Terme</p>
+            <!-- Quand showQ=false : afficher les équipes en grand -->
+            <div id="q-teams-overlay" class="hidden flex-col items-center justify-center gap-4"></div>
             <h2 id="q-term" class="text-5xl font-black text-white leading-tight"></h2>
             <!-- Answer (revealed by host) -->
             <div id="q-answer-area" class="hidden mt-8 pt-8 border-t border-slate-800 fade-in">
@@ -280,20 +285,45 @@ function renderQuestion(room, q) {
     document.getElementById('q-def').textContent  = q.def  || '';
     document.getElementById('q-answer-area').classList.add('hidden');
 
+    const totalQ = (room.questions||[]).length;
+    const qNum   = (room.currentQ || 0) + 1;
     const roundBadge = document.getElementById('q-round-badge');
-    const qNum = (room.currentQ || 0) + 1;
-    roundBadge.textContent = `Q ${qNum} / ${(room.questions||[]).length}`;
+    roundBadge.textContent = `Q ${qNum}`;
     roundBadge.dataset.q = room.currentQ;
+
+    const remainingEl = document.getElementById('q-remaining-badge');
+    if (remainingEl) remainingEl.textContent = `${totalQ - qNum} restante${totalQ-qNum>1?'s':''}`;
 
     const doubleBadge = document.getElementById('q-double-badge');
     if (q.isDouble) doubleBadge.classList.remove('hidden');
     else doubleBadge.classList.add('hidden');
 
-    // Timer
+    // Équipes en grand si showQ=false
+    const teamsOverlay = document.getElementById('q-teams-overlay');
+    if (teamsOverlay) {
+        if (!showQ) {
+            const teams = room.settings?.teams || [];
+            teamsOverlay.classList.remove('hidden');
+            teamsOverlay.classList.add('flex');
+            teamsOverlay.innerHTML = teams.map(t => `
+                <div class="flex items-center gap-4">
+                    <div class="w-6 h-6 rounded-full flex-shrink-0" style="background:${t.color};box-shadow:0 0 12px ${t.color}80"></div>
+                    <span class="font-black text-white text-4xl">${t.name}</span>
+                </div>`).join('');
+            document.getElementById('q-term').style.display = 'none';
+            document.getElementById('q-label').style.display = 'none';
+        } else {
+            teamsOverlay.classList.add('hidden');
+            teamsOverlay.classList.remove('flex');
+            document.getElementById('q-term').style.display = '';
+            document.getElementById('q-label').style.display = '';
+        }
+    }
+
+    // Timer — piloté uniquement par JS (pas de CSS transition pour éviter les bugs)
     clearInterval(qTimerInterval);
     const noTimer = room.settings?.noTimer || !room.questionStartTime;
     const timeLimit = room.settings?.timePerQ || room.settings?.timeQ || 20;
-    const timerBox = document.getElementById('q-timer-box');
     const timerBarWrap = document.getElementById('q-timer-bar-wrap');
     const timerBar = document.getElementById('q-timer-bar');
     const numEl = document.getElementById('q-timer-num');
@@ -302,27 +332,19 @@ function renderQuestion(room, q) {
         numEl.textContent = '∞';
         numEl.style.color = '#475569';
         if (timerBarWrap) timerBarWrap.style.opacity = '0';
-        if (timerBar) { timerBar.style.transition='none'; timerBar.style.width='100%'; timerBar.style.background='#1e293b'; }
+        if (timerBar) { timerBar.style.width='100%'; timerBar.style.background='#1e293b'; }
     } else {
         if (timerBarWrap) timerBarWrap.style.opacity = '1';
         const startTime = room.questionStartTime || Date.now();
-        // Animate bar
-        const elapsed = Math.max(0, (Date.now() - startTime) / 1000);
-        const pctLeft = Math.max(0, (timeLimit - elapsed) / timeLimit * 100);
-        if (timerBar) {
-            timerBar.style.transition = 'none';
-            timerBar.style.width = pctLeft + '%';
-            timerBar.style.background = pctLeft > 30 ? '#7c3aed' : '#f97316';
-            requestAnimationFrame(() => requestAnimationFrame(() => {
-                const remaining = Math.max(0, timeLimit - elapsed);
-                timerBar.style.transition = `width ${remaining}s linear, background 1s`;
-                timerBar.style.width = '0%';
-                timerBar.style.background = '#f43f5e';
-            }));
-        }
+        // JS-only timer — pas de transition CSS
         const updateTimer = () => {
-            const e = (Date.now() - startTime) / 1000;
-            const left = Math.max(0, timeLimit - e);
+            const elapsed = (Date.now() - startTime) / 1000;
+            const left = Math.max(0, timeLimit - elapsed);
+            const pct  = (left / timeLimit) * 100;
+            if (timerBar) {
+                timerBar.style.width = pct + '%';
+                timerBar.style.background = pct > 50 ? '#7c3aed' : pct > 20 ? '#f97316' : '#f43f5e';
+            }
             numEl.textContent = Math.ceil(left);
             const isUrgent = left <= 5;
             numEl.className = isUrgent ? 'text-3xl font-black tabular-nums w-14 text-center timer-urgent' : 'text-3xl font-black text-violet-400 tabular-nums w-14 text-center';
