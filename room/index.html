@@ -37,7 +37,7 @@
         <div class="text-center mb-8">
             <div class="text-5xl mb-3">🎮</div>
             <h1 class="text-3xl font-black text-white uppercase italic">Rejoindre <span class="text-violet-400">une partie</span></h1>
-            <p class="text-slate-600 text-[10px] font-bold uppercase tracking-widest mt-1">Saisis le code donné par ton prof</p>
+            <p class="text-slate-600 text-[10px] font-bold uppercase tracking-widest mt-1">Saisis le code donné par ton prof · Kahoot ou Présentateur</p>
         </div>
         <div class="space-y-3 mb-5">
             <div class="flex justify-center">
@@ -207,6 +207,50 @@
     </div>
 </div>
 
+<!-- ============================================================ PRESENTER VIEWER -->
+<div id="screen-pres-viewer" class="screen flex-col overflow-hidden" style="height:100dvh;position:relative">
+    <!-- Top bar -->
+    <div class="px-4 pt-4 pb-3 flex items-center justify-between flex-shrink-0">
+        <button onclick="confirmQuitPlayer()" class="text-slate-600 hover:text-rose-400 transition-colors text-xs font-bold uppercase">✕ Quitter</button>
+        <span id="pv-round" class="text-[10px] font-black text-slate-600 uppercase">Q 1/?</span>
+        <div class="flex items-center gap-1.5">
+            <div id="pv-dot" class="w-2 h-2 rounded-full bg-emerald-500"></div>
+            <span id="pv-course" class="text-[9px] font-black text-slate-600 uppercase tracking-widest">En direct</span>
+        </div>
+    </div>
+    <!-- Timer bar -->
+    <div class="px-4 pb-2 flex-shrink-0">
+        <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+            <div id="pv-timer-bar" class="h-full bg-violet-500 w-full" style="transition:width linear"></div>
+        </div>
+    </div>
+    <!-- Question -->
+    <div class="flex-grow flex flex-col px-4 pb-3 gap-3 min-h-0">
+        <div class="flex-grow bg-slate-900 border-2 border-slate-800 rounded-3xl p-5 flex flex-col justify-center text-center min-h-0">
+            <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-3">Question</p>
+            <h2 id="pv-term" class="text-xl font-black text-white leading-snug"></h2>
+            <div id="pv-answer-area" class="hidden mt-4 pt-4 border-t border-slate-800">
+                <p class="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-2">✓ Réponse</p>
+                <p id="pv-def" class="text-emerald-400 text-base font-bold leading-snug"></p>
+            </div>
+        </div>
+        <!-- Scores live -->
+        <div class="flex-shrink-0 bg-slate-900 border border-slate-800 rounded-2xl p-3 max-h-40 overflow-y-auto">
+            <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-2">🏆 Scores</p>
+            <div id="pv-scores" class="space-y-1.5"></div>
+        </div>
+    </div>
+    <!-- Waiting overlay -->
+    <div id="pv-waiting-overlay" class="absolute inset-0 flex flex-col items-center justify-center text-center p-8" style="background:#020617;z-index:10">
+        <div class="text-5xl mb-4 pulse">⏳</div>
+        <p class="font-black text-white text-xl uppercase mb-1">En attente...</p>
+        <p id="pv-overlay-course" class="text-slate-500 text-sm font-medium mb-6"></p>
+        <!-- Teams preview -->
+        <div id="pv-overlay-teams" class="w-full space-y-2 mb-6" style="max-width:320px"></div>
+        <button onclick="confirmQuitPlayer()" class="text-slate-700 font-bold text-xs uppercase hover:text-rose-400 transition-colors mt-4">Quitter</button>
+    </div>
+</div>
+
 <!-- ============================================================ ERROR -->
 <div id="screen-room-error" class="screen items-center justify-center p-6 text-center">
     <div>
@@ -300,7 +344,6 @@ async function joinRoom() {
     const errEl = document.getElementById('join-error');
 
     if (!/^\d{2}$/.test(code)) { showJoinError('Code invalide (2 chiffres)'); return; }
-    if (!name) { showJoinError('Entre ton prénom'); return; }
     if (!useFirebase) { showJoinError('Connexion Firebase introuvable'); return; }
 
     errEl.classList.add('hidden');
@@ -316,6 +359,16 @@ async function joinRoom() {
         if (room.status === 'finished' || room.status === 'cancelled') {
             showJoinError('Cette partie est terminée'); return;
         }
+
+        // ── Mode PRÉSENTATEUR : rejoindre en spectateur (nom non requis) ─
+        if (room.type === 'presenter') {
+            roomCode = code;
+            listenPresenterViewer(code);
+            return;
+        }
+
+        // Kahoot : vérifier que le prénom est renseigné
+        if (!name) { showJoinError('Entre ton prénom pour rejoindre cette partie'); return; }
 
         // Enregistrer le joueur avec sa couleur
         await db.collection('rooms').doc(code).update({
@@ -345,6 +398,114 @@ function showJoinError(msg) {
     const el = document.getElementById('join-error');
     el.querySelector('p').textContent = msg;
     el.classList.remove('hidden');
+}
+
+// =====================================================================
+// PRÉSENTATION VIEWER (rejoindre en spectateur une salle présentateur)
+// =====================================================================
+let presViewerUnsub = null;
+let pvTimerInterval = null;
+
+function listenPresenterViewer(code) {
+    showScreen('screen-pres-viewer');
+    if (presViewerUnsub) presViewerUnsub();
+    presViewerUnsub = db.collection('rooms').doc(code).onSnapshot(snap => {
+        if (!snap.exists) { showRoomError('Salle introuvable'); return; }
+        const room = snap.data();
+        if (!room || room.type !== 'presenter') return;
+        handlePresViewerState(room);
+    });
+}
+
+function handlePresViewerState(room) {
+    const phase = room.phase || 'waiting';
+    const overlay = document.getElementById('pv-waiting-overlay');
+    const dot = document.getElementById('pv-dot');
+
+    // Toujours mettre à jour les scores
+    renderPvScores(room.settings?.teams || []);
+
+    if (phase === 'waiting') {
+        if (overlay) overlay.style.display = '';
+        document.getElementById('pv-overlay-course').textContent = room.courseName || '';
+        // Équipes en attente
+        const teams = room.settings?.teams || [];
+        document.getElementById('pv-overlay-teams').innerHTML = teams.map(t => `
+            <div class="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2">
+                <div class="w-3 h-3 rounded-full flex-shrink-0" style="background:${t.color}"></div>
+                <span class="font-black text-white text-sm flex-grow text-left">${t.name}</span>
+                <span class="font-black text-sm" style="color:${t.color}">${t.score || 0} pts</span>
+            </div>`).join('');
+        if (dot) dot.style.background = '#475569';
+        return;
+    }
+
+    // Masquer overlay dès qu'on n'est plus en waiting
+    if (overlay) overlay.style.display = 'none';
+    if (dot) dot.style.background = '#10b981';
+
+    if (phase === 'question') {
+        const q = (room.questions || [])[room.currentQ || 0];
+        if (!q) return;
+        const total = (room.questions || []).length;
+        document.getElementById('pv-round').textContent = `Q ${(room.currentQ||0)+1}/${total}`;
+        document.getElementById('pv-course').textContent = room.courseName || '';
+
+        // showQ = afficher le terme sur l'écran
+        const showQ = room.settings?.showQ !== false;
+        document.getElementById('pv-term').textContent = showQ ? (q.term || '') : '[ Question cachée ]';
+        document.getElementById('pv-term').style.opacity = showQ ? '' : '0.3';
+
+        // Réponse révélée ?
+        const ansArea = document.getElementById('pv-answer-area');
+        document.getElementById('pv-def').textContent = q.def || '';
+        if (room.showAnswer) ansArea.classList.remove('hidden');
+        else ansArea.classList.add('hidden');
+
+        // Timer
+        clearInterval(pvTimerInterval);
+        const noTimer = room.settings?.noTimer || !room.questionStartTime;
+        const timeLimit = room.settings?.timePerQ || room.settings?.timeQ || 20;
+        const bar = document.getElementById('pv-timer-bar');
+        if (noTimer || timeLimit === 0) {
+            bar.style.transition = 'none'; bar.style.width = '100%'; bar.style.background = '#1e293b';
+        } else {
+            const startTime = room.questionStartTime || Date.now();
+            const elapsed = Math.max(0, (Date.now() - startTime) / 1000);
+            const pctLeft = Math.max(0, (timeLimit - elapsed) / timeLimit * 100);
+            bar.style.transition = 'none'; bar.style.width = pctLeft + '%'; bar.style.background = '#7c3aed';
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                const rem = Math.max(0, timeLimit - elapsed);
+                bar.style.transition = `width ${rem}s linear`; bar.style.width = '0%'; bar.style.background = '#f43f5e';
+            }));
+        }
+    }
+
+    if (phase === 'scores' || phase === 'end') {
+        clearInterval(pvTimerInterval);
+        const bar = document.getElementById('pv-timer-bar');
+        bar.style.transition = 'none'; bar.style.width = '0%';
+        document.getElementById('pv-round').textContent = phase === 'end' ? 'Fin !' : 'Scores';
+    }
+}
+
+function renderPvScores(teams) {
+    const el = document.getElementById('pv-scores');
+    if (!el || !teams.length) return;
+    const sorted = [...teams].sort((a,b) => (b.score||0) - (a.score||0));
+    const medals = ['🥇','🥈','🥉'];
+    // Dense ranks
+    let rank = 1;
+    const ranks = sorted.map((t, i) => { if (i > 0 && t.score !== sorted[i-1].score) rank++; return rank; });
+    el.innerHTML = sorted.map((t, i) => {
+        const r = medals[ranks[i]-1] || `#${ranks[i]}`;
+        return `<div class="flex items-center gap-2">
+            <span class="text-sm w-5 text-center flex-shrink-0">${r}</span>
+            <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${t.color}"></div>
+            <span class="flex-grow text-white text-xs font-bold truncate">${t.name}</span>
+            <span class="font-black text-xs tabular-nums ${(t.score||0) < 0 ? 'text-rose-400' : ''}" style="${(t.score||0) >= 0 ? 'color:'+t.color : ''}">${t.score||0}</span>
+        </div>`;
+    }).join('');
 }
 
 // =====================================================================
@@ -726,8 +887,11 @@ function bookmarkCurrentQuestion() {
 // QUITTER
 // =====================================================================
 function confirmQuitPlayer() {
-    if (confirm('Quitter la partie ? Tu perdras ta progression.')) {
+    const msg = presViewerUnsub ? 'Quitter le mode spectateur ?' : 'Quitter la partie ? Tu perdras ta progression.';
+    if (confirm(msg)) {
         if (roomListener) { roomListener(); roomListener = null; }
+        if (presViewerUnsub) { presViewerUnsub(); presViewerUnsub = null; }
+        clearInterval(pvTimerInterval);
         sessionStorage.clear();
         location.href = '../';
     }
