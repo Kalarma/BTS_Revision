@@ -567,7 +567,6 @@ window.onload = init;
 // LEADERBOARD
 // =====================================================================
 let lbVisible = false;
-let lbLoaded  = false;
 
 async function toggleLeaderboard() {
     const section  = document.getElementById('leaderboard-section');
@@ -575,7 +574,8 @@ async function toggleLeaderboard() {
     lbVisible = !lbVisible;
     section.classList.toggle('hidden', !lbVisible);
     if (chevron) chevron.textContent = lbVisible ? '▲' : '▼';
-    if (lbVisible && !lbLoaded) await loadLeaderboard();
+    // Toujours recharger à l'ouverture pour avoir les données fraîches
+    if (lbVisible) await loadLeaderboard();
 }
 
 async function loadLeaderboard() {
@@ -628,7 +628,6 @@ async function loadLeaderboard() {
                 </div>
             </div>`;
         }).join('');
-        lbLoaded = true;
     } catch(e) {
         list.innerHTML = `<p class="text-rose-400 text-xs text-center py-4 font-bold">Erreur chargement. Règles Firestore à mettre à jour.</p>`;
     }
