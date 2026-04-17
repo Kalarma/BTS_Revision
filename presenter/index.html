@@ -138,9 +138,15 @@ async function initFirebase() {
     try {
         const v = '10.12.0';
         await loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-app-compat.js`);
+        await loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-auth-compat.js`);
         await loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-firestore-compat.js`);
         if (!firebase.apps.length) firebase.initializeApp(cfg);
         fbDb = firebase.firestore();
+        // Connexion anonyme pour accès Firestore
+        const auth = firebase.auth();
+        if (!auth.currentUser) {
+            await auth.signInAnonymously().catch(e => console.warn('Anon auth:', e));
+        }
         return true;
     } catch(e) { showError('Erreur Firebase : ' + e.message); return false; }
 }
@@ -360,8 +366,8 @@ function renderEnd(teams) {
 window.onload = async () => {
     const params = new URLSearchParams(location.search);
     const code = params.get('code');
-    if (code && code.length === 6) {
-        document.getElementById('pres-code').value = code.toUpperCase();
+    if (code && /^\d{2}$/.test(code)) {
+        document.getElementById('pres-code').value = code;
         await connect();
     }
 };
