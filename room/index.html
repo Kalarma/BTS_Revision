@@ -269,6 +269,11 @@ async function initFirebase() {
         await loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-firestore-compat.js`);
         if (!firebase.apps.length) firebase.initializeApp(cfg);
         db = firebase.firestore();
+        // Connexion anonyme pour autoriser les écritures Firestore
+        const auth = firebase.auth();
+        if (!auth.currentUser) {
+            await auth.signInAnonymously().catch(e => console.warn('Anon auth:', e));
+        }
         useFirebase = true;
     } catch(e) { console.warn('Firebase failed:', e); }
 }
