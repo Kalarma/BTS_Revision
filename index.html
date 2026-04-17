@@ -559,7 +559,7 @@ async function loadLeaderboard() {
         return;
     }
     try {
-        const snap = await fbDb.collection('leaderboard').orderBy('updatedAt','desc').limit(30).get();
+        const snap = await fbDb.collection('leaderboard').limit(50).get();
         if (snap.empty) { list.innerHTML = `<p class="text-slate-600 text-xs text-center py-4">Aucun score enregistré.</p>`; return; }
 
         const rows = snap.docs.map(d => {
@@ -568,7 +568,7 @@ async function loadLeaderboard() {
             const vals = Object.values(scores);
             const avg = vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length) : 0;
             return { name: data.name || 'Anonyme', photo: data.photoURL, avg, courses: vals.length };
-        }).sort((a,b) => b.avg - a.avg);
+        }).filter(r => r.courses > 0).sort((a,b) => b.avg - a.avg).slice(0, 30);
 
         const totalEl = document.getElementById('lb-total-users');
         if (totalEl) { totalEl.textContent = rows.length + ' joueurs'; totalEl.classList.remove('hidden'); }
