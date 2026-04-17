@@ -261,7 +261,7 @@
         <h3 class="text-base font-black text-white uppercase tracking-widest text-center mb-1">🖥️ Mode Présentateur</h3>
         <p class="text-[10px] text-slate-500 font-bold text-center mb-5 uppercase tracking-widest">Quel est ton rôle ?</p>
         <div class="space-y-3 mb-3">
-            <button onclick="closePresenterChoiceModal(); showScreen('screen-presenter-setup')"
+            <button onclick="closePresenterChoiceModal(); openPresenterSetup()"
                     class="w-full py-5 bg-violet-700 hover:bg-violet-600 text-white rounded-2xl active:scale-95 transition-all flex flex-col items-center gap-1">
                 <span class="font-black uppercase tracking-wider text-sm">📱 Téléphone — Hôte</span>
                 <span class="text-violet-300/60 text-xs font-medium">Je crée et contrôle la partie depuis mon téléphone</span>
@@ -411,11 +411,22 @@
 <!-- ==================== PRÉSENTATEUR SETUP ==================== -->
 <div id="screen-presenter-setup" class="screen overflow-y-auto">
     <div class="flex flex-col mx-auto w-full px-5 pb-10" style="max-width:480px">
-        <div class="pt-6 pb-4 flex items-center gap-3">
+        <div class="pt-6 pb-3 flex items-center gap-3">
             <button onclick="exitToHome()" class="quit-btn w-9 h-9 flex items-center justify-center rounded-xl text-slate-500 font-black text-base">✕</button>
             <h2 class="text-xl font-black text-white uppercase italic flex-grow">🖥️ Mode Présentateur</h2>
         </div>
-        <p class="text-[10px] text-slate-500 font-bold mb-5 leading-relaxed">Le téléphone gère la partie. L'ordi/TV affiche les questions et scores en grand. Ouvre <span class="text-violet-400 font-black">kalarma.github.io/BTS_Revision/presenter</span> sur l'écran de projection.</p>
+
+        <!-- CODE PRÉ-GÉNÉRÉ — affiché dès l'ouverture -->
+        <div class="mb-5 bg-gradient-to-r from-violet-600/20 to-violet-500/10 border border-violet-500/30 rounded-3xl px-5 py-4 flex items-center justify-between">
+            <div>
+                <p class="text-[9px] font-black text-violet-400 uppercase tracking-widest mb-1">Code de la salle</p>
+                <p class="text-[10px] text-slate-500 font-medium">Ouvre <span class="text-violet-400 font-bold">presenter/</span> sur l'écran et entre ce code</p>
+            </div>
+            <div class="text-right">
+                <p id="pres-setup-code" class="text-4xl font-black text-white tracking-[0.15em]">——</p>
+                <button onclick="copyPresSetupCode()" class="text-[9px] font-black text-violet-500 uppercase tracking-widest hover:text-violet-400 mt-0.5">Copier lien</button>
+            </div>
+        </div>
 
         <!-- Équipes -->
         <div class="mb-5">
@@ -463,6 +474,16 @@
                     <button onclick="selectDoubleMode('many',this)" class="pres-double-btn py-2 text-[9px] font-black rounded-xl bg-slate-800 text-slate-400">Beaucoup</button>
                 </div>
             </div>
+            <!-- No timer toggle -->
+            <label class="flex items-center justify-between cursor-pointer" onclick="togglePresTimer(this)">
+                <div>
+                    <span class="text-[10px] font-bold text-slate-400">Pas de limite de temps</span>
+                    <p class="text-[9px] text-slate-600 font-medium">L'hôte passe manuellement à la suite</p>
+                </div>
+                <div id="pres-notimer-toggle" class="w-10 h-5 rounded-full bg-slate-700 relative transition-all flex-shrink-0">
+                    <div class="w-4 h-4 rounded-full bg-slate-400 absolute top-0.5 left-0.5 transition-all"></div>
+                </div>
+            </label>
             <!-- Show question on screen -->
             <label class="flex items-center justify-between cursor-pointer">
                 <span class="text-[10px] font-bold text-slate-400">Afficher la question sur l'écran</span>
@@ -471,7 +492,7 @@
         </div>
 
         <button onclick="launchPresenter()" class="w-full py-5 bg-violet-700 hover:bg-violet-600 text-white font-black uppercase rounded-3xl shadow-2xl active:scale-95 transition-all">
-            Créer la salle 🚀
+            🚀 Lancer la partie
         </button>
     </div>
 </div>
@@ -510,7 +531,7 @@
         </div>
     </div>
     <!-- Timer bar -->
-    <div class="px-5 pb-3 flex-shrink-0">
+    <div id="ph-timer-wrap" class="px-5 pb-3 flex-shrink-0 transition-opacity">
         <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
             <div id="ph-timer-bar" class="bg-violet-500 h-full w-full timer-animate rounded-full"></div>
         </div>
@@ -622,37 +643,53 @@
 
 <!-- ==================== MULTI SETUP ==================== -->
 <div id="screen-multi-setup" class="screen overflow-y-auto">
-    <div class="flex flex-col w-full px-6 pb-8">
-        <div class="pt-6 pb-4 flex items-center gap-4">
-            <button onclick="exitToHome()" class="text-slate-600 font-black text-lg leading-none">←</button>
-            <h2 class="text-xl font-black text-white uppercase italic">Mode Multi</h2>
+    <div class="flex flex-col w-full px-5 pb-10 mx-auto" style="max-width:480px">
+        <div class="pt-6 pb-4 flex items-center gap-3">
+            <button onclick="exitToHome()" class="w-9 h-9 flex items-center justify-center rounded-xl text-slate-500 font-black text-base">←</button>
+            <div>
+                <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest">Multi</p>
+                <h2 class="text-xl font-black text-white uppercase italic leading-tight">Mode Équipes</h2>
+            </div>
         </div>
-        <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 mb-4">
+
+        <!-- Params -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-4">
             <label class="text-[9px] font-black text-slate-500 uppercase block mb-3">Paramètres</label>
             <div class="grid grid-cols-3 gap-3">
                 <div>
-                    <span class="text-[9px] text-slate-400 block mb-1 uppercase">Temps (s)</span>
-                    <input id="multi-time" type="number" value="20" min="5" max="60" class="w-full bg-slate-950 p-2 rounded-lg text-white font-bold border border-slate-800 text-center">
+                    <span class="text-[9px] text-slate-500 font-black block mb-1.5 uppercase">Temps (s)</span>
+                    <input id="multi-time" type="number" value="20" min="5" max="60"
+                           class="w-full bg-slate-950 px-2 py-2.5 rounded-xl text-white font-black text-sm border border-slate-800 text-center focus:border-violet-500 outline-none transition-colors">
                 </div>
                 <div>
-                    <span class="text-[9px] text-slate-400 block mb-1 uppercase">Pts/Q</span>
-                    <input id="multi-pts" type="number" value="100" min="10" max="500" step="10" class="w-full bg-slate-950 p-2 rounded-lg text-white font-bold border border-slate-800 text-center">
+                    <span class="text-[9px] text-slate-500 font-black block mb-1.5 uppercase">Pts / Q</span>
+                    <input id="multi-pts" type="number" value="100" min="10" max="500" step="10"
+                           class="w-full bg-slate-950 px-2 py-2.5 rounded-xl text-white font-black text-sm border border-slate-800 text-center focus:border-violet-500 outline-none transition-colors">
                 </div>
                 <div>
-                    <span class="text-[9px] text-slate-400 block mb-1 uppercase">Nb Q</span>
-                    <input id="multi-nb" type="number" value="15" min="5" max="50" class="w-full bg-slate-950 p-2 rounded-lg text-white font-bold border border-slate-800 text-center">
+                    <span class="text-[9px] text-slate-500 font-black block mb-1.5 uppercase">Nb Q</span>
+                    <input id="multi-nb" type="number" value="15" min="5" max="50"
+                           class="w-full bg-slate-950 px-2 py-2.5 rounded-xl text-white font-black text-sm border border-slate-800 text-center focus:border-violet-500 outline-none transition-colors">
                 </div>
             </div>
         </div>
-        <div class="mb-4">
-            <label class="text-[9px] font-black text-slate-500 uppercase block mb-3">Équipes (2 à 6)</label>
+
+        <!-- Teams -->
+        <div class="mb-5">
+            <div class="flex items-center justify-between mb-3">
+                <label class="text-[9px] font-black text-slate-500 uppercase">Équipes (2–6)</label>
+                <span class="text-[9px] text-slate-700 font-bold" id="team-count-label"></span>
+            </div>
             <div id="teams-list" class="space-y-2 mb-3"></div>
-            <button onclick="addTeam()" class="w-full py-3 border-2 border-dashed border-slate-800 rounded-xl text-slate-500 font-bold text-xs uppercase hover:border-violet-500 transition-colors active:scale-95">
+            <button onclick="addTeam()"
+                    class="w-full py-3.5 border-2 border-dashed border-slate-800 rounded-2xl text-slate-500 font-black text-xs uppercase tracking-widest hover:border-violet-500 hover:text-violet-500 transition-all active:scale-95">
                 + Ajouter une équipe
             </button>
         </div>
-        <button onclick="launchMulti()" class="w-full py-5 bg-violet-700 text-white font-black uppercase rounded-3xl shadow-2xl active:scale-95 transition-all">
-            C'est parti !
+
+        <button onclick="launchMulti()"
+                class="w-full py-5 bg-violet-700 hover:bg-violet-600 text-white font-black uppercase rounded-3xl shadow-lg shadow-violet-500/25 active:scale-95 transition-all">
+            🏆 C'est parti !
         </button>
     </div>
 </div>
@@ -696,11 +733,19 @@
 </div>
 
 <!-- ==================== MULTI SCORES ==================== -->
-<div id="screen-multi-scores" class="screen items-center justify-center p-6">
-    <div class="w-full max-w-sm fade-up">
-        <h3 class="text-[10px] font-black text-slate-600 uppercase tracking-widest text-center mb-6">Classement en cours</h3>
-        <div id="ms-list" class="space-y-3 mb-8"></div>
-        <button onclick="nextMultiRound()" class="w-full py-5 bg-violet-700 text-white font-black uppercase rounded-2xl active:scale-95 transition-all">Tour suivant →</button>
+<div id="screen-multi-scores" class="screen overflow-y-auto">
+    <div class="flex flex-col w-full px-5 pb-10 mx-auto" style="max-width:480px">
+        <div class="pt-6 pb-4 flex items-center justify-between">
+            <div>
+                <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest">Mode Multi</p>
+                <h2 class="text-2xl font-black text-white uppercase italic">Scores</h2>
+            </div>
+            <span id="ms-round-label" class="text-[10px] font-black text-violet-400 uppercase tracking-widest"></span>
+        </div>
+        <div id="ms-list" class="space-y-2 mb-8"></div>
+        <button onclick="nextMultiRound()" class="w-full py-5 bg-violet-700 text-white font-black uppercase rounded-3xl active:scale-95 transition-all shadow-lg shadow-violet-500/20">
+            Tour suivant →
+        </button>
     </div>
 </div>
 
@@ -752,6 +797,19 @@
                     <input id="kahoot-time" type="number" value="20" min="5" max="60" class="w-full bg-slate-950 p-2 rounded-lg text-white font-bold border border-slate-800 text-center">
                 </div>
             </div>
+        </div>
+
+        <!-- Candy Crush Mode toggle -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl px-4 py-3.5 mb-4">
+            <label class="flex items-center gap-3 cursor-pointer" onclick="toggleKahootCandyCrush()">
+                <div class="flex-grow">
+                    <p class="text-[10px] font-black text-slate-300">🍬 Animation Candy Crush</p>
+                    <p class="text-[9px] text-slate-600 font-medium mt-0.5">Classement animé après chaque question</p>
+                </div>
+                <div id="kh-candy-toggle" class="w-10 h-5 rounded-full relative transition-all flex-shrink-0" style="background:#7c3aed">
+                    <div class="w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all" style="right:0.125rem;left:auto"></div>
+                </div>
+            </label>
         </div>
 
         <!-- Players list -->
@@ -1721,15 +1779,25 @@ function renderProgList() {
 // MULTI MODE
 // =====================================================================
 function addTeam() {
-    const list=document.getElementById('teams-list');
-    if(list.children.length>=6) return;
-    const i=list.children.length;
-    const div=document.createElement('div');
-    div.className='flex items-center gap-3 bg-slate-950 p-2 rounded-xl border border-slate-800';
-    div.innerHTML=`<div class="w-4 h-4 rounded-full flex-shrink-0" style="background:${TEAM_COLORS[i]}"></div>
-        <input type="text" placeholder="Équipe ${i+1}" class="bg-transparent flex-grow text-white font-bold outline-none team-input placeholder-slate-700">
-        <button onclick="this.parentElement.remove()" class="text-slate-700 hover:text-rose-500 transition-colors font-black text-sm flex-shrink-0">✕</button>`;
+    const list = document.getElementById('teams-list');
+    if (list.children.length >= 6) return;
+    const i = list.children.length;
+    const color = TEAM_COLORS[i];
+    const div = document.createElement('div');
+    div.className = 'flex items-center gap-3 bg-slate-900 px-4 py-3.5 rounded-2xl border border-slate-800 hover:border-slate-700 transition-colors';
+    div.innerHTML = `
+        <div class="w-4 h-4 rounded-full flex-shrink-0" style="background:${color};box-shadow:0 0 8px ${color}60"></div>
+        <input type="text" placeholder="Équipe ${i+1}"
+               class="bg-transparent flex-grow text-white font-black text-sm outline-none team-input placeholder-slate-600 min-w-0">
+        <button onclick="this.parentElement.remove();updateTeamCountLabel()"
+                class="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-xl text-slate-700 hover:text-rose-400 hover:bg-rose-500/10 font-black text-xs transition-all">✕</button>`;
     list.appendChild(div);
+    updateTeamCountLabel();
+}
+function updateTeamCountLabel() {
+    const n = document.getElementById('teams-list')?.children.length || 0;
+    const el = document.getElementById('team-count-label');
+    if (el) el.textContent = `${n} équipe${n>1?'s':''}`;
 }
 
 function launchMulti() {
@@ -1773,20 +1841,32 @@ function scoreMulti(correct) {
 }
 
 function showMultiScores() {
-    const sorted=[...teams].map((t,i)=>({...t,orig:i})).sort((a,b)=>b.score-a.score);
-    document.getElementById('ms-list').innerHTML=sorted.map((t,rank)=>`
-        <div class="flex items-center justify-between bg-slate-900 p-4 rounded-2xl border border-slate-800">
-            <div class="flex items-center gap-3">
-                <span class="text-slate-600 font-black text-sm w-5">${rank+1}</span>
-                <div class="w-3 h-3 rounded-full" style="background:${t.color}"></div>
-                <span class="text-white font-bold">${t.name}</span>
+    const sorted = [...teams].map((t,i) => ({...t, orig:i})).sort((a,b) => b.score - a.score);
+    const maxScore = Math.max(...sorted.map(t => t.score), 1);
+    const medals = ['🥇','🥈','🥉'];
+    const roundLabel = document.getElementById('ms-round-label');
+    if (roundLabel) roundLabel.textContent = `${Math.min(multiRound+1, multiPool.length)} / ${multiPool.length}`;
+
+    document.getElementById('ms-list').innerHTML = sorted.map((t, rank) => {
+        const pct = Math.round(t.score / maxScore * 100);
+        const medal = medals[rank] || `<span class="w-7 text-center text-slate-500 font-black text-sm flex-shrink-0">#${rank+1}</span>`;
+        const scoreColor = t.color || '#7c3aed';
+        return `<div class="bg-slate-900 border border-slate-800 rounded-2xl px-4 py-3.5 hover:border-slate-700 transition-colors fade-up" style="animation-delay:${rank*0.06}s">
+            <div class="flex items-center gap-3 mb-2.5">
+                <span class="text-xl w-7 text-center flex-shrink-0">${medal}</span>
+                <div class="w-3 h-3 rounded-full flex-shrink-0" style="background:${scoreColor};box-shadow:0 0 6px ${scoreColor}60"></div>
+                <span class="text-white font-black text-sm flex-grow min-w-0 truncate">${t.name}</span>
+                <div class="flex items-center gap-1.5 flex-shrink-0">
+                    <button onclick="adjustScore(${t.orig},-${multiSettings.pts})" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-600 hover:text-slate-300 hover:bg-slate-800 font-black transition-all">−</button>
+                    <span class="font-black tabular-nums text-base min-w-[64px] text-right" style="color:${scoreColor}">${t.score} pts</span>
+                    <button onclick="adjustScore(${t.orig},${multiSettings.pts})" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-600 hover:text-slate-300 hover:bg-slate-800 font-black transition-all">+</button>
+                </div>
             </div>
-            <div class="flex items-center gap-2">
-                <button onclick="adjustScore(${t.orig},-${multiSettings.pts})" class="text-slate-700 hover:text-slate-400 font-black w-6 text-center">−</button>
-                <span class="font-black text-violet-400 w-16 text-right">${t.score} pts</span>
-                <button onclick="adjustScore(${t.orig},${multiSettings.pts})" class="text-slate-700 hover:text-slate-400 font-black w-6 text-center">+</button>
+            <div class="ml-10 h-2 bg-slate-800 rounded-full overflow-hidden">
+                <div class="h-full rounded-full" style="width:${pct}%;background:${scoreColor};transition:width .8s cubic-bezier(.4,0,.2,1)"></div>
             </div>
-        </div>`).join('');
+        </div>`;
+    }).join('');
     showScreen('screen-multi-scores');
 }
 
@@ -1832,6 +1912,64 @@ let presSettings  = {}, presTeams = [], presQuestions = [], presCurrentQ = 0;
 let presRoomCode  = '', presUnsubRoom = null, presDoubleMode = 'none';
 let presTimerInterval = null, presShowAnswer = false;
 
+// Ouvre le setup présentateur et pré-génère le code immédiatement
+function openPresenterSetup() {
+    // Réinitialiser le code précédent si la salle est terminée
+    if (presRoomCode) {
+        fbDb?.collection('rooms').doc(presRoomCode).delete().catch(()=>{});
+        presRoomCode = '';
+    }
+    presRoomCode = generateRoomCode();
+    showScreen('screen-presenter-setup');
+    document.getElementById('pres-setup-code').textContent = presRoomCode;
+    // Pré-réserver la salle pour que l'écran puisse déjà se connecter
+    if (fbDb) {
+        fbDb.collection('rooms').doc(presRoomCode).set({
+            type: 'presenter',
+            phase: 'waiting',
+            courseName: C?.title || courseName,
+            hostId: currentUser?.uid || 'local',
+            createdAt: Date.now(),
+        }).catch(()=>{});
+    }
+    // Init équipes par défaut si vide
+    const list = document.getElementById('pres-teams-list');
+    if (!list.children.length) { addPresTeam(); addPresTeam(); }
+}
+
+function copyPresSetupCode() {
+    if (!presRoomCode) return;
+    const url = `https://kalarma.github.io/BTS_Revision/presenter/?code=${presRoomCode}`;
+    navigator.clipboard?.writeText(url).catch(()=>{});
+    const btn = event.target;
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copié !';
+    btn.style.color = '#10b981';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1500);
+}
+
+let _presNoTimer = false;
+function togglePresTimer(labelEl) {
+    _presNoTimer = !_presNoTimer;
+    const toggle = document.getElementById('pres-notimer-toggle');
+    const dot = toggle.querySelector('div');
+    if (_presNoTimer) {
+        toggle.classList.add('active');
+        toggle.style.background = '#7c3aed';
+        dot.style.left = '1.25rem';
+        dot.style.background = '#ffffff';
+        document.getElementById('pres-time-q').disabled = true;
+        document.getElementById('pres-time-q').style.opacity = '0.3';
+    } else {
+        toggle.classList.remove('active');
+        toggle.style.background = '';
+        dot.style.left = '0.125rem';
+        dot.style.background = '';
+        document.getElementById('pres-time-q').disabled = false;
+        document.getElementById('pres-time-q').style.opacity = '1';
+    }
+}
+
 function addPresTeam() {
     const list = document.getElementById('pres-teams-list');
     if (list.children.length >= 6) return;
@@ -1861,7 +1999,7 @@ async function launchPresenter() {
 
     const nbQ   = parseInt(document.getElementById('pres-nb-q').value)  || 15;
     const ptsQ  = parseInt(document.getElementById('pres-pts-q').value)  || 100;
-    const timeQ = parseInt(document.getElementById('pres-time-q').value) || 20;
+    let   timeQ = parseInt(document.getElementById('pres-time-q').value) || 20;
     const neg   = parseInt(document.getElementById('pres-neg').value)    || 0;
     const showQ = document.getElementById('pres-show-q').checked;
 
@@ -1875,10 +2013,12 @@ async function launchPresenter() {
         isDouble: Math.random() < rate
     }));
 
-    presSettings = { teams: presTeams, nbQ, ptsQ, timeQ, neg, showQ, doubleMode: presDoubleMode };
+    const noTimer = document.getElementById('pres-notimer-toggle')?.classList.contains('active') || false;
+    if (noTimer) timeQ = 0;  // 0 = pas de timer
+    presSettings = { teams: presTeams, nbQ, ptsQ, timeQ, neg, showQ, doubleMode: presDoubleMode, noTimer };
 
-    // Generate room code
-    presRoomCode = Math.random().toString(36).slice(2,8).toUpperCase();
+    // Utiliser le code pré-généré (affiché sur la page de setup)
+    if (!presRoomCode) presRoomCode = generateRoomCode();
     presCurrentQ = 0; presShowAnswer = false;
 
     if (fbDb) {
@@ -1923,21 +2063,29 @@ function showPresQuestion() {
 
     // Timer bar
     clearInterval(presTimerInterval);
-    const timeQ = presSettings.timeQ || 20;
-    const start = Date.now();
+    const timeQ = presSettings.timeQ || 0;
+    const noTimer = presSettings.noTimer || timeQ === 0;
     const bar = document.getElementById('ph-timer-bar');
-    bar.style.transition = 'none'; bar.style.width = '100%';
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-        bar.style.transition = `width ${timeQ}s linear`; bar.style.width = '0%';
-    }));
-    presTimerInterval = setTimeout(() => {}, timeQ * 1000);
+    const timerWrap = document.getElementById('ph-timer-wrap');
+    if (noTimer) {
+        bar.style.transition = 'none'; bar.style.width = '100%'; bar.style.background = '#475569';
+        if (timerWrap) timerWrap.style.opacity = '0.2';
+    } else {
+        if (timerWrap) timerWrap.style.opacity = '1';
+        bar.style.transition = 'none'; bar.style.width = '100%'; bar.style.background = '';
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            bar.style.transition = `width ${timeQ}s linear`; bar.style.width = '0%';
+        }));
+    }
 
     // Push to Firebase
     if (fbDb) fbDb.collection('rooms').doc(presRoomCode).update({
         phase: 'question',
         currentQ: presCurrentQ,
         showAnswer: false,
-        questionStartTime: Date.now(),
+        questionStartTime: noTimer ? null : Date.now(),
+        'settings.timePerQ': timeQ,
+        'settings.noTimer': noTimer,
     }).catch(()=>{});
 
     showScreen('screen-presenter-host');
@@ -2017,6 +2165,23 @@ let kahootQuestions = [];
 let kahootCurrentQ = 0;
 let kahootSettings = {};
 let kahootTimerTimeout = null;
+let _kahootCandyCrushMode = true;
+let _lastKahootPlayers = {};
+let _lastKahootPoints = {};
+
+function toggleKahootCandyCrush() {
+    _kahootCandyCrushMode = !_kahootCandyCrushMode;
+    const toggle = document.getElementById('kh-candy-toggle');
+    if (!toggle) return;
+    const dot = toggle.querySelector('div');
+    if (_kahootCandyCrushMode) {
+        toggle.style.background = '#7c3aed';
+        dot.style.right = '0.125rem'; dot.style.left = 'auto';
+    } else {
+        toggle.style.background = '#475569';
+        dot.style.left = '0.125rem'; dot.style.right = 'auto';
+    }
+}
 let kahootCountdownInterval = null;
 
 function generateRoomCode() {
@@ -2248,8 +2413,12 @@ async function revealKahootAnswer() {
     // Notifier les joueurs (reveal + scores mis à jour)
     await fbDb.collection('rooms').doc(kahootRoom).update({ status: 'reveal' });
 
-    // Auto-afficher l'animation si plus de 1 joueur
-    if (Object.keys(players).length >= 2) {
+    // Sauvegarder pour le bouton "Voir animation" manuel
+    _lastKahootPlayers = players;
+    _lastKahootPoints = pointsThisQ;
+
+    // Auto-afficher l'animation si mode candy crush activé et plus de 1 joueur
+    if (_kahootCandyCrushMode && Object.keys(players).length >= 2) {
         showKahootScoreAnimation(players, pointsThisQ);
     } else {
         showScreen('screen-kahoot-reveal');
@@ -2257,8 +2426,8 @@ async function revealKahootAnswer() {
 }
 
 function showKahootScoreAnimation(playersOverride, pointsThisQ) {
-    const players = playersOverride || {};
-    const pts = pointsThisQ || {};
+    const players = playersOverride || _lastKahootPlayers || {};
+    const pts = pointsThisQ || _lastKahootPoints || {};
     const sorted = Object.entries(players).sort((a,b) => (b[1].score||0) - (a[1].score||0));
     const maxScore = Math.max(...sorted.map(([,p]) => p.score||0), 1);
     const medals = ['🥇','🥈','🥉'];
