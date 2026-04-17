@@ -208,6 +208,27 @@
         <button onclick="confirmReset()" class="w-full text-[10px] font-bold text-slate-800 uppercase tracking-widest hover:text-slate-600 transition-colors pb-2">
             Réinitialiser la progression
         </button>
+
+        <!-- Suggestion button -->
+        <button onclick="openSuggestionModal()" class="w-full flex items-center justify-center gap-1.5 py-3 text-[10px] font-bold text-slate-700 uppercase tracking-widest hover:text-violet-500 transition-colors">
+            💡 Suggérer une amélioration
+        </button>
+    </div>
+</div>
+
+<!-- ==================== MODAL SUGGESTION ==================== -->
+<div id="suggestion-modal" data-modal-backdrop class="hidden fixed inset-0 z-50 flex items-end justify-center" style="background:rgba(2,6,23,.85);backdrop-filter:blur(4px)">
+    <div class="w-full bg-slate-900 border-t border-slate-800 rounded-t-3xl p-6 fade-up" style="max-width:520px">
+        <div class="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-5"></div>
+        <h3 class="text-base font-black text-white uppercase tracking-widest text-center mb-1">💡 Suggestion</h3>
+        <p class="text-[10px] text-slate-500 font-bold text-center mb-5 uppercase tracking-widest">Propose une amélioration ou signale un problème</p>
+        <textarea id="suggestion-text" placeholder="Ex : Ajouter un mode nuit, corriger la carte X, ..." rows="4"
+            class="w-full bg-slate-800 border border-slate-700 rounded-2xl px-4 py-3 text-white text-sm font-medium placeholder-slate-600 outline-none focus:border-violet-500 transition-colors resize-none mb-3"></textarea>
+        <div id="suggestion-feedback" class="hidden text-center text-xs font-bold mb-3"></div>
+        <button onclick="submitSuggestion()" class="w-full py-4 bg-violet-700 hover:bg-violet-600 text-white rounded-2xl font-black uppercase text-sm tracking-wider active:scale-95 transition-all mb-2">
+            Envoyer 🚀
+        </button>
+        <button onclick="closeSuggestionModal()" class="w-full py-3 text-slate-700 font-bold text-xs uppercase hover:text-slate-500 transition-colors">Annuler</button>
     </div>
 </div>
 
@@ -1126,6 +1147,12 @@ async function loadCourseAndStart() {
         if (!C.cards.length) throw new Error('Aucune carte trouvée');
         localStorage.setItem('total_' + courseName, C.cards.length);
         await loadProgress();
+        // Track course open in Firestore
+        if (useFirebase && currentUser && fbDb) {
+            fbDb.collection('users').doc(currentUser.uid).set(
+                { coursesOpened: firebase.firestore.FieldValue.increment(1) }, { merge: true }
+            ).catch(() => {});
+        }
         updateHome();
         showScreen('screen-home');
     } catch(e) {
@@ -1205,6 +1232,12 @@ function setP(idx, correct, mode = 'flash') {
     p.pct = Math.min(100, Math.max(0, currentPct + gain - loss));
     progress[idx] = p;
     saveProgress();
+    // Track errors in Firestore
+    if (!correct && useFirebase && currentUser && fbDb) {
+        fbDb.collection('users').doc(currentUser.uid).set(
+            { totalErrors: firebase.firestore.FieldValue.increment(1) }, { merge: true }
+        ).catch(() => {});
+    }
 }
 
 // isMastered : pct >= 80
@@ -1224,6 +1257,10 @@ function saveBookmarks(bms) {
     if (useFirebase && currentUser && fbDb) {
         fbDb.collection('users').doc(currentUser.uid).collection('bookmarks').doc(courseName)
             .set({ ids: bms }).catch(() => {});
+        // Track bookmark count per-course in main user doc for admin stats
+        fbDb.collection('users').doc(currentUser.uid).set(
+            { [`bm_${courseName}`]: bms.length }, { merge: true }
+        ).catch(() => {});
     }
 }
 function isBookmarked(idx) { return getBookmarks().includes(idx); }
@@ -1326,10 +1363,53 @@ function confirmReset() {
 }
 
 // =====================================================================
+// SUGGESTION
+// =====================================================================
+function openSuggestionModal() {
+    const el = document.getElementById('suggestion-modal');
+    if (el) {
+        el.classList.remove('hidden');
+        document.getElementById('suggestion-text').value = '';
+        const fb = document.getElementById('suggestion-feedback');
+        if (fb) { fb.textContent = ''; fb.classList.add('hidden'); }
+    }
+}
+function closeSuggestionModal() {
+    document.getElementById('suggestion-modal')?.classList.add('hidden');
+}
+async function submitSuggestion() {
+    const text = (document.getElementById('suggestion-text')?.value || '').trim();
+    if (!text) return;
+    const fb = document.getElementById('suggestion-feedback');
+    const btn = document.querySelector('#suggestion-modal button[onclick="submitSuggestion()"]');
+    if (btn) btn.disabled = true;
+    if (fb) { fb.textContent = ''; fb.classList.add('hidden'); }
+    const entry = {
+        text,
+        courseName: courseName || '',
+        uid: currentUser?.uid || 'anonymous',
+        name: currentUser?.displayName || 'Anonyme',
+        date: new Date().toISOString()
+    };
+    if (useFirebase && fbDb) {
+        try {
+            await fbDb.collection('suggestions').add(entry);
+            if (fb) { fb.textContent = '✅ Suggestion envoyée, merci !'; fb.style.color='#10b981'; fb.classList.remove('hidden'); }
+            setTimeout(() => closeSuggestionModal(), 1500);
+        } catch(e) {
+            if (fb) { fb.textContent = '❌ Erreur : ' + e.message; fb.style.color='#f87171'; fb.classList.remove('hidden'); }
+        }
+    } else {
+        if (fb) { fb.textContent = '⚠️ Non connecté à Firebase — suggestion non enregistrée.'; fb.style.color='#f97316'; fb.classList.remove('hidden'); }
+    }
+    if (btn) btn.disabled = false;
+}
+
+// =====================================================================
 // MODAL UTILS
 // =====================================================================
 function closeAllModals() {
-    ['fc-mode-modal','quiz-mode-modal','report-modal','presenter-choice-modal'].forEach(id => {
+    ['fc-mode-modal','quiz-mode-modal','report-modal','presenter-choice-modal','suggestion-modal'].forEach(id => {
         document.getElementById(id)?.classList.add('hidden');
     });
 }
