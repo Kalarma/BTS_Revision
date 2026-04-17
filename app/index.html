@@ -172,29 +172,6 @@
             <div id="home-stats" class="grid grid-cols-3 text-center gap-1"></div>
         </div>
 
-        <!-- ── TROPHÉES ── -->
-        <div id="trophy-widget" class="mb-4 bg-slate-900 border border-slate-800 rounded-3xl px-5 py-4">
-            <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-2">
-                    <span id="trophy-rank-emoji" class="text-xl">🪵</span>
-                    <div>
-                        <p id="trophy-rank-name" class="text-sm font-black text-white leading-tight">Bois</p>
-                        <p class="text-[9px] font-bold text-slate-600 uppercase tracking-widest">Rang</p>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <p class="text-[9px] font-bold text-slate-600 uppercase tracking-widest">Trophées</p>
-                    <p id="trophy-count" class="text-xl font-black text-amber-400 leading-tight">0 🏆</p>
-                </div>
-            </div>
-            <!-- XP bar vers prochain rang -->
-            <div class="flex items-center gap-2">
-                <div class="flex-grow h-2.5 bg-slate-800 rounded-full overflow-hidden">
-                    <div id="trophy-xp-bar" class="h-full rounded-full transition-all duration-700" style="width:0%;background:#f59e0b"></div>
-                </div>
-                <span id="trophy-xp-label" class="text-[9px] font-black text-slate-600 tabular-nums flex-shrink-0">0 XP</span>
-            </div>
-        </div>
 
         <!-- ── MODE SOLO ── -->
         <p class="text-[9px] font-black text-slate-700 uppercase tracking-widest px-1 mb-2">Mode Solo</p>
@@ -512,6 +489,14 @@
             <label class="flex items-center justify-between cursor-pointer">
                 <span class="text-[10px] font-bold text-slate-400">Afficher la question sur l'écran</span>
                 <input id="pres-show-q" type="checkbox" checked class="w-4 h-4 accent-violet-500">
+            </label>
+            <!-- Mode inversé -->
+            <label class="flex items-center justify-between cursor-pointer">
+                <div>
+                    <span class="text-[10px] font-bold text-slate-400">Mode inversé</span>
+                    <p class="text-[9px] text-slate-600 font-medium">Affiche la définition, les équipes donnent le terme</p>
+                </div>
+                <input id="pres-inverse-mode" type="checkbox" class="w-4 h-4 accent-violet-500">
             </label>
         </div>
 
@@ -977,6 +962,7 @@ const QUIZ_TIME   = 15;
 let C = null, courseName = '', progress = {};
 let fcDeck = [], fcIdx = 0, fcFlipped = false, fcSessionCorrect = 0, fcSessionWrong = 0;
 let fcSessionResults = [], fcMode = 'classic';
+let fcAlreadyRequeued = new Set(); // cartes déjà repassées une fois ce tour
 let quizDeck = [], quizIdx = 0, quizScore = 0, quizCorrect = 0, quizWrong = 0, quizTimer = null, quizCountInterval = null;
 let quizMode = 'classic';
 let reportCardIdx = -1;
@@ -1205,9 +1191,18 @@ function setP(idx, correct, mode = 'flash') {
     const p = getP(idx);
     p.c = (p.c || 0) + (correct ? 1 : 0);
     p.w = (p.w || 0) + (correct ? 0 : 1);
-    const gain  = correct ? (mode === 'flash' ? 30 : 15) : 0;
-    const loss  = correct ? 0 : (mode === 'flash' ? 10 : 5);
-    p.pct = Math.min(100, Math.max(0, (p.pct || 0) + gain - loss));
+    // Gain progressif : plus facile au début pour voir sa progression
+    const currentPct = p.pct || 0;
+    let gain = 0, loss = 0;
+    if (correct) {
+        // Flash : +35 si <40%, +25 si <70%, +15 sinon / Quiz : moitié
+        gain = mode === 'flash'
+            ? (currentPct < 40 ? 35 : currentPct < 70 ? 25 : 15)
+            : (currentPct < 40 ? 18 : currentPct < 70 ? 12 : 8);
+    } else {
+        loss = mode === 'flash' ? 8 : 4; // perte réduite
+    }
+    p.pct = Math.min(100, Math.max(0, currentPct + gain - loss));
     progress[idx] = p;
     saveProgress();
 }
@@ -1318,80 +1313,9 @@ function updateHome() {
 // =====================================================================
 // TROPHÉES / PROGRESSION (style Clash Royale)
 // =====================================================================
-const TROPHY_RANKS = [
-    { min:0,    max:99,   name:'Bois',      emoji:'🪵', color:'#92400e', barColor:'#d97706' },
-    { min:100,  max:249,  name:'Fer',       emoji:'⚙️', color:'#64748b', barColor:'#94a3b8' },
-    { min:250,  max:499,  name:'Bronze',    emoji:'🥉', color:'#b45309', barColor:'#f97316' },
-    { min:500,  max:999,  name:'Argent',    emoji:'🥈', color:'#475569', barColor:'#cbd5e1' },
-    { min:1000, max:1999, name:'Or',        emoji:'🥇', color:'#b45309', barColor:'#fbbf24' },
-    { min:2000, max:3999, name:'Diamant',   emoji:'💎', color:'#0e7490', barColor:'#22d3ee' },
-    { min:4000, max:Infinity, name:'Maître',emoji:'👑', color:'#7c3aed', barColor:'#a78bfa' },
-];
-
-function getTrophyXP() {
-    return parseInt(localStorage.getItem('trophy_xp_' + courseName) || '0');
-}
-function setTrophyXP(xp) {
-    localStorage.setItem('trophy_xp_' + courseName, Math.max(0, xp));
-}
-function getTrophyRank(xp) {
-    return TROPHY_RANKS.slice().reverse().find(r => xp >= r.min) || TROPHY_RANKS[0];
-}
-function getTrophyCount(xp) {
-    // 1 trophée toutes les 25 XP
-    return Math.floor(xp / 25);
-}
-
-function awardXP(amount, label) {
-    const prev = getTrophyXP();
-    const next = prev + amount;
-    setTrophyXP(next);
-    updateTrophyWidget(true, amount, label);
-    // Sync to Firestore
-    if (fbDb && currentUser) {
-        fbDb.collection('users').doc(currentUser.uid).set(
-            { trophyXP: { [courseName]: next } }, { merge: true }
-        ).catch(() => {});
-    }
-}
-
-function updateTrophyWidget(animate, xpGained, label) {
-    const xp = getTrophyXP();
-    const rank = getTrophyRank(xp);
-    const nextRank = TROPHY_RANKS.find(r => r.min > xp);
-    const trophies = getTrophyCount(xp);
-
-    document.getElementById('trophy-rank-emoji').textContent = rank.emoji;
-    document.getElementById('trophy-rank-name').textContent = rank.name;
-    document.getElementById('trophy-count').textContent = trophies + ' 🏆';
-
-    const barEl = document.getElementById('trophy-xp-bar');
-    if (barEl) {
-        const pct = nextRank
-            ? Math.round((xp - rank.min) / (nextRank.min - rank.min) * 100)
-            : 100;
-        barEl.style.width = pct + '%';
-        barEl.style.background = rank.barColor;
-    }
-    document.getElementById('trophy-xp-label').textContent =
-        nextRank ? `${xp} / ${nextRank.min} XP` : `${xp} XP · MAX`;
-
-    // Animation de gain de XP
-    if (animate && xpGained > 0) {
-        showXpPopup(xpGained, label);
-    }
-}
-
-function showXpPopup(amount, label) {
-    const widget = document.getElementById('trophy-widget');
-    if (!widget) return;
-    const pop = document.createElement('div');
-    pop.textContent = `+${amount} XP ${label || ''}`;
-    pop.style.cssText = `position:absolute;top:-8px;right:12px;background:#f59e0b;color:#000;font-weight:900;font-size:11px;padding:2px 8px;border-radius:20px;animation:fadeUp .6s ease forwards;pointer-events:none;z-index:10`;
-    widget.style.position = 'relative';
-    widget.appendChild(pop);
-    setTimeout(() => pop.remove(), 700);
-}
+// Trophées supprimés — fonctions gardées en no-op pour compatibilité
+function awardXP() {}
+function updateTrophyWidget() {}
 
 function confirmReset() {
     if (confirm('Réinitialiser toute la progression ? Irréversible.')) {
@@ -1613,21 +1537,30 @@ function closeFcModal() {
 
 function startFlashcards(mode) {
     fcMode = mode || 'classic';
+    const bookmarks = new Set(getBookmarks());
+    // Tri : signets d'abord, puis non-maîtrisés, puis maîtrisés — chaque groupe mélangé
     const order = C.cards.map((_,i)=>i).sort((a,b) => {
+        const abm=bookmarks.has(a), bbm=bookmarks.has(b);
+        if(abm!==bbm) return abm?-1:1; // signets en premier
         const ma=isMastered(a), mb=isMastered(b);
         if(ma!==mb) return ma?1:-1;
         return Math.random()-.5;
     });
-    // Limiter à 25 questions max
-    fcDeck = order.slice(0, 25);
+    // Limiter à 25 questions max, mais toujours garder TOUS les signets
+    const bookmarkCards = order.filter(i=>bookmarks.has(i));
+    const otherCards    = order.filter(i=>!bookmarks.has(i));
+    const maxOthers = Math.max(0, 25 - bookmarkCards.length);
+    fcDeck = [...bookmarkCards, ...otherCards.slice(0, maxOthers)];
     fcIdx=0; fcSessionCorrect=0; fcSessionWrong=0;
     fcSessionResults = [];
+    fcAlreadyRequeued.clear();
     showScreen('screen-flashcard');
     showFlashcard();
     initSwipe();
 }
 
 function showFlashcard() {
+    _swipeLocked = false; // débloquer pour la nouvelle carte
     if (fcIdx >= fcDeck.length) { endFlashcards(); return; }
     const cardIdx = fcDeck[fcIdx];
     const card = C.cards[cardIdx];
@@ -1678,7 +1611,11 @@ function answerCard(correct) {
     setP(idx, correct, 'flash');
     fcSessionResults.push({ idx, correct });
     if (correct) fcSessionCorrect++; else fcSessionWrong++;
-    if (!correct) fcDeck.splice(Math.min(fcIdx+3, fcDeck.length), 0, idx);
+    // Si faux : replacer la carte à la fin UNE seule fois par session
+    if (!correct && !fcAlreadyRequeued.has(idx)) {
+        fcAlreadyRequeued.add(idx);
+        fcDeck.push(idx); // à la fin, pas juste derrière
+    }
     const el = document.getElementById('fc-card');
     el.classList.add('snapping', correct ? 'fly-right' : 'fly-left');
     setTimeout(() => { fcIdx++; showFlashcard(); }, 350);
@@ -1717,10 +1654,16 @@ function endFlashcards() {
 // =====================================================================
 // SWIPE GESTURES
 // =====================================================================
+let _swipeLocked = false; // anti-doublon : bloque jusqu'à la prochaine carte
+
 function initSwipe() {
     const el = document.getElementById('fc-card');
+    // Supprimer les anciens listeners window pour éviter les doublons entre sessions
+    if (window._swipeMoveHandler) window.removeEventListener('mousemove', window._swipeMoveHandler);
+    if (window._swipeUpHandler)   window.removeEventListener('mouseup',   window._swipeUpHandler);
+
     let startX=0, startY=0, dragging=false, moved=false;
-    const onStart=(x,y)=>{ startX=x; startY=y; dragging=true; moved=false; };
+    const onStart=(x,y)=>{ if(_swipeLocked) return; startX=x; startY=y; dragging=true; moved=false; };
     const onMove=(x,y)=>{
         if(!dragging) return;
         const dx=x-startX, dy=y-startY;
@@ -1734,20 +1677,22 @@ function initSwipe() {
         document.getElementById('hint-left').style.opacity  = dx<0?Math.min(1,-dx/80):'.4';
     };
     const onEnd=(x)=>{
-        if(!dragging) return; dragging=false;
+        if(!dragging || _swipeLocked) return; dragging=false;
         const dx=x-startX;
         if(!moved){ el.style.transform=''; el.classList.remove('glow-green','glow-red'); return; }
-        if(dx>80) answerCard(true);
-        else if(dx<-80) answerCard(false);
+        if(dx>80)       { _swipeLocked=true; answerCard(true); }
+        else if(dx<-80) { _swipeLocked=true; answerCard(false); }
         else { el.classList.add('snapping'); el.style.transform=''; el.classList.remove('glow-green','glow-red'); setTimeout(()=>el.classList.remove('snapping'),350); }
     };
     el.addEventListener('touchstart',e=>onStart(e.touches[0].clientX,e.touches[0].clientY),{passive:true});
     el.addEventListener('touchmove', e=>{ onMove(e.touches[0].clientX,e.touches[0].clientY); if(moved)e.preventDefault(); },{passive:false});
     el.addEventListener('touchend',  e=>onEnd(e.changedTouches[0].clientX));
     el.addEventListener('mousedown', e=>{ onStart(e.clientX,e.clientY); });
-    window.addEventListener('mousemove', e=>{ if(dragging) onMove(e.clientX,e.clientY); });
-    window.addEventListener('mouseup',   e=>{ if(dragging) onEnd(e.clientX); });
-    el.addEventListener('click', ()=>{ if(!moved) flipFlashcard(); });
+    window._swipeMoveHandler = e=>{ if(dragging) onMove(e.clientX,e.clientY); };
+    window._swipeUpHandler   = e=>{ if(dragging) onEnd(e.clientX); };
+    window.addEventListener('mousemove', window._swipeMoveHandler);
+    window.addEventListener('mouseup',   window._swipeUpHandler);
+    el.addEventListener('click', ()=>{ if(!moved && !_swipeLocked) flipFlashcard(); });
 }
 
 // =====================================================================
@@ -2205,21 +2150,25 @@ async function launchPresenter() {
     const ptsQ  = parseInt(document.getElementById('pres-pts-q').value)  || 100;
     let   timeQ = parseInt(document.getElementById('pres-time-q').value) || 20;
     const neg   = parseInt(document.getElementById('pres-neg').value)    || 0;
-    const showQ = document.getElementById('pres-show-q').checked;
+    const showQ       = document.getElementById('pres-show-q').checked;
+    const inverseMode = document.getElementById('pres-inverse-mode')?.checked || false;
 
     // Build questions with double-point flags
     const doubleRates = { none:0, few:.05, normal:.125, many:.3 };
     const rate = doubleRates[presDoubleMode] || 0;
     const allCards = C.cards.map((_,i)=>i).sort(()=>Math.random()-.5).slice(0,Math.min(nbQ,C.cards.length));
-    presQuestions = allCards.map(idx => ({
-        term: C.cards[idx].term,
-        def:  cleanText(C.cards[idx].def),
-        isDouble: Math.random() < rate
-    }));
+    presQuestions = allCards.map(idx => {
+        const card = C.cards[idx];
+        return {
+            term: inverseMode ? cleanText(card.def) : card.term,
+            def:  inverseMode ? card.term : cleanText(card.def),
+            isDouble: Math.random() < rate
+        };
+    });
 
     const noTimer = document.getElementById('pres-notimer-toggle')?.classList.contains('active') || false;
     if (noTimer) timeQ = 0;  // 0 = pas de timer
-    presSettings = { teams: presTeams, nbQ, ptsQ, timeQ, neg, showQ, doubleMode: presDoubleMode, noTimer };
+    presSettings = { teams: presTeams, nbQ, ptsQ, timeQ, neg, showQ, inverseMode, doubleMode: presDoubleMode, noTimer };
 
     // Utiliser le code pré-généré (affiché sur la page de setup)
     if (!presRoomCode) presRoomCode = generateRoomCode();
@@ -2364,7 +2313,43 @@ function endPresenter() {
     activeSession = false;
     if (fbDb) fbDb.collection('rooms').doc(presRoomCode).update({ phase: 'end' }).catch(()=>{});
     if (presUnsubRoom) { presUnsubRoom(); presUnsubRoom = null; }
-    exitToHome();
+    // Afficher podium final avant de quitter
+    showPresPodium();
+}
+
+function showPresPodium() {
+    const sorted = [...presTeams].sort((a,b)=>b.score-a.score);
+    const ranks  = denseRanks(sorted.map(t=>t.score));
+    const medals = ['🥇','🥈','🥉'];
+    // Réutiliser l'écran podium multi si disponible, sinon créer une alerte stylée
+    const podiumBars = document.getElementById('podium-bars');
+    const podiumList = document.getElementById('podium-list');
+    if (podiumBars && podiumList) {
+        const topN=sorted.slice(0,Math.min(3,sorted.length));
+        const heights=[192,140,100], orders=['order-2','order-1','order-3'];
+        podiumBars.innerHTML=topN.map((t,i)=>`
+            <div class="flex flex-col items-center ${orders[i]} fade-up" style="animation-delay:${i*150}ms">
+                ${i===0?'<span class="text-3xl mb-1">👑</span>':''}
+                <div class="w-20 rounded-t-2xl flex flex-col items-center justify-end pb-3 border-t-4"
+                     style="height:${heights[i]}px;background:rgba(255,255,255,.05);border-color:${t.color}">
+                    <span class="font-black text-white text-sm">${t.score}</span>
+                    <span style="color:${t.color}" class="font-black text-[9px] uppercase">${['1er','2ème','3ème'][i]||''}</span>
+                </div>
+                <span class="text-[10px] font-bold text-slate-500 mt-2 uppercase text-center max-w-[80px] truncate">${t.name}</span>
+            </div>`).join('');
+        podiumList.innerHTML=sorted.map((t,i)=>`
+            <div class="flex items-center justify-between bg-slate-900 p-4 rounded-2xl border border-slate-800 fade-up" style="animation-delay:${i*80}ms">
+                <div class="flex items-center gap-3">
+                    <span class="font-black text-slate-600 w-5 text-sm">#${ranks[i]}</span>
+                    <div class="w-3 h-3 rounded-full" style="background:${t.color}"></div>
+                    <span class="font-bold text-white">${t.name}</span>
+                </div>
+                <span class="font-black ${t.score<0?'text-rose-400':'text-violet-400'}">${t.score} pts</span>
+            </div>`).join('');
+        showScreen('screen-podium');
+    } else {
+        exitToHome();
+    }
 }
 
 function confirmQuitPresenter() {
