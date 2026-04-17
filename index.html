@@ -573,8 +573,17 @@ async function loadLeaderboard() {
         const totalEl = document.getElementById('lb-total-users');
         if (totalEl) { totalEl.textContent = rows.length + ' joueurs'; totalEl.classList.remove('hidden'); }
 
+        // Dense ranking : même score = même position (ordre d'arrivée préservé pour les ex-aequo)
+        const lbRanks = [];
+        let dRank = 1;
+        for (let i = 0; i < rows.length; i++) {
+            if (i > 0 && rows[i].avg !== rows[i-1].avg) dRank++;
+            lbRanks.push(dRank);
+        }
+
         list.innerHTML = rows.map((r, i) => {
-            const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`<span class="text-slate-600 font-black text-xs w-6 text-center">#${i+1}</span>`;
+            const rank = lbRanks[i];
+            const medal = rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':`<span class="text-slate-600 font-black text-xs w-6 text-center">#${rank}</span>`;
             const barColor = r.avg>=80?'#10b981':r.avg>=40?'#f97316':'#7c3aed';
             const avatar = r.photo
                 ? `<img src="${r.photo}" class="w-8 h-8 rounded-full object-cover flex-shrink-0" referrerpolicy="no-referrer">`
@@ -613,7 +622,11 @@ let _adminAllUsers = [];
 let _adminShowAnon = false;
 
 function showAdminPanel() {
-    if (!hubUser || hubUser.email !== 'zaogirardot@gmail.com') return;
+    const email = hubUser?.email || fbAuth?.currentUser?.email;
+    if (email !== 'zaogirardot@gmail.com') {
+        console.warn('Admin refusé. Email détecté :', email);
+        return;
+    }
     document.getElementById('admin-modal').classList.remove('hidden');
     loadAdminData();
 }
