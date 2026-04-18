@@ -1236,10 +1236,13 @@ function setP(idx, correct, mode = 'flash') {
     p.pct = Math.min(100, Math.max(0, currentPct + gain - loss));
     progress[idx] = p;
     saveProgress();
-    // Track errors in Firestore
-    if (!correct && useFirebase && currentUser && fbDb) {
+    // Track correct/wrong counts in Firestore
+    if (useFirebase && currentUser && fbDb) {
         fbDb.collection('users').doc(currentUser.uid).set(
-            { totalErrors: firebase.firestore.FieldValue.increment(1) }, { merge: true }
+            correct
+                ? { totalCorrect: firebase.firestore.FieldValue.increment(1) }
+                : { totalErrors:  firebase.firestore.FieldValue.increment(1) },
+            { merge: true }
         ).catch(() => {});
     }
 }
@@ -1465,10 +1468,16 @@ async function updateStreak(uid) {
         const lastDate = data.lastLoginDate || '';
         const yesterday = new Date(Date.now() - 86400000).toDateString();
         let streak = data.streak || 0;
-        if (lastDate === today) { /* already counted */ }
+        const isNewDay = lastDate !== today;
+        if (!isNewDay) { /* already counted today */ }
         else if (lastDate === yesterday) { streak++; }
         else { streak = 1; }
-        await ref.set({ streak, lastLoginDate: today, studyMinutes: data.studyMinutes || 0 }, { merge: true });
+        const updates = { streak, lastLoginDate: today, studyMinutes: data.studyMinutes || 0 };
+        // Première connexion jamais
+        if (!data.firstLoginDate) updates.firstLoginDate = today;
+        // Incrémenter le nombre de jours d'utilisation (un seul incrément par jour)
+        if (isNewDay) updates.loginDays = firebase.firestore.FieldValue.increment(1);
+        await ref.set(updates, { merge: true });
         return streak;
     } catch(e) { return 0; }
 }
@@ -1727,6 +1736,12 @@ function endFlashcards() {
     const xpBonus = rate >= 0.8 ? 20 : rate >= 0.5 ? 5 : 0;
     if (xpBase + xpBonus > 0) awardXP(xpBase + xpBonus, '🃏');
 
+    // Tracking session terminée
+    if (useFirebase && currentUser && fbDb && (fcSessionCorrect + fcSessionWrong) > 0) {
+        fbDb.collection('users').doc(currentUser.uid).set(
+            { flashcardsCompleted: firebase.firestore.FieldValue.increment(1) }, { merge: true }
+        ).catch(() => {});
+    }
     updateHome();
     showScreen('screen-fc-end');
 }
@@ -1765,7 +1780,8 @@ function initSwipe() {
         else { el.classList.add('snapping'); el.style.transform=''; el.classList.remove('glow-green','glow-red'); setTimeout(()=>el.classList.remove('snapping'),350); }
     };
     el.addEventListener('touchstart',e=>onStart(e.touches[0].clientX,e.touches[0].clientY),{passive:true});
-    el.addEventListener('touchmove', e=>{ onMove(e.touches[0].clientX,e.touches[0].clientY); if(moved)e.preventDefault(); },{passive:false});
+    // passive:true — ne pas appeler preventDefault() pour éviter la vibration haptique iOS
+    el.addEventListener('touchmove', e=>{ onMove(e.touches[0].clientX,e.touches[0].clientY); },{passive:true});
     el.addEventListener('touchend',  e=>onEnd(e.changedTouches[0].clientX));
     el.addEventListener('mousedown', e=>{ onStart(e.clientX,e.clientY); });
     window._swipeMoveHandler = e=>{ if(dragging) onMove(e.clientX,e.clientY); };
@@ -1857,6 +1873,12 @@ function endQuiz() {
     const xpQuiz = rate >= 0.8 ? 50 : rate >= 0.6 ? 30 : rate >= 0.4 ? 15 : 5;
     awardXP(xpQuiz, '📝');
 
+    // Tracking session terminée
+    if (useFirebase && currentUser && fbDb) {
+        fbDb.collection('users').doc(currentUser.uid).set(
+            { quizCompleted: firebase.firestore.FieldValue.increment(1) }, { merge: true }
+        ).catch(() => {});
+    }
     updateHome(); showScreen('screen-quiz-end');
 }
 
@@ -2099,8 +2121,15 @@ function adjustScore(origIdx, delta) { teams[origIdx].score += delta; showMultiS
 
 function nextMultiRound() {
     multiRound++; multiTeamIdx=(multiTeamIdx+1)%teams.length;
-    if(multiRound>=multiPool.length) showPodium();
-    else { showScreen('screen-multi-game'); showMultiQuestion(); }
+    if (multiRound >= multiPool.length) {
+        // Tracking partie Équipes terminée
+        if (useFirebase && currentUser && fbDb) {
+            fbDb.collection('users').doc(currentUser.uid).set(
+                { multiCompleted: firebase.firestore.FieldValue.increment(1) }, { merge: true }
+            ).catch(() => {});
+        }
+        showPodium();
+    } else { showScreen('screen-multi-game'); showMultiQuestion(); }
 }
 
 function showPodium() {
@@ -2393,6 +2422,12 @@ function endPresenter() {
     activeSession = false;
     if (fbDb) fbDb.collection('rooms').doc(presRoomCode).update({ phase: 'end' }).catch(()=>{});
     if (presUnsubRoom) { presUnsubRoom(); presUnsubRoom = null; }
+    // Tracking partie Présentateur terminée
+    if (useFirebase && currentUser && fbDb) {
+        fbDb.collection('users').doc(currentUser.uid).set(
+            { presCompleted: firebase.firestore.FieldValue.increment(1) }, { merge: true }
+        ).catch(() => {});
+    }
     // Afficher podium final avant de quitter
     showPresPodium();
 }
@@ -2793,6 +2828,15 @@ function showKahootFinalPodium() {
 
         fbDb.collection('rooms').doc(kahootRoom).update({ status: 'finished' });
         if (kahootListener) { kahootListener(); kahootListener = null; }
+
+        // Tracking partie Kahoot hébergée terminée
+        const uniquePlayerCount = Object.keys(players).length;
+        if (useFirebase && currentUser && fbDb) {
+            fbDb.collection('users').doc(currentUser.uid).set({
+                kahootHosted: firebase.firestore.FieldValue.increment(1),
+                kahootHostedPlayers: firebase.firestore.FieldValue.increment(uniquePlayerCount)
+            }, { merge: true }).catch(() => {});
+        }
 
         teams = sorted.map((p,i) => ({
             name: p.name,
