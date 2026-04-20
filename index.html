@@ -79,6 +79,9 @@
                                 🧡 Débloquer Premium (Tipeee)
                             </a>
                         </div>
+                        <button onclick="closeUserMenu();showSettingsModal()" class="w-full text-left px-3 py-2.5 text-slate-400 font-bold text-xs rounded-xl hover:bg-slate-800 transition-colors mb-0.5">
+                            ⚙️ Paramètres
+                        </button>
                         <button id="hub-admin-btn" onclick="closeUserMenu();showAdminPanel()" class="hidden w-full text-left px-3 py-2.5 text-violet-400 font-bold text-xs rounded-xl hover:bg-violet-500/10 transition-colors mb-0.5">
                             🛡️ Panel Admin
                         </button>
@@ -184,6 +187,9 @@
                 <button id="adm-tab-users" onclick="switchAdminTab('users')" class="flex-1 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all bg-slate-800 text-white">
                     👥 Utilisateurs
                 </button>
+                <button id="adm-tab-reports" onclick="switchAdminTab('reports')" class="flex-1 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all text-slate-600 hover:text-slate-400">
+                    ⚠️ Signalements
+                </button>
                 <button id="adm-tab-suggestions" onclick="switchAdminTab('suggestions')" class="flex-1 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all text-slate-600 hover:text-slate-400">
                     💡 Suggestions
                 </button>
@@ -216,6 +222,19 @@
                 </div>
             </div>
 
+            <!-- Pane: Reports -->
+            <div id="adm-pane-reports" class="hidden flex-col flex-grow min-h-0">
+                <div class="flex items-center justify-between mb-3 flex-shrink-0">
+                    <p class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Erreurs signalées par les utilisateurs</p>
+                    <button onclick="loadReports()" class="flex-shrink-0 px-3 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-[10px] font-black text-violet-500 uppercase tracking-wide hover:border-violet-500/40 transition-all">
+                        ↺ Recharger
+                    </button>
+                </div>
+                <div id="admin-reports-list" class="flex-grow overflow-y-auto space-y-2 pr-1">
+                    <p class="text-slate-700 text-sm text-center py-8 font-bold">Cliquer sur l'onglet pour charger</p>
+                </div>
+            </div>
+
             <!-- Pane: Suggestions -->
             <div id="adm-pane-suggestions" class="hidden flex-col flex-grow min-h-0">
                 <div class="flex items-center justify-between mb-3 flex-shrink-0">
@@ -227,6 +246,60 @@
                 <div id="admin-suggestions-list" class="flex-grow overflow-y-auto space-y-2 pr-1">
                     <p class="text-slate-700 text-sm text-center py-8 font-bold">Cliquer sur l'onglet pour charger</p>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== SETTINGS MODAL ===== -->
+    <div id="settings-modal" class="hidden fixed inset-0 z-50 flex items-end justify-center" style="background:rgba(2,6,23,.85);backdrop-filter:blur(6px)">
+        <div class="w-full bg-slate-900 border-t border-slate-800 rounded-t-3xl p-6 fade-up" style="max-width:520px;max-height:90dvh;overflow-y:auto">
+            <div class="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-5"></div>
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-base font-black text-white uppercase tracking-widest">⚙️ Paramètres</h3>
+                <button onclick="closeSettingsModal()" class="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-800 text-slate-400 hover:text-white font-black transition-all">✕</button>
+            </div>
+
+            <!-- Pseudo -->
+            <div class="mb-5">
+                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Pseudo affiché</p>
+                <div class="flex gap-2">
+                    <input id="settings-pseudo" type="text" maxlength="30" placeholder="Ton prénom ou pseudo..."
+                        class="flex-grow bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm font-medium placeholder-slate-600 outline-none focus:border-violet-500 transition-colors">
+                    <button onclick="savePseudo()" class="px-4 py-2.5 bg-violet-700 hover:bg-violet-600 text-white rounded-xl font-black text-xs uppercase active:scale-95 transition-all">Sauver</button>
+                </div>
+                <p class="text-[9px] text-slate-700 mt-1.5 font-medium">Apparaît dans le classement et les parties multijoueur</p>
+            </div>
+
+            <!-- Photo de profil -->
+            <div class="mb-5 pb-5 border-b border-slate-800">
+                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Photo de profil</p>
+                <label class="flex items-center justify-between cursor-pointer">
+                    <div>
+                        <span class="text-sm font-bold text-white">Afficher ma photo</span>
+                        <p class="text-[10px] text-slate-600 font-medium">Dans le classement et les parties</p>
+                    </div>
+                    <input id="settings-show-pfp" type="checkbox" checked class="w-5 h-5 accent-violet-500 cursor-pointer"
+                        onchange="saveShowPfp(this.checked)">
+                </label>
+            </div>
+
+            <!-- Nombre de flashcards -->
+            <div class="mb-5 pb-5 border-b border-slate-800">
+                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Cartes par session Flashcards</p>
+                <div class="grid grid-cols-4 gap-2">
+                    ${[10,15,20,25,30,35,40].map(n => `<button onclick="setFcCount(${n})" id="fc-count-btn-${n}"
+                        class="py-2 rounded-xl font-black text-xs border transition-all fc-count-btn ${n===20?'bg-violet-700 border-violet-600 text-white':'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'}">${n}</button>`).join('')}
+                </div>
+                <p class="text-[9px] text-slate-700 mt-1.5 font-medium">Les signets sont toujours inclus en priorité</p>
+            </div>
+
+            <!-- Supprimer le compte -->
+            <div>
+                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Zone dangereuse</p>
+                <button onclick="deleteAccount()" class="w-full py-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-2xl font-black text-xs uppercase hover:bg-rose-500/20 active:scale-95 transition-all">
+                    🗑 Supprimer mon compte
+                </button>
+                <p class="text-[9px] text-slate-700 mt-1.5 font-medium text-center">Supprime définitivement ton compte et toutes tes données</p>
             </div>
         </div>
     </div>
@@ -316,6 +389,7 @@ async function hubLogout() {
     if (fbAuth) await fbAuth.signOut();
     hubUser = null;
     showLoggedOut();
+    window._allProgress = {};
     renderGrid(window._courses, {});
 }
 
@@ -496,7 +570,6 @@ function renderGrid(courses, allProgress) {
                 </div>
 
                 <h3 class="text-lg font-extrabold text-white leading-snug">${c.title}</h3>
-                <p class="text-slate-600 text-[11px] font-medium mt-0.5">Flashcards · Quiz QCM · Mode Multi</p>
                 ${statusLine}
 
                 <div class="mt-auto pt-5 flex items-center text-violet-400 text-[10px] font-black uppercase tracking-[0.2em]">
@@ -512,6 +585,46 @@ function renderGrid(courses, allProgress) {
             </div>
         </a>`;
     }).join('');
+
+    // Add local courses
+    const localCourses = getLocalCourses();
+    if (localCourses.length > 0) {
+        grid.innerHTML += localCourses.map(lc => `
+        <div class="glass-card rounded-[2.5rem] flex flex-col overflow-hidden group relative">
+            <button onclick="deleteLocalCourse('${lc.id}')" class="absolute top-3 right-3 z-10 w-6 h-6 flex items-center justify-center rounded-full bg-slate-800 text-slate-500 hover:text-rose-400 text-xs font-black transition-colors" title="Supprimer">✕</button>
+            <a href="${BASE_URL}/app/?course=${lc.id}" class="p-6 flex flex-col flex-grow">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="w-11 h-11 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-all flex-shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                    </div>
+                    <span class="text-[9px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded-lg">Local</span>
+                </div>
+                <h3 class="text-lg font-extrabold text-white leading-snug">${lc.title}</h3>
+                <p class="text-[10px] text-slate-600 font-bold mt-2">${lc.cardCount} cartes · cours importé</p>
+                <div class="mt-auto pt-5 flex items-center text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em]">
+                    Lancer <svg class="w-3.5 h-3.5 ml-2 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                </div>
+            </a>
+            <div class="w-full h-2 bg-slate-800 flex-shrink-0"><div class="h-full bg-emerald-500/40" style="width:100%"></div></div>
+        </div>`).join('');
+    }
+
+    // Drop zone card
+    grid.innerHTML += `
+    <div id="drop-zone-card" class="glass-card rounded-[2.5rem] flex flex-col overflow-hidden border-dashed border-2 border-slate-700 hover:border-violet-500 transition-colors cursor-pointer min-h-[200px]"
+         onclick="document.getElementById('local-file-input').click()"
+         ondragover="event.preventDefault();this.classList.add('border-violet-500','bg-violet-500/5')"
+         ondragleave="this.classList.remove('border-violet-500','bg-violet-500/5')"
+         ondrop="event.preventDefault();this.classList.remove('border-violet-500','bg-violet-500/5');handleCourseFileDrop(event.dataTransfer.files[0])">
+        <div class="p-6 flex flex-col flex-grow items-center justify-center text-center gap-3">
+            <div class="w-11 h-11 bg-slate-800 rounded-2xl flex items-center justify-center text-slate-500 text-xl">+</div>
+            <div>
+                <p class="text-sm font-black text-slate-500 uppercase tracking-widest">Importer un cours</p>
+                <p class="text-[10px] text-slate-700 font-medium mt-1">Glisse un fichier .txt ou clique</p>
+            </div>
+        </div>
+    </div>
+    <input id="local-file-input" type="file" accept=".txt" class="hidden" onchange="handleCourseFileDrop(this.files[0])">`;
 
     document.getElementById('loader').classList.add('hidden');
     document.getElementById('grid-label').classList.remove('hidden');
@@ -573,13 +686,19 @@ async function init() {
                 showLoggedOut();
             }
             const allProgress = await loadAllProgress(courses);
+            window._allProgress = allProgress;
             renderGrid(courses, allProgress);
+            // Sync leaderboard scores on login
+            if (user && useFirebase && fbDb) {
+                syncLeaderboardOnLogin(user, courses, allProgress);
+            }
         });
     } else {
         // Pas de Firebase — affichage local direct
         document.getElementById('user-loading').classList.add('hidden');
         const allProgress = {};
         for (const c of courses) allProgress[c.id] = getLocalProgress(c.id);
+        window._allProgress = allProgress;
         renderGrid(courses, allProgress);
     }
 }
@@ -601,6 +720,27 @@ async function toggleLeaderboard() {
     if (lbVisible) await loadLeaderboard();
 }
 
+async function syncLeaderboardOnLogin(user, courses, allProgress) {
+    try {
+        const scores = {};
+        for (const c of courses) {
+            const prog = allProgress[c.id] || {};
+            const total = getLocalTotal(c.id);
+            if (total > 0) {
+                const mastery = getMasteryFromProgress(prog, total);
+                if (mastery.pct > 0) scores[c.id] = mastery.pct;
+            }
+        }
+        if (Object.keys(scores).length === 0) return;
+        await fbDb.collection('leaderboard').doc(user.uid).set({
+            name: user.displayName || user.email?.split('@')[0] || 'Anonyme',
+            photoURL: user.photoURL || null,
+            scores,
+            updatedAt: Date.now()
+        }, { merge: true });
+    } catch(e) { console.warn('Leaderboard sync error:', e); }
+}
+
 async function loadLeaderboard() {
     const list = document.getElementById('leaderboard-list');
     if (!fbDb || !hubUser) {
@@ -611,45 +751,69 @@ async function loadLeaderboard() {
         const snap = await fbDb.collection('leaderboard').limit(50).get();
         if (snap.empty) { list.innerHTML = `<p class="text-slate-600 text-xs text-center py-4">Aucun score enregistré.</p>`; return; }
 
-        const rows = snap.docs.map(d => {
+        const meUid = hubUser?.uid || null;
+        const allRows = snap.docs.map(d => {
             const data = d.data();
             const scores = data.scores || {};
             const vals = Object.values(scores);
-            const avg = vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length) : 0;
-            return { name: data.name || 'Anonyme', photo: data.photoURL, avg, courses: vals.length };
-        }).filter(r => r.courses > 0).sort((a,b) => b.avg - a.avg).slice(0, 30);
+            const total = vals.reduce((a,b)=>a+b,0);
+            return { uid: d.id, name: data.name || 'Anonyme', photo: data.photoURL, total, courses: vals.length };
+        }).filter(r => r.courses > 0).sort((a,b) => b.total - a.total);
 
         const totalEl = document.getElementById('lb-total-users');
-        if (totalEl) { totalEl.textContent = rows.length + ' joueurs'; totalEl.classList.remove('hidden'); }
+        if (totalEl) { totalEl.textContent = allRows.length + ' joueurs'; totalEl.classList.remove('hidden'); }
 
-        // Dense ranking : même score = même position (ordre d'arrivée préservé pour les ex-aequo)
-        const lbRanks = [];
+        // Dense ranking
+        const allRanks = [];
         let dRank = 1;
-        for (let i = 0; i < rows.length; i++) {
-            if (i > 0 && rows[i].avg !== rows[i-1].avg) dRank++;
-            lbRanks.push(dRank);
+        for (let i = 0; i < allRows.length; i++) {
+            if (i > 0 && allRows[i].total !== allRows[i-1].total) dRank++;
+            allRanks.push(dRank);
         }
 
-        list.innerHTML = rows.map((r, i) => {
-            const rank = lbRanks[i];
+        // Determine which rows to show
+        const meIdx = meUid ? allRows.findIndex(r => r.uid === meUid) : -1;
+        let displayIndices = [];
+        if (meIdx === -1 || meIdx < 10) {
+            // Just show top 10
+            for (let i = 0; i < Math.min(10, allRows.length); i++) displayIndices.push(i);
+        } else {
+            // Top 5 + ellipsis + 2 above + me + 2 below
+            for (let i = 0; i < Math.min(5, allRows.length); i++) displayIndices.push(i);
+            displayIndices.push(-1); // ellipsis
+            for (let i = Math.max(5, meIdx - 2); i <= Math.min(allRows.length - 1, meIdx + 2); i++) {
+                displayIndices.push(i);
+            }
+        }
+
+        function rowHtml(r, i, isMe) {
+            const rank = allRanks[i];
             const medal = rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':`<span class="text-slate-600 font-black text-xs w-6 text-center">#${rank}</span>`;
-            const barColor = r.avg>=80?'#10b981':r.avg>=40?'#f97316':'#7c3aed';
+            const barColor = r.total>=500?'#10b981':r.total>=150?'#f97316':'#7c3aed';
+            const maxBar = allRows[0]?.total || 1;
+            const barW = Math.round(r.total / maxBar * 100);
             const avatar = r.photo
                 ? `<img src="${r.photo}" class="w-8 h-8 rounded-full object-cover flex-shrink-0" referrerpolicy="no-referrer">`
                 : `<div class="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0 text-violet-400 font-black text-xs">${(r.name[0]||'?').toUpperCase()}</div>`;
-            return `<div class="flex items-center gap-3 bg-slate-900/60 border border-slate-800 rounded-2xl px-4 py-3">
+            const highlight = isMe ? ' border-violet-500/60 bg-violet-500/10' : ' border-slate-800';
+            return `<div class="flex items-center gap-3 bg-slate-900/60 border rounded-2xl px-4 py-3${highlight}">
                 <span class="text-lg w-7 text-center flex-shrink-0">${medal}</span>
                 ${avatar}
                 <div class="flex-grow min-w-0">
                     <div class="flex items-center justify-between mb-1">
-                        <p class="font-bold text-white text-sm truncate">${r.name}</p>
-                        <span class="font-black text-sm ml-2 flex-shrink-0" style="color:${barColor}">${r.avg} pts</span>
+                        <p class="font-bold text-sm truncate ${isMe?'text-violet-300':'text-white'}">${r.name}${isMe?' (toi)':''}</p>
+                        <span class="font-black text-sm ml-2 flex-shrink-0" style="color:${barColor}">${r.total} pts</span>
                     </div>
                     <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                        <div class="h-full rounded-full transition-all" style="width:${r.avg}%;background:${barColor}"></div>
+                        <div class="h-full rounded-full transition-all" style="width:${barW}%;background:${barColor}"></div>
                     </div>
                 </div>
             </div>`;
+        }
+
+        list.innerHTML = displayIndices.map(i => {
+            if (i === -1) return `<div class="text-center text-slate-600 font-black text-sm py-1">· · ·</div>`;
+            return rowHtml(allRows[i], i, allRows[i].uid === meUid);
         }).join('');
     } catch(e) {
         list.innerHTML = `<p class="text-rose-400 text-xs text-center py-4 font-bold">Erreur chargement. Règles Firestore à mettre à jour.</p>`;
@@ -879,31 +1043,16 @@ let _adminActiveTab = 'users';
 
 function switchAdminTab(tab) {
     _adminActiveTab = tab;
-    const tabUsers = document.getElementById('adm-tab-users');
-    const tabSugg  = document.getElementById('adm-tab-suggestions');
-    const paneUsers = document.getElementById('adm-pane-users');
-    const paneSugg  = document.getElementById('adm-pane-suggestions');
-
-    if (tab === 'users') {
-        tabUsers?.classList.add('bg-slate-800', 'text-white');
-        tabUsers?.classList.remove('text-slate-600');
-        tabSugg?.classList.remove('bg-slate-800', 'text-white');
-        tabSugg?.classList.add('text-slate-600');
-        paneUsers?.classList.remove('hidden');
-        paneUsers?.classList.add('flex');
-        paneSugg?.classList.add('hidden');
-        paneSugg?.classList.remove('flex');
-    } else {
-        tabSugg?.classList.add('bg-slate-800', 'text-white');
-        tabSugg?.classList.remove('text-slate-600');
-        tabUsers?.classList.remove('bg-slate-800', 'text-white');
-        tabUsers?.classList.add('text-slate-600');
-        paneSugg?.classList.remove('hidden');
-        paneSugg?.classList.add('flex');
-        paneUsers?.classList.add('hidden');
-        paneUsers?.classList.remove('flex');
-        loadSuggestions();
-    }
+    const allTabs = ['users','reports','suggestions'];
+    allTabs.forEach(t => {
+        const btn  = document.getElementById(`adm-tab-${t}`);
+        const pane = document.getElementById(`adm-pane-${t}`);
+        const active = t === tab;
+        if (btn)  { btn.className  = btn.className.replace(/bg-slate-800|text-white|text-slate-600/g,'').trim() + (active ? ' bg-slate-800 text-white' : ' text-slate-600'); }
+        if (pane) { pane.classList.toggle('hidden', !active); pane.classList.toggle('flex', active); }
+    });
+    if (tab === 'suggestions') loadSuggestions();
+    if (tab === 'reports')     loadReports();
 }
 
 async function loadSuggestions() {
@@ -1078,6 +1227,189 @@ function statBox(label, value) {
         <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">${label}</p>
         <p class="text-sm font-black text-white">${value}</p>
     </div>`;
+}
+
+// =====================================================================
+// ADMIN TAB: REPORTS
+// =====================================================================
+async function loadReports() {
+    const listEl = document.getElementById('admin-reports-list');
+    if (!listEl) return;
+    listEl.innerHTML = `<div class="flex items-center justify-center py-12"><div class="w-6 h-6 border-t-2 border-violet-500 rounded-full animate-spin"></div></div>`;
+    if (!fbDb) { listEl.innerHTML = `<p class="text-rose-400 text-sm text-center py-8 font-bold">Firebase non disponible.</p>`; return; }
+    try {
+        const snap = await fbDb.collection('reports').orderBy('ts', 'desc').limit(100).get();
+        if (snap.empty) { listEl.innerHTML = `<p class="text-slate-600 text-sm text-center py-8 font-bold">Aucun signalement.</p>`; return; }
+        const typeLabel = { wrong_def: '❌ Mauvaise définition', wrong_term: '⚠️ Mauvais terme', duplicate: '🔁 Doublon' };
+        listEl.innerHTML = snap.docs.map(doc => {
+            const d = doc.data();
+            const date = d.ts ? new Date(d.ts).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '?';
+            const label = typeLabel[d.type] || d.type;
+            return `<div class="bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-3">
+                <div class="flex items-center justify-between gap-2 mb-2">
+                    <span class="text-[10px] font-black px-2 py-0.5 rounded-lg bg-rose-500/10 text-rose-400">${label}</span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[9px] text-violet-400 font-bold">${d.course?.replace(/_/g,' ')||'?'}</span>
+                        <span class="text-[9px] text-slate-600 font-bold">${date}</span>
+                    </div>
+                </div>
+                <p class="text-xs font-black text-white">${d.term || ''}</p>
+                <p class="text-[10px] text-slate-500 font-medium mt-0.5 italic">${d.def || ''}</p>
+                <div class="flex items-center justify-between mt-2">
+                    <span class="text-[9px] text-slate-700 font-medium">${d.reporter || 'anonyme'}</span>
+                    <button onclick="deleteReport('${doc.id}', this)" class="text-[9px] text-slate-700 hover:text-rose-400 font-bold uppercase tracking-widest transition-colors">🗑 Supprimer</button>
+                </div>
+            </div>`;
+        }).join('');
+    } catch(e) {
+        listEl.innerHTML = `<p class="text-rose-400 text-sm text-center py-8 font-bold">Erreur : ${e.message}</p>`;
+    }
+}
+
+async function deleteReport(docId, btn) {
+    if (!fbDb || !confirm('Supprimer ce signalement ?')) return;
+    try { await fbDb.collection('reports').doc(docId).delete(); btn?.closest('div[class*="rounded-2xl"]')?.remove(); }
+    catch(e) { alert('Erreur : ' + e.message); }
+}
+
+
+// =====================================================================
+// GLOBAL SETTINGS
+// =====================================================================
+function getHubSettings() {
+    try { return JSON.parse(localStorage.getItem('hub_settings') || '{}'); } catch { return {}; }
+}
+function saveHubSettings(updates) {
+    const s = { ...getHubSettings(), ...updates };
+    localStorage.setItem('hub_settings', JSON.stringify(s));
+    return s;
+}
+
+function showSettingsModal() {
+    const s = getHubSettings();
+    const modal = document.getElementById('settings-modal');
+    if (!modal) return;
+    // Populate current values
+    const pseudoInput = document.getElementById('settings-pseudo');
+    if (pseudoInput) pseudoInput.value = s.pseudo || hubUser?.displayName || '';
+    const pfpCheck = document.getElementById('settings-show-pfp');
+    if (pfpCheck) pfpCheck.checked = s.showPfp !== false;
+    // Flashcard count buttons
+    const fcCount = s.fcCount || 20;
+    document.querySelectorAll('.fc-count-btn').forEach(btn => {
+        const n = parseInt(btn.id.replace('fc-count-btn-',''));
+        btn.className = btn.className.replace(/bg-violet-700 border-violet-600 text-white|bg-slate-800 border-slate-700 text-slate-400/g, '').trim();
+        btn.classList.add(n === fcCount ? 'bg-violet-700' : 'bg-slate-800');
+        btn.classList.add(n === fcCount ? 'border-violet-600' : 'border-slate-700');
+        btn.classList.add(n === fcCount ? 'text-white' : 'text-slate-400');
+    });
+    modal.classList.remove('hidden');
+}
+function closeSettingsModal() {
+    document.getElementById('settings-modal')?.classList.add('hidden');
+}
+
+async function savePseudo() {
+    const val = (document.getElementById('settings-pseudo')?.value || '').trim();
+    if (!val) return;
+    saveHubSettings({ pseudo: val });
+    if (useFirebase && hubUser && fbDb) {
+        try {
+            await fbDb.collection('users').doc(hubUser.uid).set({ name: val }, { merge: true });
+            await fbDb.collection('leaderboard').doc(hubUser.uid).set({ name: val }, { merge: true });
+            // Update Auth display name
+            if (fbAuth?.currentUser) await fbAuth.currentUser.updateProfile({ displayName: val }).catch(()=>{});
+        } catch {}
+        // Refresh displayed name
+        document.getElementById('user-name').textContent = val;
+    }
+    // Visual feedback
+    const btn = document.querySelector('#settings-modal button[onclick="savePseudo()"]');
+    if (btn) { btn.textContent = '✓'; setTimeout(() => { btn.textContent = 'Sauver'; }, 1500); }
+}
+
+function saveShowPfp(show) {
+    saveHubSettings({ showPfp: show });
+    if (useFirebase && hubUser && fbDb) {
+        fbDb.collection('leaderboard').doc(hubUser.uid).set(
+            { hidePfp: !show }, { merge: true }
+        ).catch(() => {});
+    }
+}
+
+function setFcCount(n) {
+    saveHubSettings({ fcCount: n });
+    document.querySelectorAll('.fc-count-btn').forEach(btn => {
+        const num = parseInt(btn.id.replace('fc-count-btn-',''));
+        btn.className = btn.className
+            .replace(/bg-violet-700|bg-slate-800|border-violet-600|border-slate-700|border-slate-600|text-white|text-slate-400/g,'').trim()
+            + ` ${num === n ? 'bg-violet-700 border-violet-600 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'}`;
+    });
+}
+
+async function deleteAccount() {
+    if (!hubUser || !fbAuth?.currentUser) return;
+    if (!confirm('Supprimer DÉFINITIVEMENT ton compte et toutes tes données ? Cette action est irréversible.')) return;
+    if (!confirm('Dernière confirmation — es-tu sûr(e) ?')) return;
+    try {
+        const uid = hubUser.uid;
+        // Clean Firestore data
+        if (fbDb) {
+            await fbDb.collection('leaderboard').doc(uid).delete().catch(()=>{});
+            await fbDb.collection('users').doc(uid).delete().catch(()=>{});
+        }
+        // Delete Firebase Auth account
+        await fbAuth.currentUser.delete();
+        // Clear local storage
+        localStorage.clear();
+        location.reload();
+    } catch(e) {
+        alert('Erreur lors de la suppression : ' + e.message + '\n\nTu devras peut-être te reconnecter d\'abord.');
+    }
+}
+
+// =====================================================================
+// LOCAL COURSES (fichiers importés)
+// =====================================================================
+function getLocalCourses() {
+    try { return JSON.parse(localStorage.getItem('local_courses') || '[]'); } catch { return []; }
+}
+function saveLocalCourses(arr) { localStorage.setItem('local_courses', JSON.stringify(arr)); }
+
+function handleCourseFileDrop(file) {
+    if (!file) return;
+    if (!file.name.endsWith('.txt')) { alert('Seuls les fichiers .txt sont supportés.\n\nFormat : une ligne par carte\nterme | définition'); return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+        const content = e.target.result;
+        // Parse to count cards and extract title
+        const lines = content.split('\n').map(l => l.trim()).filter(Boolean);
+        let title = file.name.replace('.txt','').replace(/_/g,' ');
+        const cards = lines.filter(l => !l.startsWith('#') && l.includes('|'));
+        const titleLine = lines.find(l => l.startsWith('# ') && !l.startsWith('## '));
+        if (titleLine) title = titleLine.slice(2).trim();
+
+        if (cards.length === 0) { alert('Aucune carte trouvée.\n\nFormat attendu : terme | définition (une ligne par carte)'); return; }
+
+        const id = '_local_' + Date.now();
+        const existing = getLocalCourses();
+        existing.unshift({ id, title, cardCount: cards.length, addedAt: Date.now() });
+        saveLocalCourses(existing);
+        localStorage.setItem('local_course_content_' + id, content);
+
+        // Refresh grid
+        if (window._courses) renderGrid(window._courses, window._allProgress || {});
+        alert(`✅ Cours importé : "${title}" (${cards.length} cartes)\nDisponible dans la grille !`);
+    };
+    reader.readAsText(file, 'UTF-8');
+}
+
+function deleteLocalCourse(id) {
+    if (!confirm('Supprimer ce cours local ?')) return;
+    const existing = getLocalCourses().filter(c => c.id !== id);
+    saveLocalCourses(existing);
+    localStorage.removeItem('local_course_content_' + id);
+    if (window._courses) renderGrid(window._courses, window._allProgress || {});
 }
 </script>
 </body>
