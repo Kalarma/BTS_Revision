@@ -2,437 +2,949 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Écran Présentateur — BTS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Kahoot BTS — Rejoindre</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="../firebase-config.js" onerror="console.log('Firebase non configuré.')"></script>
+    <script src="../firebase-config.js" onerror="console.log('no firebase')"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap');
-        body { font-family:'Plus Jakarta Sans',sans-serif; background:#020617; color:#f8fafc; margin:0; overflow:hidden; }
-        @keyframes fadeIn  { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes popIn   { 0%{transform:scale(.85);opacity:0} 70%{transform:scale(1.03)} 100%{transform:scale(1);opacity:1} }
-        @keyframes pulse   { 0%,100%{opacity:1} 50%{opacity:.3} }
-        @keyframes scoreGrow { from{width:0} to{width:var(--w)} }
-        @keyframes scoreCount { from{opacity:0;transform:scale(.7)} to{opacity:1;transform:scale(1)} }
-        @keyframes timerPulse { 0%,100%{color:#f97316} 50%{color:#f43f5e} }
-        .fade-in { animation:fadeIn .5s ease forwards; }
-        .pop-in  { animation:popIn .4s cubic-bezier(.34,1.56,.64,1) forwards; }
-        .pulse   { animation:pulse 1.5s infinite; }
-        .screen  { display:none; position:fixed; inset:0; flex-direction:column; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        :root { --app-h: 100dvh; --c-primary:#7c3aed; --c-orange:#f97316; --c-green:#10b981; }
+        body { font-family:'Plus Jakarta Sans',sans-serif; background:#020617; height:var(--app-h); overflow:hidden; color:#f8fafc; margin:0; }
+        #app { height:var(--app-h); display:flex; flex-direction:column; }
+        .screen { display:none; flex:1; flex-direction:column; height:100%; overflow-y:auto; }
         .screen.active { display:flex; }
-        .score-bar-fill { animation:scoreGrow .8s cubic-bezier(.4,0,.2,1) forwards; }
-        .score-val { animation:scoreCount .4s cubic-bezier(.34,1.56,.64,1) forwards; }
-        .timer-urgent { animation:timerPulse .6s infinite; }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+        @keyframes rankBounce { 0%{transform:translateX(-8px);opacity:.5} 100%{transform:translateX(0);opacity:1} }
+        @keyframes timerPulse { 0%,100%{background:#7c3aed} 50%{background:#f43f5e} }
+        .fade-up { animation:fadeUp .35s ease forwards; }
+        .pulse { animation:pulse 1.5s infinite; }
+        .choice-btn:active { transform:scale(.95) !important; }
+        input:-webkit-autofill { -webkit-box-shadow:0 0 0 50px #0f172a inset!important; -webkit-text-fill-color:#fff!important; }
+        .timer-animate { transition:width linear; }
+        .color-btn { cursor:pointer; }
+        #screen-question { overflow:hidden; }
+        #q-choices { display:grid; }
     </style>
 </head>
 <body>
+<div id="app">
 
-<!-- ================ CONNEXION ================ -->
-<div id="screen-connect" class="screen active p-8 text-center">
-    <div class="fade-in" style="max-width:480px;width:100%">
-        <div class="text-6xl mb-6">🖥️</div>
-        <h1 class="text-4xl font-black text-white uppercase italic mb-2">Écran <span class="text-violet-400">Présentateur</span></h1>
-        <p class="text-slate-500 text-sm font-medium mb-10">Entre le code affiché sur le téléphone du présentateur</p>
-        <input id="pres-code" type="text" placeholder="00" maxlength="2" inputmode="numeric"
-               class="w-28 block mx-auto bg-slate-900 border-2 border-slate-700 rounded-2xl px-4 py-4 text-white font-black text-center text-4xl tracking-[0.5em] placeholder-slate-700 outline-none focus:border-violet-500 transition-colors mb-4"
-               oninput="this.value=this.value.replace(/\D/g,'').slice(0,2)" onkeydown="if(event.key==='Enter')connect()">
-        <button onclick="connect()" class="w-full max-w-xs mx-auto block py-4 bg-violet-700 hover:bg-violet-600 text-white font-black uppercase rounded-2xl active:scale-95 transition-all shadow-lg">
-            Connecter l'écran
-        </button>
-        <p id="connect-error" class="hidden mt-4 text-rose-400 text-sm font-bold"></p>
-    </div>
-</div>
-
-<!-- ================ ATTENTE ================ -->
-<div id="screen-wait" class="screen overflow-y-auto" style="position:relative">
-    <button onclick="if(confirm('Déconnecter cet écran ?')){location.reload()}" style="position:absolute;top:1rem;right:1rem;z-index:10" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-600 hover:text-white font-black text-sm transition-all">✕</button>
-    <div class="min-h-full flex flex-col items-center justify-center p-8 text-center">
-        <div class="fade-in w-full" style="max-width:700px">
-            <div class="text-7xl mb-6 pulse">⏳</div>
-            <h2 class="text-3xl font-black text-white uppercase">En attente du présentateur...</h2>
-            <p id="wait-course" class="text-slate-500 text-base mt-2 font-medium"></p>
-            <div id="wait-code" class="mt-6 bg-slate-900 border border-slate-800 rounded-3xl px-8 py-4 inline-block">
-                <p class="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Code salle</p>
-                <p class="text-5xl font-black text-white tracking-[0.3em]"></p>
-            </div>
-            <!-- Équipes en temps réel -->
-            <div id="wait-teams" class="mt-8 w-full grid grid-cols-2 gap-3" style="max-width:600px;margin-left:auto;margin-right:auto"></div>
-            <!-- Paramètres -->
-            <div id="wait-params" class="mt-5 flex flex-wrap items-center justify-center gap-3"></div>
+<!-- ============================================================ JOIN -->
+<div id="screen-join" class="screen active items-center justify-center p-6 relative">
+    <a href="../" class="absolute top-4 left-4 text-slate-700 hover:text-slate-400 transition-colors text-xs font-bold uppercase flex items-center gap-1">← Hub</a>
+    <div class="w-full max-w-sm fade-up">
+        <div class="text-center mb-8">
+            <div class="text-5xl mb-3">🎮</div>
+            <h1 class="text-3xl font-black text-white uppercase italic">Rejoindre <span class="text-violet-400">une partie</span></h1>
+            <p class="text-slate-600 text-[10px] font-bold uppercase tracking-widest mt-1">Saisis le code donné par ton prof · Kahoot ou Présentateur</p>
         </div>
-    </div>
-</div>
-
-<!-- ================ QUESTION ================ -->
-<div id="screen-question" class="screen" style="flex-direction:row">
-
-    <!-- COLONNE GAUCHE : Question principale -->
-    <div class="flex-grow flex flex-col p-10 min-w-0">
-        <!-- Top bar -->
-        <div class="flex items-center justify-between mb-4 flex-shrink-0">
-            <div class="flex items-center gap-3">
-                <div id="q-round-badge" class="bg-violet-700/80 backdrop-blur text-white font-black text-sm px-4 py-2 rounded-full"></div>
-                <span id="q-remaining-badge" class="text-slate-500 text-sm font-bold"></span>
+        <div class="space-y-3 mb-5">
+            <div class="flex justify-center">
+                <input id="join-code" type="text" placeholder="00" maxlength="2" inputmode="numeric"
+                       class="w-28 bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-white font-black text-center text-3xl tracking-[0.4em] placeholder-slate-700 outline-none focus:border-violet-500 transition-colors"
+                       oninput="this.value=this.value.replace(/\D/g,'').slice(0,2)">
             </div>
-            <div id="q-double-badge" class="hidden bg-orange-500 text-white font-black text-sm px-4 py-2 rounded-full animate-pulse">✦ Double points</div>
-            <!-- Timer -->
-            <div id="q-timer-box" class="flex items-center gap-3 bg-slate-900/80 border border-slate-800 rounded-2xl px-5 py-2.5">
-                <span id="q-timer-num" class="text-3xl font-black text-violet-400 tabular-nums w-14 text-center">—</span>
+            <input id="join-name" type="text" placeholder="Ton prénom" maxlength="20"
+                   class="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-white font-bold placeholder-slate-700 outline-none focus:border-violet-500 transition-colors">
+        </div>
+
+        <!-- Sélecteur de couleur — 4 couleurs -->
+        <div class="mb-5">
+            <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest text-center mb-3">Choisis ta couleur</p>
+            <div class="flex gap-4 justify-center">
+                <button onclick="selectColor('#7c3aed')" class="color-btn w-12 h-12 rounded-full border-2 active:scale-90 transition-all" style="background:#7c3aed;border-color:white;transform:scale(1.15)" data-color="#7c3aed"></button>
+                <button onclick="selectColor('#f43f5e')" class="color-btn w-12 h-12 rounded-full border-2 border-transparent active:scale-90 transition-all" style="background:#f43f5e" data-color="#f43f5e"></button>
+                <button onclick="selectColor('#10b981')" class="color-btn w-12 h-12 rounded-full border-2 border-transparent active:scale-90 transition-all" style="background:#10b981" data-color="#10b981"></button>
+                <button onclick="selectColor('#f97316')" class="color-btn w-12 h-12 rounded-full border-2 border-transparent active:scale-90 transition-all" style="background:#f97316" data-color="#f97316"></button>
             </div>
         </div>
-        <!-- Timer bar — simple, sans animation CSS pour éviter les bugs -->
-        <div id="q-timer-bar-wrap" class="h-1.5 bg-slate-800 rounded-full overflow-hidden mb-4 flex-shrink-0">
-            <div id="q-timer-bar" class="h-full bg-violet-500 w-full"></div>
-        </div>
-        <!-- Question card -->
-        <div id="q-card" class="flex-grow bg-slate-900/60 border-2 border-slate-800 rounded-[2.5rem] p-10 flex flex-col justify-center text-center fade-in" style="position:relative">
-            <p class="text-[11px] font-black text-slate-600 uppercase tracking-widest mb-6" id="q-label">Terme</p>
-            <!-- Quand showQ=false : afficher les équipes en grand -->
-            <div id="q-teams-overlay" class="hidden flex-col items-center justify-center gap-4"></div>
-            <h2 id="q-term" class="text-5xl font-black text-white leading-tight"></h2>
-            <!-- Answer (revealed by host) -->
-            <div id="q-answer-area" class="hidden mt-8 pt-8 border-t border-slate-800 fade-in">
-                <p class="text-[11px] font-black text-emerald-500 uppercase tracking-widest mb-4">✓ Réponse</p>
-                <p id="q-def" class="text-3xl font-bold text-emerald-400 leading-snug"></p>
-            </div>
-        </div>
-    </div>
 
-    <!-- COLONNE DROITE : Scores live + quit -->
-    <div id="q-scores-panel" class="flex-shrink-0 flex flex-col p-6 border-l border-slate-800/60" style="width:280px;background:rgba(15,23,42,.8)">
-        <div class="flex items-center justify-between mb-4">
-            <p class="text-[10px] font-black text-slate-600 uppercase tracking-widest">🏆 Scores</p>
-            <button onclick="if(confirm('Déconnecter cet écran ?')){location.reload()}" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 border border-slate-700 text-slate-500 hover:text-white font-black text-xs transition-all">✕</button>
+        <div id="join-error" class="hidden mb-3 px-4 py-2 bg-rose-500/10 border border-rose-500/20 rounded-xl">
+            <p class="text-rose-400 text-xs font-bold text-center"></p>
         </div>
-        <div id="q-teams-live" class="space-y-3 flex-grow"></div>
-    </div>
-</div>
-
-<!-- ================ SCORES ================ -->
-<div id="screen-scores" class="screen items-center justify-center p-12">
-    <div class="w-full fade-in" style="max-width:800px">
-        <div class="text-center mb-10">
-            <p class="text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">Classement intermédiaire</p>
-            <h2 class="text-5xl font-black text-white uppercase italic">🏆 Scores</h2>
-        </div>
-        <div id="sc-list" class="space-y-4"></div>
-    </div>
-</div>
-
-<!-- ================ FIN ================ -->
-<div id="screen-end" class="screen p-12 text-center">
-    <div class="fade-in" style="max-width:700px">
-        <div class="text-8xl mb-6">🏆</div>
-        <h2 class="text-5xl font-black text-white uppercase italic mb-2">Partie terminée !</h2>
-        <p class="text-slate-500 mb-10">Merci d'avoir joué</p>
-        <div id="end-podium" class="space-y-4 mb-8"></div>
-        <button onclick="location.reload()" class="px-8 py-4 bg-violet-700 text-white font-black uppercase rounded-2xl active:scale-95 transition-all">
-            Nouvelle partie
+        <button onclick="joinRoom()" class="w-full py-4 bg-violet-700 text-white font-black uppercase rounded-2xl active:scale-95 transition-all shadow-lg shadow-violet-500/20">
+            Rejoindre !
         </button>
     </div>
 </div>
 
+<!-- ============================================================ WAITING -->
+<div id="screen-waiting" class="screen items-center justify-center p-6 text-center">
+    <div class="fade-up">
+        <div class="text-6xl mb-6 pulse">⏳</div>
+        <h2 class="text-2xl font-black text-white uppercase">Connecté !</h2>
+        <p id="waiting-name" class="font-bold text-lg mt-1"></p>
+        <p class="text-slate-600 text-xs font-bold uppercase tracking-widest mt-4 pulse">En attente du professeur...</p>
+        <div class="mt-8 bg-slate-900 border border-slate-800 rounded-2xl px-6 py-4 inline-block">
+            <p class="text-[9px] text-slate-600 font-bold uppercase mb-1">Code de la salle</p>
+            <p id="waiting-code" class="text-white font-black text-2xl tracking-[0.3em]"></p>
+        </div>
+        <div class="mt-6 flex flex-col items-center gap-3">
+            <button onclick="location.reload()" class="text-violet-400 font-bold text-xs uppercase hover:text-violet-300 transition-colors">
+                ↺ Rafraîchir
+            </button>
+            <button onclick="confirmQuitPlayer()" class="text-slate-700 font-bold text-xs uppercase hover:text-rose-400 transition-colors">
+                Quitter la partie
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ QUESTION -->
+<div id="screen-question" class="screen flex-col" style="height:100dvh">
+    <!-- Header : quit + round + score -->
+    <div class="px-4 pt-4 pb-2 flex-shrink-0">
+        <div class="flex items-center justify-between mb-2">
+            <button onclick="confirmQuitPlayer()" class="text-slate-700 hover:text-rose-400 transition-colors text-xs font-bold uppercase">✕</button>
+            <span id="q-round" class="text-[10px] font-black text-slate-600 uppercase">Q 1/10</span>
+            <span id="q-score" class="text-sm font-black text-violet-400">0 pts</span>
+        </div>
+        <!-- Timer bar (masqué pendant le countdown) -->
+        <div id="q-timer-wrap" class="bg-slate-900 h-2 rounded-full overflow-hidden opacity-0 transition-opacity duration-300">
+            <div id="q-timer-bar" class="h-full w-full timer-animate" style="background:var(--c-primary)"></div>
+        </div>
+    </div>
+
+    <!-- Terme -->
+    <div class="px-4 pt-1 pb-2 flex-shrink-0">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-center">
+            <p id="q-term" class="text-white font-bold text-xl leading-snug"></p>
+        </div>
+    </div>
+
+    <!-- Zone centrale : countdown OU boutons -->
+    <div class="flex-grow relative px-4 pb-2 flex flex-col overflow-hidden">
+        <!-- OVERLAY COUNTDOWN (3-2-1) -->
+        <div id="q-countdown-overlay" class="absolute inset-0 flex flex-col items-center justify-center z-20 hidden" style="background:rgba(2,6,23,.85);border-radius:1.5rem;margin:.5rem">
+            <p class="text-[10px] font-black text-slate-500 uppercase tracking-[.2em] mb-4">Prépare-toi !</p>
+            <p id="q-countdown-num" class="font-black text-white" style="font-size:6.5rem;line-height:1;text-shadow:0 0 60px rgba(124,58,237,.8)">3</p>
+            <p id="q-term-preview" class="text-slate-400 font-bold text-sm mt-6 text-center px-4 leading-snug"></p>
+        </div>
+        <!-- BOUTONS A/B/C/D -->
+        <div id="q-choices" class="flex-grow grid grid-cols-2 gap-3">
+            <button class="choice-btn rounded-3xl flex items-center justify-center text-5xl font-black text-white transition-all" style="background:#e74c3c" onclick="selectAnswer(0)">A</button>
+            <button class="choice-btn rounded-3xl flex items-center justify-center text-5xl font-black text-white transition-all" style="background:#3498db" onclick="selectAnswer(1)">B</button>
+            <button class="choice-btn rounded-3xl flex items-center justify-center text-5xl font-black text-white transition-all" style="background:#f39c12" onclick="selectAnswer(2)">C</button>
+            <button class="choice-btn rounded-3xl flex items-center justify-center text-5xl font-black text-white transition-all" style="background:#27ae60" onclick="selectAnswer(3)">D</button>
+        </div>
+    </div>
+
+    <!-- Score fixe en bas -->
+    <div class="px-4 pb-5 flex-shrink-0">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl px-5 py-3 flex items-center justify-between">
+            <div>
+                <p class="text-[8px] font-black text-slate-700 uppercase tracking-widest">Mon score</p>
+                <p id="q-score-bottom" class="text-violet-400 font-black text-2xl leading-none mt-0.5">0 pts</p>
+            </div>
+            <div id="q-player-dot" class="w-9 h-9 rounded-full border-2 border-white/10 flex-shrink-0"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ SENT (réponse envoyée, pas encore révélée) -->
+<div id="screen-sent" class="screen items-center justify-center p-6 text-center">
+    <div class="fade-up w-full max-w-sm">
+        <div id="sent-color-badge" class="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl font-black text-white mx-auto mb-6">A</div>
+        <h2 class="text-2xl font-black text-white uppercase mb-2">Réponse envoyée !</h2>
+        <p class="text-slate-500 text-sm mb-8">En attente du résultat...</p>
+        <!-- Bouton bookmark -->
+        <button id="btn-bookmark-q" onclick="bookmarkCurrentQuestion()" class="mb-4 px-6 py-3 bg-slate-900 border border-slate-800 rounded-2xl text-slate-400 font-bold text-xs uppercase active:scale-95 transition-all hover:border-yellow-500 hover:text-yellow-400 w-full">
+            🔖 Enregistrer cette question
+        </button>
+        <!-- Bouton quitter -->
+        <button onclick="confirmQuitPlayer()" class="block w-full py-3 text-slate-700 font-bold text-xs uppercase hover:text-rose-400 transition-colors">
+            Quitter la partie
+        </button>
+    </div>
+</div>
+
+<!-- ============================================================ RESULT (après reveal du host) -->
+<div id="screen-result" class="screen items-center justify-center p-6 text-center relative">
+    <button onclick="confirmQuitPlayer()" class="absolute top-4 left-4 text-slate-700 hover:text-rose-400 transition-colors text-xs font-bold uppercase">✕ Quitter</button>
+    <div class="fade-up w-full max-w-xs">
+        <div id="result-big" class="text-8xl mb-4">✓</div>
+        <h2 id="result-title" class="text-3xl font-black uppercase mb-3 text-white">Correct !</h2>
+        <div id="result-points" class="text-6xl font-black text-violet-400 mb-1">+1000</div>
+        <p class="text-slate-500 text-sm font-bold mb-6">pts gagnés cette question</p>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-center">
+            <p class="text-[9px] font-black text-slate-600 uppercase mb-1">Score total</p>
+            <p id="result-total-score" class="text-white font-black text-3xl"></p>
+        </div>
+        <p class="text-slate-700 text-[10px] font-bold uppercase mt-6 pulse">Prochaine question bientôt...</p>
+    </div>
+</div>
+
+<!-- ============================================================ LEADERBOARD -->
+<div id="screen-leaderboard" class="screen p-6 relative">
+    <button onclick="confirmQuitPlayer()" class="absolute top-4 left-4 text-slate-700 hover:text-rose-400 transition-colors text-xs font-bold uppercase">✕ Quitter</button>
+    <div class="max-w-sm mx-auto w-full">
+        <h3 class="text-[10px] font-black text-slate-600 uppercase tracking-widest text-center mb-6">Classement</h3>
+        <div id="lb-list" class="space-y-2 mb-4"></div>
+        <p class="text-center text-slate-700 text-[10px] font-bold uppercase pulse">Prochaine question bientôt...</p>
+    </div>
+</div>
+
+<!-- ============================================================ FINAL -->
+<div id="screen-final" class="screen items-center justify-center p-6 text-center overflow-y-auto">
+    <div class="fade-up w-full max-w-sm">
+        <div id="final-emoji" class="text-6xl mb-4">🏆</div>
+        <h2 class="text-3xl font-black text-white uppercase italic mb-1">Fin de partie !</h2>
+        <p id="final-rank" class="text-violet-400 font-bold text-lg mb-6"></p>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 mb-4">
+            <p class="text-[9px] font-black text-slate-600 uppercase mb-1">Score final</p>
+            <p id="final-score" class="text-4xl font-black text-white"></p>
+        </div>
+        <!-- Bookmarks -->
+        <div id="final-bookmarks" class="hidden mb-4 text-left">
+            <p class="text-[9px] font-black text-yellow-400 uppercase mb-2">🔖 Questions enregistrées</p>
+            <div id="final-bm-list" class="space-y-1"></div>
+        </div>
+        <div id="final-leaderboard" class="space-y-2 mb-6"></div>
+        <button onclick="location.href='../'" class="w-full py-4 bg-slate-800 text-white font-black uppercase rounded-2xl active:scale-95 transition-all">
+            Retour au hub
+        </button>
+    </div>
+</div>
+
+<!-- ============================================================ PRESENTER VIEWER -->
+<div id="screen-pres-viewer" class="screen flex-col overflow-hidden" style="height:100dvh;position:relative">
+    <!-- Top bar -->
+    <div class="px-4 pt-4 pb-3 flex items-center justify-between flex-shrink-0">
+        <button onclick="confirmQuitPlayer()" class="text-slate-600 hover:text-rose-400 transition-colors text-xs font-bold uppercase">✕ Quitter</button>
+        <span id="pv-round" class="text-[10px] font-black text-slate-600 uppercase">Q 1/?</span>
+        <div class="flex items-center gap-1.5">
+            <div id="pv-dot" class="w-2 h-2 rounded-full bg-emerald-500"></div>
+            <span id="pv-course" class="text-[9px] font-black text-slate-600 uppercase tracking-widest">En direct</span>
+        </div>
+    </div>
+    <!-- Timer bar -->
+    <div class="px-4 pb-2 flex-shrink-0">
+        <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+            <div id="pv-timer-bar" class="h-full bg-violet-500 w-full" style="transition:width linear"></div>
+        </div>
+    </div>
+    <!-- Question -->
+    <div class="flex-grow flex flex-col px-4 pb-3 gap-3 min-h-0">
+        <div class="flex-grow bg-slate-900 border-2 border-slate-800 rounded-3xl p-5 flex flex-col justify-center text-center min-h-0">
+            <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-3">Question</p>
+            <h2 id="pv-term" class="text-xl font-black text-white leading-snug"></h2>
+            <div id="pv-answer-area" class="hidden mt-4 pt-4 border-t border-slate-800">
+                <p class="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-2">✓ Réponse</p>
+                <p id="pv-def" class="text-emerald-400 text-base font-bold leading-snug"></p>
+            </div>
+        </div>
+        <!-- Scores live -->
+        <div class="flex-shrink-0 bg-slate-900 border border-slate-800 rounded-2xl p-3 max-h-40 overflow-y-auto">
+            <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-2">🏆 Scores</p>
+            <div id="pv-scores" class="space-y-1.5"></div>
+        </div>
+    </div>
+    <!-- Waiting overlay -->
+    <div id="pv-waiting-overlay" class="absolute inset-0 flex flex-col items-center justify-center text-center p-8" style="background:#020617;z-index:10">
+        <div class="text-5xl mb-4 pulse">⏳</div>
+        <p class="font-black text-white text-xl uppercase mb-1">En attente...</p>
+        <p id="pv-overlay-course" class="text-slate-500 text-sm font-medium mb-6"></p>
+        <!-- Teams preview -->
+        <div id="pv-overlay-teams" class="w-full space-y-2 mb-6" style="max-width:320px"></div>
+        <button onclick="confirmQuitPlayer()" class="text-slate-700 font-bold text-xs uppercase hover:text-rose-400 transition-colors mt-4">Quitter</button>
+    </div>
+</div>
+
+<!-- ============================================================ ERROR -->
+<div id="screen-room-error" class="screen items-center justify-center p-6 text-center">
+    <div>
+        <div class="text-5xl mb-4">⚠️</div>
+        <p id="room-error-msg" class="text-rose-400 font-bold mb-4"></p>
+        <button onclick="location.reload()" class="text-violet-400 font-bold text-sm">Réessayer</button>
+    </div>
+</div>
+
+</div><!-- /app -->
 <script>
 // =====================================================================
-// FIREBASE
+// STATE
 // =====================================================================
-let fbApp = null, fbDb = null;
-let roomCode = '', unsubRoom = null;
+let db = null, useFirebase = false;
+let roomCode = '', playerId = '', playerName = '', playerScore = 0;
+let playerColor = '#7c3aed';
+let currentQ = 0, totalQ = 10, qTime = 20;
+let questions = [], roomListener = null;
+let hasAnswered = false, qTimerTimeout = null;
+let questionStartTime = 0;
+let lastAnswerIdx = -1;
+let prevRanks = {};
+let bookmarkedQuestions = JSON.parse(sessionStorage.getItem('kh_bookmarks') || '[]');
+// Anti-doublon points : on ne met à jour le score qu'une seule fois par question
+let scoreUpdatedForQ = -1;
 
+// Couleurs des boutons A/B/C/D
+const BTN_COLORS = ['#e74c3c', '#3498db', '#f39c12', '#27ae60'];
+const BTN_LETTERS = ['A', 'B', 'C', 'D'];
+
+// =====================================================================
+// COULEUR JOUEUR
+// =====================================================================
+function selectColor(c) {
+    playerColor = c;
+    document.querySelectorAll('.color-btn').forEach(b => {
+        b.style.borderColor = b.dataset.color === c ? 'white' : 'transparent';
+        b.style.transform   = b.dataset.color === c ? 'scale(1.2)' : 'scale(1)';
+    });
+}
+
+// =====================================================================
+// FIREBASE INIT
+// =====================================================================
 async function loadScript(src) {
     return new Promise((resolve, reject) => {
-        const s = document.createElement('script');
-        s.src = src; s.onload = resolve; s.onerror = reject;
-        document.head.appendChild(s);
+        const s = document.createElement('script'); s.src = src;
+        s.onload = resolve; s.onerror = reject; document.head.appendChild(s);
     });
 }
 
 async function initFirebase() {
     const cfg = window.FIREBASE_CONFIG;
-    if (!cfg || cfg.apiKey === 'VOTRE_API_KEY') { showError('Firebase non configuré'); return false; }
+    if (!cfg || cfg.apiKey === 'VOTRE_API_KEY') return;
     try {
         const v = '10.12.0';
         await loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-app-compat.js`);
         await loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-auth-compat.js`);
         await loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-firestore-compat.js`);
         if (!firebase.apps.length) firebase.initializeApp(cfg);
-        fbDb = firebase.firestore();
-        // Connexion anonyme pour accès Firestore
+        db = firebase.firestore();
+        // Connexion anonyme pour autoriser les écritures Firestore
         const auth = firebase.auth();
         if (!auth.currentUser) {
             await auth.signInAnonymously().catch(e => console.warn('Anon auth:', e));
         }
-        return true;
-    } catch(e) { showError('Erreur Firebase : ' + e.message); return false; }
+        useFirebase = true;
+    } catch(e) { console.warn('Firebase failed:', e); }
 }
 
 // =====================================================================
-// CONNECT
+// NAV
 // =====================================================================
 function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
 }
-function showError(msg) {
-    const el = document.getElementById('connect-error');
-    el.textContent = msg; el.classList.remove('hidden');
+
+function showRoomError(msg) {
+    document.getElementById('room-error-msg').textContent = msg;
+    showScreen('screen-room-error');
 }
 
-async function connect() {
-    const code = document.getElementById('pres-code').value.trim();
-    if (!/^\d{2}$/.test(code)) { showError('Code à 2 chiffres requis'); return; }
+// =====================================================================
+// JOIN
+// =====================================================================
+async function joinRoom() {
+    const code = document.getElementById('join-code').value.trim();
+    const name = document.getElementById('join-name').value.trim();
+    const errEl = document.getElementById('join-error');
 
-    const ok = await initFirebase();
-    if (!ok) return;
+    if (!/^\d{2}$/.test(code)) { showJoinError('Code invalide (2 chiffres)'); return; }
+    if (!useFirebase) { showJoinError('Connexion Firebase introuvable'); return; }
 
-    const snap = await fbDb.collection('rooms').doc(code).get();
-    if (!snap.exists) { showError('Salle introuvable — vérifie le code'); return; }
-
+    errEl.classList.add('hidden');
     roomCode = code;
-    // Mark screen connected
-    fbDb.collection('rooms').doc(code).set({ screenConnected: true }, { merge: true });
+    playerName = name;
+    playerId = 'p_' + Math.random().toString(36).slice(2, 10);
+    playerScore = 0;
 
-    startListening();
+    try {
+        const snap = await db.collection('rooms').doc(code).get();
+        if (!snap.exists) { showJoinError('Salle introuvable'); return; }
+        const room = snap.data();
+        if (room.status === 'finished' || room.status === 'cancelled') {
+            showJoinError('Cette partie est terminée'); return;
+        }
+
+        // ── Mode PRÉSENTATEUR : rejoindre en spectateur (nom non requis) ─
+        if (room.type === 'presenter') {
+            roomCode = code;
+            listenPresenterViewer(code);
+            return;
+        }
+
+        // Kahoot : vérifier que le prénom est renseigné
+        if (!name) { showJoinError('Entre ton prénom pour rejoindre cette partie'); return; }
+
+        // Enregistrer le joueur avec sa couleur
+        await db.collection('rooms').doc(code).update({
+            [`players.${playerId}`]: { name, score: 0, color: playerColor, joinedAt: Date.now() }
+        });
+
+        // Stocker infos session
+        sessionStorage.setItem('kh_room', code);
+        sessionStorage.setItem('kh_pid', playerId);
+        sessionStorage.setItem('kh_name', name);
+        sessionStorage.setItem('kh_color', playerColor);
+
+        // Mettre à jour waiting screen
+        const nameEl = document.getElementById('waiting-name');
+        nameEl.textContent = name;
+        nameEl.style.color = playerColor;
+        document.getElementById('waiting-code').textContent = code;
+        showScreen('screen-waiting');
+
+        listenToRoom(code);
+    } catch(e) {
+        showJoinError('Erreur : ' + e.message);
+    }
+}
+
+function showJoinError(msg) {
+    const el = document.getElementById('join-error');
+    el.querySelector('p').textContent = msg;
+    el.classList.remove('hidden');
 }
 
 // =====================================================================
-// REAL-TIME LISTENER
+// PRÉSENTATION VIEWER (rejoindre en spectateur une salle présentateur)
 // =====================================================================
-function startListening() {
-    if (unsubRoom) unsubRoom();
-    unsubRoom = fbDb.collection('rooms').doc(roomCode).onSnapshot(snap => {
-        if (!snap.exists) { showScreen('screen-connect'); return; }
+let presViewerUnsub = null;
+let pvTimerInterval = null;
+
+function listenPresenterViewer(code) {
+    showScreen('screen-pres-viewer');
+    if (presViewerUnsub) presViewerUnsub();
+    presViewerUnsub = db.collection('rooms').doc(code).onSnapshot(snap => {
+        if (!snap.exists) { showRoomError('Salle introuvable'); return; }
         const room = snap.data();
         if (!room || room.type !== 'presenter') return;
-        handleRoomState(room);
+        handlePresViewerState(room);
     });
 }
 
-let currentPhase = '', qTimerInterval = null;
-
-function handleRoomState(room) {
+function handlePresViewerState(room) {
     const phase = room.phase || 'waiting';
+    const overlay = document.getElementById('pv-waiting-overlay');
+    const dot = document.getElementById('pv-dot');
+
+    // Toujours mettre à jour les scores
+    renderPvScores(room.settings?.teams || []);
 
     if (phase === 'waiting') {
-        showScreen('screen-wait');
-        document.getElementById('wait-course').textContent = room.courseName || '';
-        document.querySelector('#wait-code p:last-child').textContent = roomCode;
-        renderWaitTeams(room.settings?.teams || [], room.settings || {});
+        if (overlay) overlay.style.display = '';
+        document.getElementById('pv-overlay-course').textContent = room.courseName || '';
+        // Équipes en attente
+        const teams = room.settings?.teams || [];
+        document.getElementById('pv-overlay-teams').innerHTML = teams.map(t => `
+            <div class="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2">
+                <div class="w-3 h-3 rounded-full flex-shrink-0" style="background:${t.color}"></div>
+                <span class="font-black text-white text-sm flex-grow text-left">${t.name}</span>
+                <span class="font-black text-sm" style="color:${t.color}">${t.score || 0} pts</span>
+            </div>`).join('');
+        if (dot) dot.style.background = '#475569';
         return;
     }
+
+    // Masquer overlay dès qu'on n'est plus en waiting
+    if (overlay) overlay.style.display = 'none';
+    if (dot) dot.style.background = '#10b981';
 
     if (phase === 'question') {
         const q = (room.questions || [])[room.currentQ || 0];
         if (!q) return;
+        const total = (room.questions || []).length;
+        document.getElementById('pv-round').textContent = `Q ${(room.currentQ||0)+1}/${total}`;
+        document.getElementById('pv-course').textContent = room.courseName || '';
 
-        const isNewQ = room.currentQ !== parseInt(document.getElementById('q-round-badge').dataset.q||'-1');
-        if (phase !== currentPhase || isNewQ) {
-            renderQuestion(room, q);
-        }
-        // Show/hide answer
-        const ansArea = document.getElementById('q-answer-area');
+        // showQ = afficher le terme sur l'écran
+        const showQ = room.settings?.showQ !== false;
+        document.getElementById('pv-term').textContent = showQ ? (q.term || '') : '[ Question cachée ]';
+        document.getElementById('pv-term').style.opacity = showQ ? '' : '0.3';
+
+        // Réponse révélée ?
+        const ansArea = document.getElementById('pv-answer-area');
+        document.getElementById('pv-def').textContent = q.def || '';
         if (room.showAnswer) ansArea.classList.remove('hidden');
         else ansArea.classList.add('hidden');
 
-        // Scores live (toujours mis à jour)
-        renderTeamsBar(room.settings?.teams || []);
-    }
-
-    if (phase === 'scores') {
-        renderScores(room.settings?.teams || []);
-        showScreen('screen-scores');
-    }
-
-    if (phase === 'end') {
-        renderEnd(room.settings?.teams || []);
-        showScreen('screen-end');
-    }
-
-    currentPhase = phase;
-}
-
-function renderWaitTeams(teams, settings) {
-    const teamsEl = document.getElementById('wait-teams');
-    const paramsEl = document.getElementById('wait-params');
-    if (!teamsEl || !paramsEl) return;
-
-    if (teams.length === 0) {
-        teamsEl.innerHTML = '<p class="col-span-2 text-slate-700 text-sm font-bold">Aucune équipe configurée...</p>';
-    } else {
-        teamsEl.innerHTML = teams.map(t => `
-            <div class="flex items-center gap-3 bg-slate-900 border border-slate-800 rounded-2xl px-5 py-4 fade-in">
-                <div class="w-5 h-5 rounded-full flex-shrink-0" style="background:${t.color};box-shadow:0 0 8px ${t.color}60"></div>
-                <span class="font-black text-white text-xl truncate">${t.name}</span>
-                <span class="ml-auto font-black text-base" style="color:${t.color}">${t.score || 0} pts</span>
-            </div>`).join('');
-    }
-
-    const parts = [];
-    if (settings.nbQ)                      parts.push(`<span class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-slate-400 text-sm font-bold">📋 ${settings.nbQ} questions</span>`);
-    if (settings.ptsQ)                     parts.push(`<span class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-slate-400 text-sm font-bold">⭐ ${settings.ptsQ} pts/Q</span>`);
-    if (settings.timeQ && !settings.noTimer) parts.push(`<span class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-slate-400 text-sm font-bold">⏱ ${settings.timeQ}s</span>`);
-    if (settings.neg)                       parts.push(`<span class="bg-rose-500/10 border border-rose-500/20 rounded-xl px-3 py-1.5 text-rose-400 text-sm font-bold">⚠️ −${settings.neg}% si faux</span>`);
-    if (settings.noTimer)                   parts.push(`<span class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-slate-400 text-sm font-bold">⏸ Sans timer</span>`);
-    paramsEl.innerHTML = parts.join('');
-}
-
-function renderQuestion(room, q) {
-    // showQ = afficher le terme sur l'écran de projection
-    const showQ = room.settings?.showQ !== false;
-    document.getElementById('q-term').textContent = showQ ? (q.term || '') : '';
-    document.getElementById('q-term').style.opacity = showQ ? '' : '0';
-    document.getElementById('q-label').style.opacity = showQ ? '' : '0';
-    document.getElementById('q-def').textContent  = q.def  || '';
-    document.getElementById('q-answer-area').classList.add('hidden');
-
-    const totalQ = (room.questions||[]).length;
-    const qNum   = (room.currentQ || 0) + 1;
-    const roundBadge = document.getElementById('q-round-badge');
-    roundBadge.textContent = `Q ${qNum}`;
-    roundBadge.dataset.q = room.currentQ;
-
-    const remainingEl = document.getElementById('q-remaining-badge');
-    if (remainingEl) remainingEl.textContent = `${totalQ - qNum} restante${totalQ-qNum>1?'s':''}`;
-
-    const doubleBadge = document.getElementById('q-double-badge');
-    if (q.isDouble) doubleBadge.classList.remove('hidden');
-    else doubleBadge.classList.add('hidden');
-
-    // Équipes en grand si showQ=false
-    const teamsOverlay = document.getElementById('q-teams-overlay');
-    if (teamsOverlay) {
-        if (!showQ) {
-            const teams = room.settings?.teams || [];
-            teamsOverlay.classList.remove('hidden');
-            teamsOverlay.classList.add('flex');
-            teamsOverlay.innerHTML = teams.map(t => `
-                <div class="flex items-center gap-4">
-                    <div class="w-6 h-6 rounded-full flex-shrink-0" style="background:${t.color};box-shadow:0 0 12px ${t.color}80"></div>
-                    <span class="font-black text-white text-4xl">${t.name}</span>
-                </div>`).join('');
-            document.getElementById('q-term').style.display = 'none';
-            document.getElementById('q-label').style.display = 'none';
+        // Timer
+        clearInterval(pvTimerInterval);
+        const noTimer = room.settings?.noTimer || !room.questionStartTime;
+        const timeLimit = room.settings?.timePerQ || room.settings?.timeQ || 20;
+        const bar = document.getElementById('pv-timer-bar');
+        if (noTimer || timeLimit === 0) {
+            bar.style.transition = 'none'; bar.style.width = '100%'; bar.style.background = '#1e293b';
         } else {
-            teamsOverlay.classList.add('hidden');
-            teamsOverlay.classList.remove('flex');
-            document.getElementById('q-term').style.display = '';
-            document.getElementById('q-label').style.display = '';
+            const startTime = room.questionStartTime || Date.now();
+            const elapsed = Math.max(0, (Date.now() - startTime) / 1000);
+            const pctLeft = Math.max(0, (timeLimit - elapsed) / timeLimit * 100);
+            bar.style.transition = 'none'; bar.style.width = pctLeft + '%'; bar.style.background = '#7c3aed';
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                const rem = Math.max(0, timeLimit - elapsed);
+                bar.style.transition = `width ${rem}s linear`; bar.style.width = '0%'; bar.style.background = '#f43f5e';
+            }));
         }
     }
 
-    // Timer — piloté uniquement par JS (pas de CSS transition pour éviter les bugs)
-    clearInterval(qTimerInterval);
-    const noTimer = room.settings?.noTimer || !room.questionStartTime;
-    const timeLimit = room.settings?.timePerQ || room.settings?.timeQ || 20;
-    const timerBarWrap = document.getElementById('q-timer-bar-wrap');
-    const timerBar = document.getElementById('q-timer-bar');
-    const numEl = document.getElementById('q-timer-num');
+    if (phase === 'scores' || phase === 'end') {
+        clearInterval(pvTimerInterval);
+        const bar = document.getElementById('pv-timer-bar');
+        bar.style.transition = 'none'; bar.style.width = '0%';
+        document.getElementById('pv-round').textContent = phase === 'end' ? 'Fin !' : 'Scores';
+    }
+}
 
-    if (noTimer || timeLimit === 0) {
-        numEl.textContent = '∞';
-        numEl.style.color = '#475569';
-        if (timerBarWrap) timerBarWrap.style.opacity = '0';
-        if (timerBar) { timerBar.style.width='100%'; timerBar.style.background='#1e293b'; }
-    } else {
-        if (timerBarWrap) timerBarWrap.style.opacity = '1';
-        const startTime = room.questionStartTime || Date.now();
-        // JS-only timer — pas de transition CSS
-        const updateTimer = () => {
-            const elapsed = (Date.now() - startTime) / 1000;
-            const left = Math.max(0, timeLimit - elapsed);
-            const pct  = (left / timeLimit) * 100;
-            if (timerBar) {
-                timerBar.style.width = pct + '%';
-                timerBar.style.background = pct > 50 ? '#7c3aed' : pct > 20 ? '#f97316' : '#f43f5e';
+function renderPvScores(teams) {
+    const el = document.getElementById('pv-scores');
+    if (!el || !teams.length) return;
+    const sorted = [...teams].sort((a,b) => (b.score||0) - (a.score||0));
+    const medals = ['🥇','🥈','🥉'];
+    // Dense ranks
+    let rank = 1;
+    const ranks = sorted.map((t, i) => { if (i > 0 && t.score !== sorted[i-1].score) rank++; return rank; });
+    el.innerHTML = sorted.map((t, i) => {
+        const r = medals[ranks[i]-1] || `#${ranks[i]}`;
+        return `<div class="flex items-center gap-2">
+            <span class="text-sm w-5 text-center flex-shrink-0">${r}</span>
+            <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${t.color}"></div>
+            <span class="flex-grow text-white text-xs font-bold truncate">${t.name}</span>
+            <span class="font-black text-xs tabular-nums ${(t.score||0) < 0 ? 'text-rose-400' : ''}" style="${(t.score||0) >= 0 ? 'color:'+t.color : ''}">${t.score||0}</span>
+        </div>`;
+    }).join('');
+}
+
+// =====================================================================
+// ROOM LISTENER
+// =====================================================================
+function listenToRoom(code) {
+    if (roomListener) roomListener();
+    roomListener = db.collection('rooms').doc(code).onSnapshot(snap => {
+        if (!snap.exists) return;
+        const room = snap.data();
+        handleRoomState(room);
+    });
+}
+
+function handleRoomState(room) {
+    const onScreen = id => document.getElementById(id).classList.contains('active');
+
+    switch(room.status) {
+        case 'waiting':
+            if (!onScreen('screen-question') && !onScreen('screen-sent') && !onScreen('screen-result')) {
+                showScreen('screen-waiting');
             }
-            numEl.textContent = Math.ceil(left);
-            const isUrgent = left <= 5;
-            numEl.className = isUrgent ? 'text-3xl font-black tabular-nums w-14 text-center timer-urgent' : 'text-3xl font-black text-violet-400 tabular-nums w-14 text-center';
-            if (left <= 0) clearInterval(qTimerInterval);
-        };
-        updateTimer();
-        qTimerInterval = setInterval(updateTimer, 250);
+            break;
+
+        case 'question': {
+            const serverQ = room.currentQ ?? -1;
+            const isNewQuestion = serverQ !== currentQ;
+            // Forcer le passage à la question si on n'est pas sur question/sent
+            // (ex: téléphone qui était sur le leaderboard de la manche précédente)
+            const notInPlay = !onScreen('screen-question') && !onScreen('screen-sent');
+            if (isNewQuestion || notInPlay) {
+                currentQ          = serverQ;
+                totalQ            = room.settings?.totalQ || 10;
+                qTime             = room.settings?.time   || 20;
+                questions         = room.questions        || [];
+                questionStartTime = room.questionStartTime || Date.now();
+                scoreUpdatedForQ  = -1;
+                showQuestion(room);
+            }
+            break;
+        }
+
+        case 'reveal':
+            // Mettre à jour le score depuis Firestore (sans re-déclencher si déjà sur result)
+            if (!onScreen('screen-result')) {
+                revealAnswer(room);
+            }
+            break;
+
+        case 'leaderboard':
+            // Toujours afficher le leaderboard (même si déjà affiché → mise à jour)
+            showLeaderboard(room);
+            break;
+
+        case 'finished':
+        case 'cancelled':
+            showFinalScreen(room);
+            break;
+    }
+}
+
+// =====================================================================
+// QUESTION (avec timer synchronisé + countdown 3s)
+// =====================================================================
+const Q_COUNTDOWN = 3; // secondes de countdown avant que les boutons soient actifs
+let qCountdownInterval = null;
+
+function showQuestion(room) {
+    hasAnswered = false;
+    lastAnswerIdx = -1;
+    clearTimeout(qTimerTimeout);
+    clearInterval(qCountdownInterval);
+
+    const q = questions[currentQ];
+    if (!q) return;
+
+    // Temps écoulé depuis que la question a été publiée par l'hôte
+    const elapsed = Math.max(0, (Date.now() - questionStartTime) / 1000);
+    const countdownLeft  = Math.max(0, Q_COUNTDOWN - elapsed);
+    const answerTimeLeft = Math.max(0, qTime - Math.max(0, elapsed - Q_COUNTDOWN));
+
+    // Si la question est déjà entièrement expirée, ne pas afficher
+    if (elapsed > Q_COUNTDOWN + qTime + 2) return;
+
+    // Textes
+    document.getElementById('q-round').textContent   = `Q ${currentQ + 1}/${totalQ}`;
+    document.getElementById('q-score').textContent   = playerScore + ' pts';
+    document.getElementById('q-term').textContent    = q.term || q.question || '';
+    document.getElementById('q-score-bottom').textContent = playerScore + ' pts';
+    document.getElementById('q-term-preview').textContent = q.term || q.question || '';
+
+    // Couleur du joueur
+    const dot = document.getElementById('q-player-dot');
+    if (dot) dot.style.background = playerColor;
+
+    // Reset boutons
+    document.querySelectorAll('#q-choices .choice-btn').forEach(btn => {
+        btn.disabled    = false;
+        btn.style.opacity   = '1';
+        btn.style.transform = '';
+    });
+
+    // Timer bar : préparer sans animation
+    const bar  = document.getElementById('q-timer-bar');
+    const wrap = document.getElementById('q-timer-wrap');
+    const barPct = answerTimeLeft > 0 ? (answerTimeLeft / qTime * 100) : 0;
+    bar.style.transition = 'none';
+    bar.style.width      = barPct + '%';
+    wrap.style.opacity   = '0';
+
+    const startAnswerPhase = () => {
+        // Rendre la barre visible et lancer l'animation
+        wrap.style.opacity = '1';
+        if (answerTimeLeft > 0.2) {
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                bar.style.transition = `width ${answerTimeLeft}s linear`;
+                bar.style.width = '0%';
+            }));
+        }
+        // Timeout joueur
+        qTimerTimeout = setTimeout(() => {
+            if (!hasAnswered) {
+                hasAnswered = true;
+                db.collection('rooms').doc(roomCode).update({
+                    [`answers.${playerId}.${currentQ}`]: { idx: -1, correct: false, points: 0, ts: Date.now() }
+                }).catch(e => console.warn(e));
+                showTimedOut();
+            }
+        }, answerTimeLeft * 1000);
+    };
+
+    if (countdownLeft > 0.1) {
+        // Afficher le countdown overlay
+        document.querySelectorAll('#q-choices .choice-btn').forEach(btn => { btn.disabled = true; });
+        const overlay  = document.getElementById('q-countdown-overlay');
+        const numEl    = document.getElementById('q-countdown-num');
+        overlay.classList.remove('hidden');
+        let countNum = Math.ceil(countdownLeft);
+        numEl.textContent = countNum;
+
+        qCountdownInterval = setInterval(() => {
+            countNum--;
+            if (countNum <= 0) {
+                clearInterval(qCountdownInterval);
+                overlay.classList.add('hidden');
+                document.querySelectorAll('#q-choices .choice-btn').forEach(btn => { btn.disabled = false; });
+                startAnswerPhase();
+            } else {
+                numEl.textContent = countNum;
+            }
+        }, 1000);
+    } else {
+        // Countdown déjà passé (mise à jour reçue en retard) → démarrer directement
+        document.getElementById('q-countdown-overlay').classList.add('hidden');
+        startAnswerPhase();
     }
 
-    // Refresh card animation
-    const card = document.getElementById('q-card');
-    card.classList.remove('fade-in'); void card.offsetWidth; card.classList.add('fade-in');
     showScreen('screen-question');
 }
 
-// Scores live dans la colonne droite — appelé à chaque update Firestore
-function renderTeamsBar(teams) {
-    const panel = document.getElementById('q-teams-live');
-    if (!panel) return;
-    const sorted = [...teams].sort((a,b) => (b.score||0) - (a.score||0));
-    const maxScore = Math.max(...sorted.map(t => t.score||0), 1);
-    const medals = ['🥇','🥈','🥉'];
-
-    panel.innerHTML = sorted.map((t, i) => {
-        const pct = Math.round((t.score||0) / maxScore * 100);
-        const medal = medals[i] || `${i+1}`;
-        return `
-        <div class="group" style="animation:fadeIn .4s ${i*0.08}s ease both">
-            <div class="flex items-center justify-between mb-1.5">
-                <div class="flex items-center gap-2 min-w-0">
-                    <span class="text-base flex-shrink-0">${medal}</span>
-                    <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${t.color}"></div>
-                    <span class="font-black text-white text-sm truncate">${t.name}</span>
-                </div>
-                <span class="score-val font-black text-sm flex-shrink-0 ml-2" style="color:${t.color}">${t.score||0}</span>
-            </div>
-            <div class="h-2.5 bg-slate-800 rounded-full overflow-hidden">
-                <div class="score-bar-fill h-full rounded-full" style="--w:${pct}%;background:${t.color};animation-delay:${i*0.1}s"></div>
-            </div>
-        </div>`;
-    }).join('');
-}
-
-function renderScores(teams) {
-    const sorted = [...teams].sort((a,b) => (b.score||0) - (a.score||0));
-    const maxScore = Math.max(...sorted.map(t => t.score||0), 1);
-    const medals = ['🥇','🥈','🥉'];
-    document.getElementById('sc-list').innerHTML = sorted.map((t,i) => {
-        const pct = Math.round((t.score||0) / maxScore * 100);
-        return `
-        <div class="pop-in" style="animation-delay:${i*0.1}s">
-            <div class="flex items-center gap-5 mb-2">
-                <span class="text-5xl flex-shrink-0">${medals[i] || `<span class='text-slate-500 font-black text-2xl'>#${i+1}</span>`}</span>
-                <div class="w-5 h-5 rounded-full flex-shrink-0" style="background:${t.color}"></div>
-                <span class="font-black text-white text-2xl flex-grow">${t.name}</span>
-                <span class="font-black text-4xl" style="color:${t.color}">${t.score||0}</span>
-                <span class="text-slate-600 font-bold">pts</span>
-            </div>
-            <div class="ml-16 h-3 bg-slate-800 rounded-full overflow-hidden">
-                <div class="score-bar-fill h-full rounded-full" style="--w:${pct}%;background:${t.color};animation-delay:${i*0.15+0.3}s"></div>
-            </div>
-        </div>`;
-    }).join('');
-}
-
-function renderEnd(teams) {
-    renderScores(teams);
-    const sorted = [...teams].sort((a,b) => (b.score||0) - (a.score||0));
-    document.getElementById('end-podium').innerHTML = sorted.slice(0,3).map((t,i) => `
-        <div class="flex items-center gap-4 fade-in" style="animation-delay:${i*0.15}s">
-            <span class="text-4xl">${['🥇','🥈','🥉'][i]}</span>
-            <div class="w-5 h-5 rounded-full flex-shrink-0" style="background:${t.color}"></div>
-            <span class="font-black text-white text-2xl">${t.name}</span>
-            <span class="font-black ml-auto text-2xl" style="color:${t.color}">${t.score} pts</span>
-        </div>`).join('');
+function showTimedOut() {
+    clearInterval(qCountdownInterval);
+    document.getElementById('q-countdown-overlay').classList.add('hidden');
+    // Afficher écran "envoyé" en version temps écoulé
+    document.getElementById('sent-color-badge').style.background = '#64748b';
+    document.getElementById('sent-color-badge').textContent = '⏰';
+    document.querySelector('#screen-sent h2').textContent = 'Temps écoulé !';
+    document.querySelector('#screen-sent p').textContent = 'Tu n\'as pas répondu à temps.';
+    // Remettre le bookmark btn
+    const btn = document.getElementById('btn-bookmark-q');
+    btn.textContent = '🔖 Enregistrer cette question';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+    showScreen('screen-sent');
 }
 
 // =====================================================================
-// INIT — check URL param
+// CALCUL DES POINTS
 // =====================================================================
-window.onload = async () => {
-    const params = new URLSearchParams(location.search);
-    const code = params.get('code');
-    if (code && /^\d{2}$/.test(code)) {
-        document.getElementById('pres-code').value = code;
-        await connect();
+function calcPoints(isCorrect) {
+    if (!isCorrect) return 0;
+    // Le temps de réponse commence après le countdown de Q_COUNTDOWN secondes
+    const answerWindowStart = questionStartTime + Q_COUNTDOWN * 1000;
+    const elapsed = Math.max(0, (Date.now() - answerWindowStart) / 1000);
+    if (elapsed <= 0) return 1000;
+    const remaining = Math.max(0, qTime - elapsed);
+    if (qTime <= 0) return 1000;
+    return Math.round(500 + (500 * remaining / qTime));
+}
+
+// =====================================================================
+// SÉLECTIONNER UNE RÉPONSE
+// =====================================================================
+function selectAnswer(answerIdx) {
+    if (hasAnswered) return;
+    hasAnswered = true;
+    lastAnswerIdx = answerIdx;
+    clearTimeout(qTimerTimeout);
+    clearInterval(qCountdownInterval);
+    document.getElementById('q-countdown-overlay').classList.add('hidden');
+
+    const q = questions[currentQ];
+    if (!q) return;
+
+    const isCorrect = q.choices && q.choices[answerIdx] ? !!q.choices[answerIdx].correct : false;
+    const calculatedPoints = calcPoints(isCorrect);
+
+    // Envoyer à Firestore
+    db.collection('rooms').doc(roomCode).update({
+        [`answers.${playerId}.${currentQ}`]: {
+            idx: answerIdx,
+            correct: isCorrect,
+            points: calculatedPoints,
+            ts: Date.now()
+        }
+    }).catch(e => console.warn(e));
+
+    // Préparer l'écran "sent"
+    const badge = document.getElementById('sent-color-badge');
+    badge.style.background = BTN_COLORS[answerIdx];
+    badge.textContent = BTN_LETTERS[answerIdx];
+    // Réinitialiser titre/sous-titre
+    document.querySelector('#screen-sent h2').textContent = 'Réponse envoyée !';
+    document.querySelector('#screen-sent p').textContent = 'En attente du résultat...';
+    // Réinitialiser bookmark btn
+    const btn = document.getElementById('btn-bookmark-q');
+    btn.textContent = '🔖 Enregistrer cette question';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+
+    showScreen('screen-sent');
+}
+
+// =====================================================================
+// REVEAL (le host révèle la bonne réponse)
+// =====================================================================
+function revealAnswer(room) {
+    // Ne traiter que si on est sur sent/question/result
+    const activeSent     = document.getElementById('screen-sent').classList.contains('active');
+    const activeQuestion = document.getElementById('screen-question').classList.contains('active');
+    const activeResult   = document.getElementById('screen-result').classList.contains('active');
+    if (!activeSent && !activeQuestion && !activeResult) return;
+
+    // Lire la réponse soumise
+    const myAnswer = room.answers?.[playerId]?.[currentQ];
+    if (!myAnswer && myAnswer !== false) {
+        // Pas répondu : afficher raté
+        showResultScreen(false, 0);
+        return;
     }
-};
+
+    const isCorrect = myAnswer.correct || false;
+    const pts = myAnswer.points || 0;
+
+    // Mettre à jour le score UNE SEULE FOIS par question (anti-boucle infinie)
+    if (scoreUpdatedForQ !== currentQ) {
+        scoreUpdatedForQ = currentQ;
+        if (isCorrect && pts > 0) {
+            const baseScore = room.players?.[playerId]?.score || 0;
+            const newScore  = baseScore + pts;
+            db.collection('rooms').doc(roomCode).update({
+                [`players.${playerId}.score`]: newScore
+            }).then(() => { playerScore = newScore; })
+              .catch(e => console.warn(e));
+            playerScore = newScore; // optimiste
+        }
+    } else {
+        // Score déjà mis à jour, juste lire depuis Firestore
+        playerScore = room.players?.[playerId]?.score || playerScore;
+    }
+
+    showResultScreen(isCorrect, pts);
+}
+
+function showResultScreen(isCorrect, pts) {
+    document.getElementById('result-big').textContent    = isCorrect ? '🎉' : '😅';
+    document.getElementById('result-title').textContent  = isCorrect ? 'Correct !' : 'Raté !';
+    document.getElementById('result-points').textContent = isCorrect ? '+' + pts : '+0';
+    document.getElementById('result-points').style.color = isCorrect ? '#7c3aed' : '#94a3b8';
+    document.getElementById('result-total-score').textContent = playerScore + ' pts';
+    showScreen('screen-result');
+}
+
+// =====================================================================
+// LEADERBOARD
+// =====================================================================
+function showLeaderboard(room) {
+    const players = room.players || {};
+    const sorted = Object.values(players).sort((a, b) => (b.score || 0) - (a.score || 0));
+
+    document.getElementById('lb-list').innerHTML = sorted.slice(0, 8).map((p, i) => {
+        const prevRank = prevRanks[p.name];
+        const rankChange = prevRank !== undefined ? prevRank - i : 0;
+        const isMe = p.name === playerName;
+        const arrow = rankChange > 0 ? '▲' : rankChange < 0 ? '▼' : '';
+        const arrowColor = rankChange > 0 ? 'text-emerald-400' : rankChange < 0 ? 'text-rose-400' : '';
+        prevRanks[p.name] = i;
+
+        return `<div class="flex items-center justify-between p-3 rounded-2xl border transition-all ${isMe ? 'bg-violet-500/10 border-violet-500/30' : 'bg-slate-900 border-slate-800'}"
+                     style="${rankChange !== 0 ? 'animation:rankBounce .4s ease' : ''}">
+            <div class="flex items-center gap-2">
+                <span class="font-black text-slate-600 text-sm w-5">${i + 1}</span>
+                <div class="w-3 h-3 rounded-full flex-shrink-0" style="background:${p.color || '#7c3aed'}"></div>
+                <span class="font-bold text-sm" style="color:${isMe ? (p.color || '#7c3aed') : 'white'}">${p.name}${isMe ? ' (toi)' : ''}</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="${arrowColor} text-xs font-black">${arrow}</span>
+                <span class="font-black text-sm" style="color:${isMe ? (p.color || '#7c3aed') : '#94a3b8'}">${p.score || 0} pts</span>
+            </div>
+        </div>`;
+    }).join('');
+
+    showScreen('screen-leaderboard');
+}
+
+// =====================================================================
+// FINAL
+// =====================================================================
+function showFinalScreen(room) {
+    const players = room.players || {};
+    const sorted = Object.values(players).sort((a, b) => (b.score || 0) - (a.score || 0));
+    const myRank = sorted.findIndex(p => p.name === playerName) + 1;
+    const emojis = ['🥇', '🥈', '🥉'];
+
+    document.getElementById('final-emoji').textContent = emojis[myRank - 1] || '🎮';
+    document.getElementById('final-rank').textContent  = `${myRank}e sur ${sorted.length}`;
+    document.getElementById('final-score').textContent = (room.players?.[playerId]?.score || playerScore) + ' pts';
+
+    document.getElementById('final-leaderboard').innerHTML = sorted.map((p, i) => {
+        const isMe = p.name === playerName;
+        return `<div class="flex items-center justify-between p-3 rounded-xl border ${isMe ? 'bg-violet-500/10 border-violet-500/30' : 'bg-slate-900 border-slate-800'}">
+            <div class="flex items-center gap-2">
+                <span class="font-black text-xs">${emojis[i] || (i + 1)}</span>
+                <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${p.color || '#7c3aed'}"></div>
+                <span class="font-bold text-sm" style="color:${isMe ? (p.color || '#7c3aed') : 'white'}">${p.name}</span>
+            </div>
+            <span class="font-black text-slate-400 text-sm">${p.score || 0} pts</span>
+        </div>`;
+    }).join('');
+
+    // Bookmarks
+    if (bookmarkedQuestions.length > 0) {
+        document.getElementById('final-bookmarks').classList.remove('hidden');
+        document.getElementById('final-bm-list').innerHTML = bookmarkedQuestions.map(b =>
+            `<div class="bg-slate-900 rounded-xl p-3 border border-yellow-500/20">
+                <p class="text-white font-bold text-xs">${b.term}</p>
+                <p class="text-slate-500 text-[10px]">${b.def}</p>
+            </div>`).join('');
+    }
+
+    if (roomListener) { roomListener(); roomListener = null; }
+    showScreen('screen-final');
+}
+
+// =====================================================================
+// BOOKMARK
+// =====================================================================
+function bookmarkCurrentQuestion() {
+    const q = questions[currentQ];
+    if (!q) return;
+    const btn = document.getElementById('btn-bookmark-q');
+    if (!bookmarkedQuestions.find(b => b.term === q.term)) {
+        bookmarkedQuestions.push({
+            term: q.term || q.question || '',
+            def: q.choices?.find(c => c.correct)?.text || ''
+        });
+        sessionStorage.setItem('kh_bookmarks', JSON.stringify(bookmarkedQuestions));
+        btn.textContent = '🔖 Enregistrée !';
+        btn.style.borderColor = '#eab308';
+        btn.style.color = '#eab308';
+    } else {
+        btn.textContent = '🔖 Déjà enregistrée';
+        btn.style.borderColor = '#eab308';
+        btn.style.color = '#eab308';
+    }
+}
+
+// =====================================================================
+// QUITTER
+// =====================================================================
+function confirmQuitPlayer() {
+    const msg = presViewerUnsub ? 'Quitter le mode spectateur ?' : 'Quitter la partie ? Tu perdras ta progression.';
+    if (confirm(msg)) {
+        if (roomListener) { roomListener(); roomListener = null; }
+        if (presViewerUnsub) { presViewerUnsub(); presViewerUnsub = null; }
+        clearInterval(pvTimerInterval);
+        sessionStorage.clear();
+        location.href = '../';
+    }
+}
+
+// =====================================================================
+// INIT
+// =====================================================================
+async function init() {
+    await initFirebase();
+    if (!useFirebase) {
+        showRoomError('Firebase non configuré. Contacte le professeur.');
+        return;
+    }
+
+    // Lire code depuis URL
+    const params = new URLSearchParams(window.location.search);
+    const urlCode = params.get('code');
+    if (urlCode) {
+        document.getElementById('join-code').value = urlCode.toUpperCase();
+    }
+
+    // Reconnexion auto depuis sessionStorage
+    const savedRoom  = sessionStorage.getItem('kh_room');
+    const savedPid   = sessionStorage.getItem('kh_pid');
+    const savedName  = sessionStorage.getItem('kh_name');
+    const savedColor = sessionStorage.getItem('kh_color');
+    if (savedRoom && savedPid && savedName) {
+        try {
+            const snap = await db.collection('rooms').doc(savedRoom).get();
+            if (snap.exists && !['finished', 'cancelled'].includes(snap.data().status)) {
+                roomCode    = savedRoom;
+                playerId    = savedPid;
+                playerName  = savedName;
+                playerColor = savedColor || '#7c3aed';
+                playerScore = snap.data().players?.[savedPid]?.score || 0;
+
+                const nameEl = document.getElementById('waiting-name');
+                nameEl.textContent = savedName;
+                nameEl.style.color = playerColor;
+                document.getElementById('waiting-code').textContent = savedRoom;
+
+                listenToRoom(savedRoom);
+                return;
+            }
+        } catch(e) { console.warn(e); }
+        sessionStorage.clear();
+    }
+
+    showScreen('screen-join');
+}
+
+window.onload = init;
 </script>
 </body>
 </html>
