@@ -147,6 +147,7 @@
                 <input id="app-name-color" type="color" value="#ffffff" title="Couleur du nom (Premium)"
                        class="hidden w-6 h-6 rounded-lg border border-slate-700 cursor-pointer bg-transparent flex-shrink-0"
                        oninput="applyAppNameColor(this.value, true)">
+                <button onclick="openAppSettings()" class="text-[9px] font-black text-slate-600 uppercase tracking-widest hover:text-violet-400 transition-colors">⚙️</button>
                 <button onclick="logout()" class="text-[9px] font-black text-slate-600 uppercase tracking-widest hover:text-rose-400 transition-colors">Déco</button>
             </div>
         </div>
@@ -213,6 +214,47 @@
         <button onclick="openSuggestionModal()" class="w-full flex items-center justify-center gap-1.5 py-3 text-[10px] font-bold text-slate-700 uppercase tracking-widest hover:text-violet-500 transition-colors">
             💡 Suggérer une amélioration
         </button>
+    </div>
+</div>
+
+<!-- ==================== MODAL PARAMÈTRES APP ==================== -->
+<div id="app-settings-modal" data-modal-backdrop class="hidden fixed inset-0 z-50 flex items-end justify-center" style="background:rgba(2,6,23,.85);backdrop-filter:blur(4px)">
+    <div class="w-full bg-slate-900 border-t border-slate-800 rounded-t-3xl p-6 fade-up" style="max-width:520px">
+        <div class="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-5"></div>
+        <h3 class="text-base font-black text-white uppercase tracking-widest text-center mb-5">⚙️ Paramètres</h3>
+
+        <!-- Photo de profil -->
+        <div class="flex items-center justify-between bg-slate-800/50 rounded-2xl px-4 py-3.5 mb-3">
+            <div>
+                <p class="text-sm font-black text-white">Photo de profil</p>
+                <p class="text-[10px] text-slate-500 font-medium mt-0.5">Afficher ton avatar Google</p>
+            </div>
+            <button id="app-pfp-toggle" onclick="toggleAppPfp()" class="w-12 h-6 bg-slate-700 rounded-full relative transition-colors">
+                <div class="w-4 h-4 bg-slate-400 rounded-full absolute top-1 left-1 transition-transform"></div>
+            </button>
+        </div>
+
+        <!-- Nb flashcards -->
+        <div class="bg-slate-800/50 rounded-2xl px-4 py-3.5 mb-3">
+            <p class="text-sm font-black text-white mb-1">Flashcards par session</p>
+            <p class="text-[10px] text-slate-500 font-medium mb-3">Nombre de cartes à parcourir</p>
+            <div class="grid grid-cols-7 gap-1.5">
+                <button onclick="setAppFcCount(10,this)"  class="app-fc-btn py-2 rounded-xl text-[10px] font-black bg-slate-700 text-slate-400 hover:bg-violet-600 hover:text-white transition-colors">10</button>
+                <button onclick="setAppFcCount(15,this)"  class="app-fc-btn py-2 rounded-xl text-[10px] font-black bg-slate-700 text-slate-400 hover:bg-violet-600 hover:text-white transition-colors">15</button>
+                <button onclick="setAppFcCount(20,this)"  class="app-fc-btn py-2 rounded-xl text-[10px] font-black bg-slate-700 text-slate-400 hover:bg-violet-600 hover:text-white transition-colors">20</button>
+                <button onclick="setAppFcCount(25,this)"  class="app-fc-btn py-2 rounded-xl text-[10px] font-black bg-slate-700 text-slate-400 hover:bg-violet-600 hover:text-white transition-colors">25</button>
+                <button onclick="setAppFcCount(30,this)"  class="app-fc-btn py-2 rounded-xl text-[10px] font-black bg-slate-700 text-slate-400 hover:bg-violet-600 hover:text-white transition-colors">30</button>
+                <button onclick="setAppFcCount(35,this)"  class="app-fc-btn py-2 rounded-xl text-[10px] font-black bg-slate-700 text-slate-400 hover:bg-violet-600 hover:text-white transition-colors">35</button>
+                <button onclick="setAppFcCount(40,this)"  class="app-fc-btn py-2 rounded-xl text-[10px] font-black bg-slate-700 text-slate-400 hover:bg-violet-600 hover:text-white transition-colors">40</button>
+            </div>
+        </div>
+
+        <!-- Suggestion button -->
+        <button onclick="closeAppSettings();openSuggestionModal()" class="w-full flex items-center justify-center gap-1.5 py-3 bg-slate-800/50 rounded-2xl text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:text-violet-400 transition-colors mb-3">
+            💡 Suggérer une amélioration
+        </button>
+
+        <button onclick="closeAppSettings()" class="w-full py-3 text-slate-700 font-bold text-xs uppercase hover:text-slate-500 transition-colors">Fermer</button>
     </div>
 </div>
 
@@ -685,32 +727,56 @@
         <!-- Params -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-4">
             <label class="text-[9px] font-black text-slate-500 uppercase block mb-3">Paramètres</label>
-            <div class="grid grid-cols-2 gap-3 mb-3">
-                <div>
-                    <span class="text-[9px] text-slate-500 font-black block mb-1.5 uppercase">Temps (s)</span>
-                    <input id="multi-time" type="number" value="20" min="5" max="60"
-                           class="w-full bg-slate-950 px-2 py-2.5 rounded-xl text-white font-black text-sm border border-slate-800 text-center focus:border-violet-500 outline-none transition-colors">
+
+            <!-- Temps + Illimité toggle -->
+            <div class="mb-3">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-[9px] text-slate-500 font-black uppercase">Temps / question (s)</span>
+                    <label class="flex items-center gap-1.5 cursor-pointer select-none" onclick="toggleMultiUnlimitedTime()">
+                        <span class="text-[9px] text-slate-500 font-bold uppercase tracking-wider">⏱ Illimité</span>
+                        <div id="multi-unlimited-toggle" class="w-8 h-4 bg-slate-700 rounded-full relative transition-colors">
+                            <div class="w-3 h-3 bg-slate-400 rounded-full absolute top-0.5 left-0.5 transition-transform"></div>
+                        </div>
+                    </label>
                 </div>
-                <div>
-                    <span class="text-[9px] text-slate-500 font-black block mb-1.5 uppercase">Nb Q</span>
-                    <input id="multi-nb" type="number" value="15" min="5" max="50"
-                           class="w-full bg-slate-950 px-2 py-2.5 rounded-xl text-white font-black text-sm border border-slate-800 text-center focus:border-violet-500 outline-none transition-colors">
-                </div>
+                <input id="multi-time" type="number" value="20" min="5" max="120"
+                       class="w-full bg-slate-950 px-2 py-2.5 rounded-xl text-white font-black text-sm border border-slate-800 text-center focus:border-violet-500 outline-none transition-colors">
             </div>
+
+            <!-- Nb Q / équipe + total -->
+            <div class="mb-3">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-[9px] text-slate-500 font-black uppercase">Nb Q / équipe</span>
+                    <span id="multi-nb-total" class="text-[9px] text-slate-600 font-bold uppercase"></span>
+                </div>
+                <input id="multi-nb" type="number" value="15" min="1" max="50" oninput="updateMultiTotal()"
+                       class="w-full bg-slate-950 px-2 py-2.5 rounded-xl text-white font-black text-sm border border-slate-800 text-center focus:border-violet-500 outline-none transition-colors">
+            </div>
+
+            <!-- Pts + Pénalité (dropdowns) -->
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <span class="text-[9px] text-slate-500 font-black block mb-1.5 uppercase">Pts / bonne rép.</span>
-                    <input id="multi-pts" type="number" value="100" min="10" max="500" step="10"
-                           class="w-full bg-slate-950 px-2 py-2.5 rounded-xl text-white font-black text-sm border border-slate-800 text-center focus:border-violet-500 outline-none transition-colors">
+                    <select id="multi-pts" class="w-full bg-slate-950 px-2 py-2.5 rounded-xl text-white font-black text-sm border border-slate-800 text-center focus:border-violet-500 outline-none transition-colors">
+                        <option value="50">50 pts</option>
+                        <option value="100" selected>100 pts</option>
+                        <option value="150">150 pts</option>
+                        <option value="200">200 pts</option>
+                        <option value="300">300 pts</option>
+                        <option value="500">500 pts</option>
+                    </select>
                 </div>
                 <div>
-                    <span class="text-[9px] text-slate-500 font-black block mb-1.5 uppercase">Pénalité faux (%)</span>
-                    <input id="multi-neg" type="number" value="50" min="0" max="100" step="10"
-                           class="w-full bg-slate-950 px-2 py-2.5 rounded-xl text-white font-black text-sm border border-slate-800 text-center focus:border-violet-500 outline-none transition-colors"
-                           placeholder="0">
+                    <span class="text-[9px] text-slate-500 font-black block mb-1.5 uppercase">Pénalité faux</span>
+                    <select id="multi-neg" class="w-full bg-slate-950 px-2 py-2.5 rounded-xl text-white font-black text-sm border border-slate-800 text-center focus:border-violet-500 outline-none transition-colors">
+                        <option value="0">Aucune</option>
+                        <option value="25">−25%</option>
+                        <option value="50" selected>−50%</option>
+                        <option value="75">−75%</option>
+                        <option value="100">−100%</option>
+                    </select>
                 </div>
             </div>
-            <p class="text-[9px] text-slate-700 font-medium mt-2">Pénalité : % des pts perdus sur mauvaise réponse (0 = pas de pénalité)</p>
         </div>
 
         <!-- Teams -->
@@ -743,7 +809,10 @@
         </div>
         <p class="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] mb-2">C'est votre tour !</p>
         <p id="mg-intro-name" class="text-5xl font-black text-white uppercase italic text-center px-8"></p>
-        <p id="mg-intro-score" class="text-slate-500 font-bold text-sm mt-3"></p>
+        <p id="mg-intro-score" class="text-slate-500 font-bold text-sm mt-3 mb-8"></p>
+        <button id="mg-ready-btn" onclick="onTeamReady()" class="px-10 py-4 bg-white text-slate-950 font-black uppercase text-sm rounded-2xl active:scale-95 transition-all shadow-2xl">
+            ✅ Équipe prête !
+        </button>
     </div>
 
     <div class="px-5 pt-5 pb-3 flex items-center justify-between flex-shrink-0">
@@ -977,10 +1046,15 @@
 // =====================================================================
 // CONFIG & STATE
 // =====================================================================
-const TEAM_COLORS = ['#7c3aed','#f43f5e','#10b981','#f59e0b','#a855f7','#06b6d4'];
+const TEAM_COLORS = ['#3b82f6','#ef4444','#22c55e','#eab308','#f97316','#a855f7'];
 const QUIZ_TIME   = 15;
 
 let C = null, courseName = '', progress = {};
+
+// Paramètres utilisateur partagés (hub + app)
+function getAppSettings() {
+    try { return JSON.parse(localStorage.getItem('hub_settings') || '{}'); } catch { return {}; }
+}
 let fcDeck = [], fcIdx = 0, fcFlipped = false, fcSessionCorrect = 0, fcSessionWrong = 0;
 let fcSessionResults = [], fcMode = 'classic';
 let quizDeck = [], quizIdx = 0, quizScore = 0, quizCorrect = 0, quizWrong = 0, quizTimer = null, quizCountInterval = null;
@@ -1140,9 +1214,16 @@ async function init() {
 async function loadCourseAndStart() {
     showScreen('screen-loading');
     try {
-        const r = await fetch(`../cours/${courseName}.txt`);
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        C = parseCourse(await r.text());
+        let rawText;
+        if (courseName.startsWith('_local_')) {
+            rawText = localStorage.getItem('local_course_content_' + courseName);
+            if (!rawText) throw new Error('Cours local introuvable. Importe-le à nouveau depuis le hub.');
+        } else {
+            const r = await fetch(`../cours/${courseName}.txt`);
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            rawText = await r.text();
+        }
+        C = parseCourse(rawText);
         if (!C.cards.length) throw new Error('Aucune carte trouvée');
         localStorage.setItem('total_' + courseName, C.cards.length);
         await loadProgress();
@@ -1198,19 +1279,21 @@ function saveProgress() {
             .collection('progress').doc(courseName)
             .set(progress)
             .catch(e => console.warn('Firestore save failed:', e));
-        // Update leaderboard score for this course
-        // Guard: ne jamais écrire 0% — si la progression n'a pas chargé depuis Firestore
-        // (règles pas déployées), on ne veut pas écraser un vrai score avec 0.
-        const pct = getMasteryPct();
-        const hasAnyProgress = Object.values(progress).some(p => (p.c || 0) + (p.w || 0) > 0);
-        if (hasAnyProgress) {
+        // Leaderboard : debounce 2s pour n'écrire que l'état final
+        // (évite d'enregistrer un % intermédiaire pendant une session rapide)
+        clearTimeout(window._lbDebounce);
+        window._lbDebounce = setTimeout(() => {
+            if (!useFirebase || !currentUser || !fbDb) return;
+            const pct2 = getMasteryPct();
+            const hasAny = Object.values(progress).some(p => (p.c || 0) + (p.w || 0) > 0);
+            if (!hasAny) return;
             fbDb.collection('leaderboard').doc(currentUser.uid).set({
                 name: currentUser.displayName || currentUser.email || 'Utilisateur',
                 photoURL: currentUser.photoURL || null,
-                scores: { [courseName]: pct },
+                scores: { [courseName]: pct2 },
                 updatedAt: Date.now()
             }, { merge: true }).catch(() => {});
-        }
+        }, 2000);
     }
 }
 
@@ -1291,7 +1374,7 @@ function showScreen(id) {
     document.getElementById(id).classList.add('active');
 }
 function showError(msg) { document.getElementById('error-msg').innerHTML = msg; showScreen('screen-error'); }
-function exitToHome()   { updateHome(); showScreen('screen-home'); }
+function exitToHome()   { activeSession = false; clearTimeout(multiTimerTimeout); updateHome(); showScreen('screen-home'); }
 
 // =====================================================================
 // HOME
@@ -1365,6 +1448,13 @@ function confirmReset() {
     if (confirm('Réinitialiser toute la progression ? Irréversible.')) {
         progress = {};
         saveProgress();
+        // Écriture immédiate dans le leaderboard (passe-droit la debounce)
+        clearTimeout(window._lbDebounce);
+        if (useFirebase && currentUser && fbDb) {
+            fbDb.collection('leaderboard').doc(currentUser.uid).set(
+                { scores: { [courseName]: 0 }, updatedAt: Date.now() }, { merge: true }
+            ).catch(() => {});
+        }
         updateHome();
     }
 }
@@ -1372,6 +1462,66 @@ function confirmReset() {
 // =====================================================================
 // SUGGESTION
 // =====================================================================
+// =====================================================================
+// APP SETTINGS MODAL
+// =====================================================================
+function openAppSettings() {
+    const modal = document.getElementById('app-settings-modal');
+    if (!modal) return;
+    const s = getAppSettings();
+    // Sync pfp toggle
+    const toggle = document.getElementById('app-pfp-toggle');
+    const dot = toggle?.querySelector('div');
+    const pfpOn = s.showPfp !== false; // default: true
+    if (pfpOn) {
+        toggle?.classList.add('bg-violet-600'); toggle?.classList.remove('bg-slate-700');
+        if (dot) dot.style.transform = 'translateX(24px)';
+    } else {
+        toggle?.classList.remove('bg-violet-600'); toggle?.classList.add('bg-slate-700');
+        if (dot) dot.style.transform = '';
+    }
+    // Sync fc count
+    const fc = s.fcCount || 20;
+    document.querySelectorAll('.app-fc-btn').forEach(btn => {
+        const v = parseInt(btn.textContent);
+        btn.classList.toggle('bg-violet-600', v === fc);
+        btn.classList.toggle('text-white', v === fc);
+        btn.classList.toggle('bg-slate-700', v !== fc);
+        btn.classList.toggle('text-slate-400', v !== fc);
+    });
+    modal.classList.remove('hidden');
+}
+function closeAppSettings() {
+    document.getElementById('app-settings-modal')?.classList.add('hidden');
+}
+function toggleAppPfp() {
+    const toggle = document.getElementById('app-pfp-toggle');
+    const dot = toggle?.querySelector('div');
+    const s = getAppSettings();
+    const pfpOn = toggle?.classList.contains('bg-violet-600');
+    if (pfpOn) {
+        toggle?.classList.remove('bg-violet-600'); toggle?.classList.add('bg-slate-700');
+        if (dot) dot.style.transform = '';
+        s.showPfp = false;
+    } else {
+        toggle?.classList.add('bg-violet-600'); toggle?.classList.remove('bg-slate-700');
+        if (dot) dot.style.transform = 'translateX(24px)';
+        s.showPfp = true;
+    }
+    localStorage.setItem('hub_settings', JSON.stringify(s));
+}
+function setAppFcCount(n, btn) {
+    const s = getAppSettings();
+    s.fcCount = n;
+    localStorage.setItem('hub_settings', JSON.stringify(s));
+    document.querySelectorAll('.app-fc-btn').forEach(b => {
+        b.classList.toggle('bg-violet-600', b === btn);
+        b.classList.toggle('text-white', b === btn);
+        b.classList.toggle('bg-slate-700', b !== btn);
+        b.classList.toggle('text-slate-400', b !== btn);
+    });
+}
+
 function openSuggestionModal() {
     const el = document.getElementById('suggestion-modal');
     if (el) {
@@ -1416,7 +1566,7 @@ async function submitSuggestion() {
 // MODAL UTILS
 // =====================================================================
 function closeAllModals() {
-    ['fc-mode-modal','quiz-mode-modal','report-modal','presenter-choice-modal','suggestion-modal'].forEach(id => {
+    ['fc-mode-modal','quiz-mode-modal','report-modal','presenter-choice-modal','suggestion-modal','app-settings-modal'].forEach(id => {
         document.getElementById(id)?.classList.add('hidden');
     });
 }
@@ -1639,10 +1789,11 @@ function startFlashcards(mode) {
         if(ma!==mb) return ma?1:-1;
         return Math.random()-.5;
     });
-    // Limiter à 25 questions max, mais toujours garder TOUS les signets
+    // Taille du deck selon les paramètres (défaut 20), signets toujours inclus
+    const fcCount = getAppSettings().fcCount || 20;
     const bookmarkCards = order.filter(i=>bookmarks.has(i));
     const otherCards    = order.filter(i=>!bookmarks.has(i));
-    const maxOthers = Math.max(0, 25 - bookmarkCards.length);
+    const maxOthers = Math.max(0, fcCount - bookmarkCards.length);
     fcDeck = [...bookmarkCards, ...otherCards.slice(0, maxOthers)];
     fcIdx=0; fcSessionCorrect=0; fcSessionWrong=0;
     fcSessionResults = [];
@@ -1680,8 +1831,11 @@ function showFlashcard() {
     }
 
     const el = document.getElementById('fc-card');
+    el.style.transition = 'none'; // évite le "snap" qui cause la vibration
     el.classList.remove('fly-right','fly-left','snapping','glow-green','glow-red');
-    el.style.transform=''; el.style.opacity='';
+    el.style.transform = ''; el.style.opacity = '';
+    void el.offsetWidth; // force reflow avant de réactiver la transition
+    el.style.transition = '';
     el.classList.add('fade-up'); setTimeout(()=>el.classList.remove('fade-up'),400);
     const pct = Math.round(fcIdx/fcDeck.length*100);
     document.getElementById('fc-progress').style.width = pct+'%';
@@ -1980,6 +2134,28 @@ function updateTeamCountLabel() {
     const n = document.getElementById('teams-list')?.children.length || 0;
     const el = document.getElementById('team-count-label');
     if (el) el.textContent = `${n} équipe${n>1?'s':''}`;
+    updateMultiTotal();
+}
+function updateMultiTotal() {
+    const nb = parseInt(document.getElementById('multi-nb')?.value) || 15;
+    const nTeams = document.getElementById('teams-list')?.children.length || 2;
+    const el = document.getElementById('multi-nb-total');
+    if (el) el.textContent = `Total : ${nb * nTeams} Q`;
+}
+function toggleMultiUnlimitedTime() {
+    const toggle = document.getElementById('multi-unlimited-toggle');
+    const dot = toggle?.querySelector('div');
+    const timeInput = document.getElementById('multi-time');
+    const isOn = toggle?.classList.contains('bg-violet-600');
+    if (isOn) {
+        toggle.classList.remove('bg-violet-600'); toggle.classList.add('bg-slate-700');
+        if (dot) dot.style.transform = '';
+        timeInput.disabled = false; timeInput.classList.remove('opacity-40');
+    } else {
+        toggle.classList.add('bg-violet-600'); toggle.classList.remove('bg-slate-700');
+        if (dot) dot.style.transform = 'translateX(16px)';
+        timeInput.disabled = true; timeInput.classList.add('opacity-40');
+    }
 }
 
 function launchMulti() {
@@ -1987,14 +2163,17 @@ function launchMulti() {
     teams=inputs.map((inp,i)=>({name:inp.value.trim()||`Équipe ${i+1}`,score:0,color:TEAM_COLORS[i]}));
     if(teams.length<2){ alert('Ajoute au moins 2 équipes !'); return; }
     const negPct = parseInt(document.getElementById('multi-neg')?.value || '50');
+    const unlimited = document.getElementById('multi-unlimited-toggle')?.classList.contains('bg-violet-600') || false;
     multiSettings={
-        time: parseInt(document.getElementById('multi-time').value)||20,
+        time: unlimited ? 0 : (parseInt(document.getElementById('multi-time').value)||20),
+        unlimited,
         pts:  parseInt(document.getElementById('multi-pts').value)||100,
         nb:   parseInt(document.getElementById('multi-nb').value)||15,
         negPct: isNaN(negPct) ? 50 : Math.max(0, Math.min(100, negPct))
     };
-    multiPool=[...C.cards.map((_,i)=>i)].sort(()=>Math.random()-.5).slice(0,Math.min(multiSettings.nb,C.cards.length));
+    multiPool=[...C.cards.map((_,i)=>i)].sort(()=>Math.random()-.5).slice(0,Math.min(multiSettings.nb * teams.length, C.cards.length));
     multiRound=0; multiTeamIdx=0;
+    activeSession = true;
     showScreen('screen-multi-game');
     showMultiQuestion();
 }
@@ -2002,23 +2181,24 @@ function launchMulti() {
 function showMultiQuestion() {
     const team = teams[multiTeamIdx];
 
-    // Afficher l'intro de l'équipe pendant 2 secondes
+    // Afficher l'intro de l'équipe — l'équipe appuie sur "Prêt !" pour commencer
     const intro = document.getElementById('mg-team-intro');
     const introDot = document.getElementById('mg-intro-dot-big');
     const introRing = document.getElementById('mg-intro-ring');
     const introName = document.getElementById('mg-intro-name');
     const introScore = document.getElementById('mg-intro-score');
+    const readyBtn = document.getElementById('mg-ready-btn');
     introDot.style.background = team.color;
     introRing.style.borderColor = team.color;
     introName.textContent = team.name;
     introScore.textContent = `Score : ${team.score} pts`;
+    if (readyBtn) { readyBtn.style.background = '#fff'; readyBtn.style.color = '#0f172a'; }
     intro.classList.remove('hidden');
-
     clearTimeout(multiTimerTimeout);
-    setTimeout(() => {
-        intro.classList.add('hidden');
-        startMultiQuestionDisplay();
-    }, 2000);
+}
+function onTeamReady() {
+    document.getElementById('mg-team-intro').classList.add('hidden');
+    startMultiQuestionDisplay();
 }
 
 function startMultiQuestionDisplay() {
@@ -2033,16 +2213,23 @@ function startMultiQuestionDisplay() {
     document.getElementById('mg-validation').classList.add('hidden');
 
     const bar=document.getElementById('mg-timer-bar');
-    bar.style.transition='none'; bar.style.width='100%'; bar.style.backgroundColor=team.color;
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{
-        bar.style.transition=`width ${multiSettings.time}s linear`;
-        bar.style.width='0%';
-    }));
-    // Timer expire → clignoter en rouge mais NE PAS révéler automatiquement
-    multiTimerTimeout=setTimeout(()=>{
-        bar.style.transition='none';
-        bar.style.backgroundColor='#f43f5e';
-    }, multiSettings.time*1000);
+    if (multiSettings.unlimited) {
+        // Pas de timer — barre fixe semi-transparente
+        bar.style.transition='none'; bar.style.width='100%';
+        bar.style.backgroundColor=team.color; bar.style.opacity='0.3';
+    } else {
+        bar.style.opacity='1';
+        bar.style.transition='none'; bar.style.width='100%'; bar.style.backgroundColor=team.color;
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{
+            bar.style.transition=`width ${multiSettings.time}s linear`;
+            bar.style.width='0%';
+        }));
+        // Timer expire → rouge mais NE PAS révéler automatiquement
+        multiTimerTimeout=setTimeout(()=>{
+            bar.style.transition='none';
+            bar.style.backgroundColor='#f43f5e';
+        }, multiSettings.time*1000);
+    }
 }
 
 function revealMultiAnswer() {
@@ -2133,6 +2320,7 @@ function nextMultiRound() {
 }
 
 function showPodium() {
+    activeSession = false;
     const sorted=[...teams].sort((a,b)=>b.score-a.score);
     const topN=sorted.slice(0,Math.min(3,sorted.length));
     const heights=[192,140,100], orders=['order-2','order-1','order-3'];
@@ -2893,6 +3081,7 @@ function initExitButtons() {
 document.addEventListener('DOMContentLoaded', () => {
     const list=document.getElementById('teams-list');
     if(list.children.length===0){ addTeam(); addTeam(); }
+    updateMultiTotal();
     const presList=document.getElementById('pres-teams-list');
     if(presList && presList.children.length===0){ addPresTeam(); addPresTeam(); }
     initExitButtons();
