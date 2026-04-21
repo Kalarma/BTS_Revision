@@ -2,10 +2,14 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Kahoot BTS — Rejoindre</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="../firebase-config.js" onerror="console.log('no firebase')"></script>
+    <!-- Préchargement Firebase pour réduire la latence -->
+    <link rel="preload" href="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js" as="script">
+    <link rel="preload" href="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js" as="script">
+    <link rel="preload" href="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js" as="script">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         :root { --app-h: 100dvh; --c-primary:#7c3aed; --c-orange:#f97316; --c-green:#10b981; }
@@ -25,6 +29,37 @@
         .color-btn { cursor:pointer; }
         #screen-question { overflow:hidden; }
         #q-choices { display:grid; }
+
+        /* ================================================================== */
+        /* DESKTOP RESPONSIVE */
+        /* ================================================================== */
+        @media (min-width: 768px) {
+            [style*="max-width:480px"] { max-width: 760px !important; }
+            [style*="max-width:520px"] { max-width: 820px !important; }
+        }
+        @media (min-width: 1024px) {
+            [style*="max-width:480px"] { max-width: 960px !important; }
+            [style*="max-width:520px"] { max-width: 1040px !important; }
+            .text-\[7px\]   { font-size: 11px !important; }
+            .text-\[9px\]   { font-size: 13px !important; }
+            .text-\[10px\]  { font-size: 14px !important; }
+            .text-\[11px\]  { font-size: 15px !important; }
+            .text-xs   { font-size: 0.95rem !important; line-height: 1.4 !important; }
+            .text-sm   { font-size: 1.1rem !important; line-height: 1.5 !important; }
+            .text-base { font-size: 1.25rem !important; line-height: 1.5 !important; }
+            .text-lg   { font-size: 1.45rem !important; }
+            .text-xl   { font-size: 1.7rem !important; }
+            .text-2xl  { font-size: 2rem !important; }
+            .text-3xl  { font-size: 2.5rem !important; }
+            .text-4xl  { font-size: 3.2rem !important; }
+            .text-5xl  { font-size: 4rem !important; }
+            /* Boutons de choix plus grands + hauteur plus généreuse */
+            .choice-btn { min-height: 88px; font-size: 1.25rem !important; }
+        }
+        @media (min-width: 1536px) {
+            [style*="max-width:480px"] { max-width: 1120px !important; }
+            [style*="max-width:520px"] { max-width: 1200px !important; }
+        }
     </style>
 </head>
 <body>
@@ -63,9 +98,28 @@
         <div id="join-error" class="hidden mb-3 px-4 py-2 bg-rose-500/10 border border-rose-500/20 rounded-xl">
             <p class="text-rose-400 text-xs font-bold text-center"></p>
         </div>
-        <button onclick="joinRoom()" class="w-full py-4 bg-violet-700 text-white font-black uppercase rounded-2xl active:scale-95 transition-all shadow-lg shadow-violet-500/20">
+        <button onclick="joinRoom()" class="w-full py-4 bg-violet-700 text-white font-black uppercase rounded-2xl active:scale-95 transition-all shadow-lg shadow-violet-500/20 mb-3">
             Rejoindre !
         </button>
+
+        <!-- Auth status / Google sign-in -->
+        <div id="auth-info" class="mt-2 text-center">
+            <div id="auth-anon" class="hidden">
+                <p class="text-[10px] text-slate-600 font-bold mb-2">⚠️ Tu joues en mode invité — tes points ne seront pas sauvegardés</p>
+                <button onclick="signInForKahoot()" class="inline-flex items-center gap-2 px-4 py-2 bg-white text-slate-900 text-[11px] font-black uppercase rounded-xl active:scale-95 transition-all hover:bg-slate-100">
+                    <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 48 48">
+                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                    </svg>
+                    Se connecter pour garder ses points
+                </button>
+            </div>
+            <div id="auth-logged" class="hidden">
+                <p class="text-[10px] text-emerald-500 font-bold">✓ Connecté — tes points seront sauvegardés sur ton compte</p>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -171,7 +225,8 @@
             <p class="text-[9px] font-black text-slate-600 uppercase mb-1">Score total</p>
             <p id="result-total-score" class="text-white font-black text-3xl"></p>
         </div>
-        <p class="text-slate-700 text-[10px] font-bold uppercase mt-6 pulse">Prochaine question bientôt...</p>
+        <button onclick="openRoomTermInfo()" class="mt-4 w-full py-3 bg-sky-500/15 border border-sky-500/30 text-sky-300 font-black text-xs uppercase tracking-widest rounded-2xl active:scale-95 transition-all">📖 Voir la définition complète</button>
+        <p class="text-slate-700 text-[10px] font-bold uppercase mt-4 pulse">Prochaine question bientôt...</p>
     </div>
 </div>
 
@@ -261,11 +316,87 @@
 </div>
 
 </div><!-- /app -->
+
+<!-- ===== MODAL DÉTAILS TERME (room/kahoot joueur) ===== -->
+<div id="room-term-modal" class="hidden fixed inset-0 z-50 flex items-end justify-center" style="background:rgba(2,6,23,.85);backdrop-filter:blur(4px)" onclick="if(event.target===this)closeRoomTermInfo()">
+    <div class="w-full bg-slate-900 border-t border-slate-800 rounded-t-3xl p-6 fade-up flex flex-col" style="max-width:520px;max-height:85vh">
+        <div class="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-4 flex-shrink-0"></div>
+        <div class="flex items-start justify-between gap-3 mb-3 flex-shrink-0">
+            <div class="flex-grow min-w-0">
+                <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">Terme</p>
+                <h3 id="rt-term" class="text-xl font-extrabold text-white break-words"></h3>
+            </div>
+            <button onclick="closeRoomTermInfo()" class="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-xl text-slate-500 hover:text-white font-black">✕</button>
+        </div>
+        <div class="flex-grow overflow-y-auto space-y-4 pr-1">
+            <p id="rt-def" class="text-violet-300 text-sm leading-relaxed"></p>
+            <div id="rt-long-wrap" class="hidden">
+                <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-2">📖 Définition complète</p>
+                <p id="rt-def-long" class="text-slate-300 text-sm leading-relaxed"></p>
+            </div>
+        </div>
+        <div class="flex-shrink-0 space-y-2 mt-4 pt-4 border-t border-slate-800">
+            <button onclick="roomTermGoogle()" class="w-full py-3 bg-sky-500/15 border border-sky-500/30 text-sky-300 font-black text-xs uppercase tracking-widest rounded-2xl active:scale-95 transition-all">🔎 Rechercher sur Google</button>
+            <button onclick="roomTermReport()" class="w-full py-3 bg-rose-500/15 border border-rose-500/30 text-rose-300 font-black text-xs uppercase tracking-widest rounded-2xl active:scale-95 transition-all">⚠️ Signaler une erreur</button>
+        </div>
+    </div>
+</div>
+
 <script>
 // =====================================================================
 // STATE
 // =====================================================================
 let db = null, useFirebase = false;
+
+// ===== MODAL DÉTAILS TERME =====
+let _roomTermInfo = { term: '', def: '', defLong: '' };
+
+function openRoomTermInfo() {
+    const q = (questions || [])[currentQ];
+    if (!q) return;
+    _roomTermInfo = {
+        term: q.term || q.question || '',
+        def: q.def || q.answer || '',
+        defLong: q.defLong || q.def || q.answer || ''
+    };
+    document.getElementById('rt-term').textContent = _roomTermInfo.term;
+    document.getElementById('rt-def').textContent = _roomTermInfo.def || '—';
+    const longWrap = document.getElementById('rt-long-wrap');
+    if (_roomTermInfo.defLong && _roomTermInfo.defLong !== _roomTermInfo.def) {
+        longWrap.classList.remove('hidden');
+        document.getElementById('rt-def-long').textContent = _roomTermInfo.defLong;
+    } else {
+        longWrap.classList.add('hidden');
+    }
+    document.getElementById('room-term-modal').classList.remove('hidden');
+}
+
+function closeRoomTermInfo() {
+    document.getElementById('room-term-modal').classList.add('hidden');
+}
+
+function roomTermGoogle() {
+    if (!_roomTermInfo.term) return;
+    window.open('https://www.google.com/search?q=' + encodeURIComponent(_roomTermInfo.term), '_blank', 'noopener');
+}
+
+function roomTermReport() {
+    closeRoomTermInfo();
+    if (typeof db !== 'undefined' && db) {
+        db.collection('reports').add({
+            type: 'kahoot_player',
+            term: _roomTermInfo.term,
+            def: _roomTermInfo.def,
+            reporter: 'anonymous',
+            ts: Date.now()
+        }).catch(() => {});
+    }
+    const toast = document.createElement('div');
+    toast.className = 'fixed top-6 left-1/2 -translate-x-1/2 z-[100] bg-rose-500 text-white font-black text-sm px-5 py-3 rounded-2xl shadow-2xl fade-up';
+    toast.textContent = '⚠️ Erreur signalée, merci !';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+}
 let roomCode = '', playerId = '', playerName = '', playerScore = 0;
 let playerColor = '#7c3aed';
 let currentQ = 0, totalQ = 10, qTime = 20;
@@ -313,13 +444,42 @@ async function initFirebase() {
         await loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-firestore-compat.js`);
         if (!firebase.apps.length) firebase.initializeApp(cfg);
         db = firebase.firestore();
-        // Connexion anonyme pour autoriser les écritures Firestore
         const auth = firebase.auth();
-        if (!auth.currentUser) {
-            await auth.signInAnonymously().catch(e => console.warn('Anon auth:', e));
-        }
+        // Si déjà connecté en Google (depuis le hub), on garde sa session
+        // Sinon, on propose connexion anonyme pour permettre l'écriture Firestore
+        auth.onAuthStateChanged(u => {
+            updateAuthUI(u);
+            // Si pas connecté du tout → anon
+            if (!u) auth.signInAnonymously().catch(e => console.warn('Anon auth:', e));
+        });
         useFirebase = true;
     } catch(e) { console.warn('Firebase failed:', e); }
+}
+
+function updateAuthUI(u) {
+    const anonBox = document.getElementById('auth-anon');
+    const loggedBox = document.getElementById('auth-logged');
+    if (!anonBox || !loggedBox) return;
+    if (u && !u.isAnonymous) {
+        anonBox.classList.add('hidden');
+        loggedBox.classList.remove('hidden');
+        // Préremplir le pseudo si dispo
+        const ni = document.getElementById('join-name');
+        if (ni && !ni.value) ni.value = u.displayName || (u.email ? u.email.split('@')[0] : '');
+    } else {
+        anonBox.classList.remove('hidden');
+        loggedBox.classList.add('hidden');
+    }
+}
+
+async function signInForKahoot() {
+    try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        await firebase.auth().signInWithPopup(provider);
+    } catch(e) {
+        console.warn('Google sign-in failed:', e);
+        showJoinError('Impossible de se connecter. Tu peux jouer sans compte (mode invité).');
+    }
 }
 
 // =====================================================================
@@ -349,7 +509,9 @@ async function joinRoom() {
     errEl.classList.add('hidden');
     roomCode = code;
     playerName = name;
-    playerId = 'p_' + Math.random().toString(36).slice(2, 10);
+    // Utiliser l'UID Google si connecté (stats cumulatives), sinon random
+    const au = firebase.auth?.().currentUser;
+    playerId = (au && !au.isAnonymous) ? ('u_' + au.uid.slice(0, 10)) : ('p_' + Math.random().toString(36).slice(2, 10));
     playerScore = 0;
 
     try {
@@ -830,9 +992,34 @@ function showFinalScreen(room) {
     const myRank = sorted.findIndex(p => p.name === playerName) + 1;
     const emojis = ['🥇', '🥈', '🥉'];
 
+    const finalScore = room.players?.[playerId]?.score || playerScore;
     document.getElementById('final-emoji').textContent = emojis[myRank - 1] || '🎮';
     document.getElementById('final-rank').textContent  = `${myRank}e sur ${sorted.length}`;
-    document.getElementById('final-score').textContent = (room.players?.[playerId]?.score || playerScore) + ' pts';
+    document.getElementById('final-score').textContent = finalScore + ' pts';
+
+    // Sauvegarder les stats sur le compte utilisateur si connecté avec Google
+    try {
+        const u = firebase.auth?.().currentUser;
+        if (u && !u.isAnonymous && db) {
+            const ref = db.collection('users').doc(u.uid);
+            const updates = {
+                kahootPlayed: firebase.firestore.FieldValue.increment(1),
+                kahootTotalScore: firebase.firestore.FieldValue.increment(finalScore || 0),
+                kahootLastScore: finalScore || 0,
+                kahootLastRank: myRank,
+                kahootLastPlayers: sorted.length,
+                kahootLastAt: Date.now()
+            };
+            ref.set(updates, { merge: true }).catch(e => console.warn('Kahoot save:', e));
+            // Leaderboard global : ajouter les points Kahoot
+            db.collection('leaderboard').doc(u.uid).set({
+                name: u.displayName || (u.email ? u.email.split('@')[0] : 'Anonyme'),
+                photoURL: u.photoURL || null,
+                kahootPoints: firebase.firestore.FieldValue.increment(finalScore || 0),
+                updatedAt: Date.now()
+            }, { merge: true }).catch(()=>{});
+        }
+    } catch(e) { console.warn('Kahoot stats error:', e); }
 
     document.getElementById('final-leaderboard').innerHTML = sorted.map((p, i) => {
         const isMe = p.name === playerName;
