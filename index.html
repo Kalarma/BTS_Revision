@@ -307,8 +307,13 @@
             <div class="mb-5 pb-5 border-b border-slate-800">
                 <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Cartes par session Flashcards</p>
                 <div class="grid grid-cols-4 gap-2">
-                    ${[10,15,20,25,30,35,40].map(n => `<button onclick="setFcCount(${n})" id="fc-count-btn-${n}"
-                        class="py-2 rounded-xl font-black text-xs border transition-all fc-count-btn ${n===20?'bg-violet-700 border-violet-600 text-white':'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'}">${n}</button>`).join('')}
+                    <button onclick="setFcCount(10)"  id="fc-count-btn-10"  class="py-2 rounded-xl font-black text-xs border transition-all fc-count-btn bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600">10</button>
+                    <button onclick="setFcCount(15)"  id="fc-count-btn-15"  class="py-2 rounded-xl font-black text-xs border transition-all fc-count-btn bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600">15</button>
+                    <button onclick="setFcCount(20)"  id="fc-count-btn-20"  class="py-2 rounded-xl font-black text-xs border transition-all fc-count-btn bg-violet-700 border-violet-600 text-white">20</button>
+                    <button onclick="setFcCount(25)"  id="fc-count-btn-25"  class="py-2 rounded-xl font-black text-xs border transition-all fc-count-btn bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600">25</button>
+                    <button onclick="setFcCount(30)"  id="fc-count-btn-30"  class="py-2 rounded-xl font-black text-xs border transition-all fc-count-btn bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600">30</button>
+                    <button onclick="setFcCount(35)"  id="fc-count-btn-35"  class="py-2 rounded-xl font-black text-xs border transition-all fc-count-btn bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600">35</button>
+                    <button onclick="setFcCount(40)"  id="fc-count-btn-40"  class="py-2 rounded-xl font-black text-xs border transition-all fc-count-btn bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600">40</button>
                 </div>
                 <p class="text-[9px] text-slate-700 mt-1.5 font-medium">Les signets sont toujours inclus en priorité</p>
             </div>
