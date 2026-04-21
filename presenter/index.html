@@ -63,6 +63,30 @@
     </div>
 </div>
 
+<!-- ================ TARGETING (équipe ciblée / step avant Q) ================ -->
+<div id="screen-targeting" class="screen items-center justify-center p-12 text-center">
+    <div class="fade-in w-full" style="max-width:700px">
+        <p class="text-[11px] font-black text-slate-600 uppercase tracking-[0.3em] mb-8">Prochaine question</p>
+        <div id="tgt-team-badge" class="hidden mb-8">
+            <div id="tgt-team-dot" class="w-24 h-24 rounded-full border-4 flex items-center justify-center mx-auto mb-4" style="border-color:#7c3aed;background:rgba(124,58,237,.15)">
+                <span class="text-4xl font-black text-white">🎯</span>
+            </div>
+            <p class="text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">C'est au tour de</p>
+            <h2 id="tgt-team-name" class="text-5xl font-black text-white uppercase italic"></h2>
+        </div>
+        <div id="tgt-libre-badge" class="hidden mb-8">
+            <div class="text-6xl mb-4">🙋</div>
+            <h2 class="text-4xl font-black text-white uppercase italic">Équipe Libre</h2>
+            <p class="text-slate-500 text-base mt-2">Première main levée répond</p>
+        </div>
+        <div class="flex items-center justify-center gap-3 text-slate-600">
+            <div class="w-2 h-2 rounded-full bg-slate-700 animate-pulse"></div>
+            <p class="text-sm font-bold">En attente du présentateur...</p>
+            <div class="w-2 h-2 rounded-full bg-slate-700 animate-pulse" style="animation-delay:.3s"></div>
+        </div>
+    </div>
+</div>
+
 <!-- ================ QUESTION ================ -->
 <div id="screen-question" class="screen" style="flex-direction:row">
 
@@ -94,6 +118,7 @@
             <div id="q-answer-area" class="hidden mt-8 pt-8 border-t border-slate-800 fade-in">
                 <p class="text-[11px] font-black text-emerald-500 uppercase tracking-widest mb-4">✓ Réponse</p>
                 <p id="q-def" class="text-3xl font-bold text-emerald-400 leading-snug"></p>
+                <button onclick="openPresTermModal()" class="mt-4 px-4 py-2 bg-sky-500/15 border border-sky-500/30 text-sky-300 font-bold text-sm rounded-xl active:scale-95 transition-all">📖 Définition complète</button>
             </div>
         </div>
     </div>
@@ -132,6 +157,25 @@
     </div>
 </div>
 
+<!-- ===== MODAL DÉTAILS TERME (TV présentateur) ===== -->
+<div id="pres-term-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-8" style="background:rgba(2,6,23,.85);backdrop-filter:blur(4px)" onclick="if(event.target===this)closePresTermModal()">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-8 w-full max-w-lg">
+        <div class="flex items-start justify-between gap-4 mb-4">
+            <h3 id="ptm-term" class="text-2xl font-extrabold text-white break-words flex-grow"></h3>
+            <button onclick="closePresTermModal()" class="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl text-slate-500 hover:text-white font-black text-lg">✕</button>
+        </div>
+        <p id="ptm-def" class="text-violet-300 text-base leading-relaxed mb-4"></p>
+        <div id="ptm-long-wrap" class="hidden mb-4">
+            <p class="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2">📖 Définition complète</p>
+            <p id="ptm-def-long" class="text-slate-300 text-sm leading-relaxed"></p>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-slate-800">
+            <button onclick="presTermGoogle()" class="py-3 bg-sky-500/15 border border-sky-500/30 text-sky-300 font-black text-xs uppercase tracking-widest rounded-2xl active:scale-95 transition-all">🔎 Google</button>
+            <button onclick="presTermReport()" class="py-3 bg-rose-500/15 border border-rose-500/30 text-rose-300 font-black text-xs uppercase tracking-widest rounded-2xl active:scale-95 transition-all">⚠️ Signaler</button>
+        </div>
+    </div>
+</div>
+
 <script>
 // =====================================================================
 // FIREBASE
@@ -166,6 +210,53 @@ async function initFirebase() {
     } catch(e) { showError('Erreur Firebase : ' + e.message); return false; }
 }
 
+// ===== MODAL DÉTAILS TERME (TV) =====
+let _presTV_termInfo = { term: '', def: '', defLong: '' };
+
+function openPresTermModal() {
+    const q = currentRoomData ? ((currentRoomData.questions || [])[currentRoomData.currentQ || 0]) : null;
+    if (!q) return;
+    _presTV_termInfo = { term: q.term || '', def: q.def || '', defLong: q.defLong || q.def || '' };
+    document.getElementById('ptm-term').textContent = _presTV_termInfo.term;
+    document.getElementById('ptm-def').textContent = _presTV_termInfo.def || '—';
+    const longWrap = document.getElementById('ptm-long-wrap');
+    if (_presTV_termInfo.defLong && _presTV_termInfo.defLong !== _presTV_termInfo.def) {
+        longWrap.classList.remove('hidden');
+        document.getElementById('ptm-def-long').textContent = _presTV_termInfo.defLong;
+    } else {
+        longWrap.classList.add('hidden');
+    }
+    document.getElementById('pres-term-modal').classList.remove('hidden');
+}
+
+function closePresTermModal() { document.getElementById('pres-term-modal').classList.add('hidden'); }
+
+function presTermGoogle() {
+    if (!_presTV_termInfo.term) return;
+    window.open('https://www.google.com/search?q=' + encodeURIComponent(_presTV_termInfo.term), '_blank', 'noopener');
+}
+
+function presTermReport() {
+    closePresTermModal();
+    if (typeof fbDb !== 'undefined' && fbDb) {
+        fbDb.collection('reports').add({ type: 'presenter_tv', term: _presTV_termInfo.term, def: _presTV_termInfo.def, ts: Date.now() }).catch(() => {});
+    }
+}
+
+function autoShrinkTVDef() {
+    const el = document.getElementById('q-def');
+    if (!el) return;
+    el.style.fontSize = '';
+    const card = document.getElementById('q-card');
+    if (!card) return;
+    let fs = 30, attempts = 0;
+    el.style.fontSize = fs + 'px';
+    while (el.scrollHeight > (card.clientHeight - 180) && fs > 14 && attempts++ < 40) {
+        fs -= 1;
+        el.style.fontSize = fs + 'px';
+    }
+}
+
 // =====================================================================
 // CONNECT
 // =====================================================================
@@ -189,11 +280,33 @@ async function connect() {
     if (!snap.exists) { showError('Salle introuvable — vérifie le code'); return; }
 
     roomCode = code;
-    // Mark screen connected
-    fbDb.collection('rooms').doc(code).set({ screenConnected: true }, { merge: true });
+    // Mark screen connected + start heartbeat
+    fbDb.collection('rooms').doc(code).set({
+        screenConnected: true,
+        screenLastSeen: Date.now()
+    }, { merge: true });
+    startScreenHeartbeat();
 
     startListening();
 }
+
+let _screenHeartbeat = null;
+function startScreenHeartbeat() {
+    clearInterval(_screenHeartbeat);
+    _screenHeartbeat = setInterval(() => {
+        if (!roomCode || !fbDb) return;
+        fbDb.collection('rooms').doc(roomCode).set({
+            screenConnected: true,
+            screenLastSeen: Date.now()
+        }, { merge: true }).catch(()=>{});
+    }, 3000);
+}
+window.addEventListener('beforeunload', () => {
+    if (roomCode && fbDb) {
+        // Tentative de mise à jour (pas toujours fiable au beforeunload)
+        fbDb.collection('rooms').doc(roomCode).set({ screenConnected: false }, { merge: true });
+    }
+});
 
 // =====================================================================
 // REAL-TIME LISTENER
@@ -208,9 +321,11 @@ function startListening() {
     });
 }
 
+let currentRoomData = null;
 let currentPhase = '', qTimerInterval = null;
 
 function handleRoomState(room) {
+    currentRoomData = room;
     const phase = room.phase || 'waiting';
 
     if (phase === 'waiting') {
@@ -218,6 +333,26 @@ function handleRoomState(room) {
         document.getElementById('wait-course').textContent = room.courseName || '';
         document.querySelector('#wait-code p:last-child').textContent = roomCode;
         renderWaitTeams(room.settings?.teams || [], room.settings || {});
+        return;
+    }
+
+    if (phase === 'targeting') {
+        const target = room.targetTeam;
+        const tgtTeamBadge = document.getElementById('tgt-team-badge');
+        const tgtLibreBadge = document.getElementById('tgt-libre-badge');
+        if (target && target.name) {
+            const nameEl = document.getElementById('tgt-team-name');
+            const dotEl  = document.getElementById('tgt-team-dot');
+            if (nameEl) nameEl.textContent = target.name;
+            if (dotEl) { dotEl.style.borderColor = target.color || '#7c3aed'; dotEl.style.background = (target.color || '#7c3aed') + '25'; }
+            if (tgtTeamBadge) tgtTeamBadge.classList.remove('hidden');
+            if (tgtLibreBadge) tgtLibreBadge.classList.add('hidden');
+        } else {
+            if (tgtTeamBadge) tgtTeamBadge.classList.add('hidden');
+            if (tgtLibreBadge) tgtLibreBadge.classList.remove('hidden');
+        }
+        showScreen('screen-targeting');
+        currentPhase = phase;
         return;
     }
 
@@ -231,8 +366,12 @@ function handleRoomState(room) {
         }
         // Show/hide answer
         const ansArea = document.getElementById('q-answer-area');
-        if (room.showAnswer) ansArea.classList.remove('hidden');
-        else ansArea.classList.add('hidden');
+        if (room.showAnswer) {
+            ansArea.classList.remove('hidden');
+            autoShrinkTVDef();
+        } else {
+            ansArea.classList.add('hidden');
+        }
 
         // Scores live (toujours mis à jour)
         renderTeamsBar(room.settings?.teams || []);
