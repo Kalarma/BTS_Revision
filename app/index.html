@@ -204,6 +204,11 @@
         </div>
 
 
+        <!-- ── SUCCÈS ── -->
+        <button onclick="showSucces()" class="w-full mb-4 py-3 bg-slate-900 border border-slate-800 hover:border-emerald-500/30 rounded-3xl font-black text-white text-sm active:scale-95 transition-all flex items-center justify-center gap-2">
+            <span>📈</span><span>Mes Succès</span>
+        </button>
+
         <!-- ── MODE SOLO ── -->
         <p class="text-[9px] font-black text-slate-700 uppercase tracking-widest px-1 mb-2">Mode Solo</p>
         <div class="space-y-2 mb-4">
@@ -513,6 +518,61 @@
     </div>
 </div>
 
+<!-- ==================== SUCCÈS ==================== -->
+<div id="screen-succes" class="screen overflow-y-auto">
+    <div class="flex flex-col w-full px-5 pb-10 mx-auto" style="max-width:480px">
+        <!-- Header -->
+        <div class="pt-6 pb-4 flex items-center gap-3 flex-shrink-0">
+            <button onclick="exitToHome()" class="quit-btn w-9 h-9 flex items-center justify-center rounded-xl text-slate-500 font-black text-base">✕</button>
+            <h2 class="text-xl font-black text-white">📈 Mes Succès</h2>
+        </div>
+
+        <!-- Taux global -->
+        <div id="succ-rate-box" class="bg-slate-900 border border-slate-800 rounded-3xl px-6 py-5 mb-4">
+            <div class="flex items-end justify-between mb-3">
+                <div>
+                    <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">Taux de réussite global</p>
+                    <p id="succ-rate-pct" class="text-5xl font-black text-white leading-none">—</p>
+                </div>
+                <div class="text-right">
+                    <p id="succ-rate-correct" class="text-sm font-black text-emerald-400"></p>
+                    <p id="succ-rate-wrong"   class="text-sm font-black text-rose-400"></p>
+                </div>
+            </div>
+            <!-- Barre dégradée Rouge → Vert -->
+            <div class="h-3 rounded-full overflow-hidden bg-slate-800">
+                <div id="succ-rate-bar" class="h-full rounded-full transition-all duration-700"
+                     style="width:0%;background:linear-gradient(90deg,#ef4444,#f97316,#22c55e)"></div>
+            </div>
+        </div>
+
+        <!-- Calendrier 42 jours -->
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl px-5 py-5 mb-4">
+            <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">Activité — 6 dernières semaines</p>
+            <p class="text-[9px] text-slate-700 font-bold mb-4">🟩 Réussis · 🟥 Erreurs · ⬜ Aucune activité</p>
+            <!-- Jours de la semaine -->
+            <div class="grid mb-1" style="grid-template-columns:repeat(7,1fr);gap:4px">
+                <span class="text-[8px] font-black text-slate-700 text-center">L</span>
+                <span class="text-[8px] font-black text-slate-700 text-center">M</span>
+                <span class="text-[8px] font-black text-slate-700 text-center">M</span>
+                <span class="text-[8px] font-black text-slate-700 text-center">J</span>
+                <span class="text-[8px] font-black text-slate-700 text-center">V</span>
+                <span class="text-[8px] font-black text-slate-700 text-center">S</span>
+                <span class="text-[8px] font-black text-slate-700 text-center">D</span>
+            </div>
+            <div id="succ-calendar" class="grid" style="grid-template-columns:repeat(7,1fr);gap:4px"></div>
+        </div>
+
+        <!-- Stats rapides -->
+        <div id="succ-quick-stats" class="grid grid-cols-3 gap-3 mb-4"></div>
+
+        <!-- Loader -->
+        <div id="succ-loader" class="hidden flex items-center justify-center py-10">
+            <div class="w-7 h-7 border-t-2 border-violet-500 rounded-full animate-spin"></div>
+        </div>
+    </div>
+</div>
+
 <!-- ==================== ADMIN ==================== -->
 <div id="screen-admin" class="screen overflow-y-auto">
     <div class="flex flex-col mx-auto w-full" style="max-width:480px">
@@ -569,17 +629,17 @@
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <span class="text-[9px] text-slate-500 block mb-1 uppercase">Nb questions</span>
-                    <input id="pres-nb-q" type="number" value="15" min="1" max="100" class="w-full bg-slate-950 p-2.5 rounded-xl text-white font-bold border border-slate-800 text-center">
+                    <input id="pres-nb-q" type="number" value="15" min="1" max="100" class="w-full bg-slate-950 p-2.5 rounded-xl text-white font-bold border border-slate-800 text-center" oninput="pushPresSetupLive()">
                 </div>
                 <div>
                     <span class="text-[9px] text-slate-500 block mb-1 uppercase">Pts / bonne réponse</span>
-                    <input id="pres-pts-q" type="number" value="100" min="10" max="500" step="10" class="w-full bg-slate-950 p-2.5 rounded-xl text-white font-bold border border-slate-800 text-center">
+                    <input id="pres-pts-q" type="number" value="100" min="10" max="500" step="10" class="w-full bg-slate-950 p-2.5 rounded-xl text-white font-bold border border-slate-800 text-center" oninput="pushPresSetupLive()">
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <span class="text-[9px] text-slate-500 block mb-1 uppercase">Temps / question (s)</span>
-                    <input id="pres-time-q" type="number" value="20" min="5" max="120" class="w-full bg-slate-950 p-2.5 rounded-xl text-white font-bold border border-slate-800 text-center">
+                    <input id="pres-time-q" type="number" value="20" min="5" max="120" class="w-full bg-slate-950 p-2.5 rounded-xl text-white font-bold border border-slate-800 text-center" oninput="pushPresSetupLive()">
                 </div>
                 <div>
                     <span class="text-[9px] text-slate-500 block mb-1 uppercase">Pts perdus si faux</span>
@@ -919,6 +979,10 @@
             <div id="mg-def-area" class="hidden mt-5 pt-5 border-t border-slate-800 fade-up">
                 <span class="text-[9px] font-black text-slate-600 uppercase tracking-widest block mb-2">Définition</span>
                 <p id="mg-def" class="text-violet-400 text-2xl leading-relaxed font-medium"></p>
+                <button id="mg-details-btn" onclick="openTermInfoByIdx(multiPool[multiRound])"
+                        class="mt-4 flex items-center gap-1.5 mx-auto px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs font-bold transition-all active:scale-95">
+                    📖 Déf. complète · Google · Signaler
+                </button>
             </div>
         </div>
     </div>
@@ -1277,6 +1341,9 @@ async function init() {
             return;
         }
         checkTipeeePremium(currentUser.uid);
+        // Mise à jour streak + timer même si l'utilisateur était déjà connecté (rechargement)
+        updateStreak(currentUser.uid).then(s => { if (s >= 2) showStreakToast(s); }).catch(()=>{});
+        startStudyTimer();
     }
 
     await loadCourseAndStart();
@@ -1392,14 +1459,23 @@ function setP(idx, correct, mode = 'flash') {
     p.pct = Math.min(100, Math.max(0, currentPct + gain - loss));
     progress[idx] = p;
     saveProgress();
-    // Track correct/wrong counts in Firestore
+    // Track correct/wrong counts in Firestore (globaux + journaliers)
     if (useFirebase && currentUser && fbDb) {
-        fbDb.collection('users').doc(currentUser.uid).set(
-            correct
-                ? { totalCorrect: firebase.firestore.FieldValue.increment(1) }
-                : { totalErrors:  firebase.firestore.FieldValue.increment(1) },
+        const _FV = firebase.firestore.FieldValue;
+        const _ref = fbDb.collection('users').doc(currentUser.uid);
+        // Compteurs globaux
+        _ref.set(
+            correct ? { totalCorrect: _FV.increment(1) } : { totalErrors: _FV.increment(1) },
             { merge: true }
         ).catch(() => {});
+        // Statistiques journalières pour Module Succès (clé = YYYY-MM-DD)
+        const _today = new Date().toISOString().slice(0, 10);
+        _ref.update({ [`dailyStats.${_today}.${correct ? 'c' : 'w'}`]: _FV.increment(1) })
+            .catch(() => {
+                // Le doc n'existe pas encore → set avec merge
+                const _init = { dailyStats: { [_today]: correct ? { c: 1, w: 0 } : { c: 0, w: 1 } } };
+                _ref.set(_init, { merge: true }).catch(() => {});
+            });
     }
 }
 
@@ -1448,6 +1524,7 @@ function showScreen(id) {
 }
 function showError(msg) { document.getElementById('error-msg').innerHTML = msg; showScreen('screen-error'); }
 function exitToHome()   {
+    stopStudyTimer();
     activeSession = false;
     clearTimeout(multiTimerTimeout);
     // Nettoyage complet présentateur (fix bouton Quitter fin de partie)
@@ -1793,6 +1870,125 @@ function stopStudyTimer() {
     fbDb.collection('users').doc(currentUser.uid).set(
         { studyMinutes: firebase.firestore.FieldValue.increment(mins) }, { merge: true }
     ).catch(()=>{});
+}
+
+// =====================================================================
+// MODULE SUCCÈS
+// =====================================================================
+async function showSucces() {
+    showScreen('screen-succes');
+    const loader = document.getElementById('succ-loader');
+    loader.classList.remove('hidden');
+
+    // Fallback si pas Firebase
+    if (!fbDb || !currentUser) {
+        loader.classList.add('hidden');
+        // Utiliser les données locales de progression
+        const totalC = Object.values(progress).reduce((s, p) => s + (p.c || 0), 0);
+        const totalW = Object.values(progress).reduce((s, p) => s + (p.w || 0), 0);
+        renderSuccesRate(totalC, totalW);
+        renderSuccesCalendar({});
+        renderSuccesQuickStats(totalC, totalW, 0);
+        return;
+    }
+
+    try {
+        const snap = await fbDb.collection('users').doc(currentUser.uid).get();
+        const data = snap.data() || {};
+        const dailyStats  = data.dailyStats  || {};
+        const totalCorrect = data.totalCorrect || 0;
+        const totalErrors  = data.totalErrors  || 0;
+        const loginDays    = data.loginDays    || 0;
+
+        renderSuccesRate(totalCorrect, totalErrors);
+        renderSuccesCalendar(dailyStats);
+        renderSuccesQuickStats(totalCorrect, totalErrors, loginDays);
+    } catch(e) {
+        console.warn('Succès load error:', e);
+    } finally {
+        loader.classList.add('hidden');
+    }
+}
+
+function renderSuccesRate(correct, wrong) {
+    const total = correct + wrong;
+    const pct   = total > 0 ? Math.round(correct / total * 100) : 0;
+    // Couleur dégradée Rouge(0%) → Orange(50%) → Vert(100%)
+    const hue   = Math.round(pct * 1.2); // 0→0° (rouge) 100→120° (vert)
+    const color = `hsl(${hue},80%,50%)`;
+
+    document.getElementById('succ-rate-pct').textContent         = total > 0 ? pct + '%' : '—';
+    document.getElementById('succ-rate-pct').style.color         = total > 0 ? color : '';
+    document.getElementById('succ-rate-correct').textContent     = total > 0 ? `✓ ${correct.toLocaleString()} réussis` : '';
+    document.getElementById('succ-rate-wrong').textContent       = total > 0 ? `✗ ${wrong.toLocaleString()} erreurs`  : '';
+    document.getElementById('succ-rate-bar').style.width         = pct + '%';
+}
+
+function renderSuccesCalendar(dailyStats) {
+    const cal = document.getElementById('succ-calendar');
+    if (!cal) return;
+
+    // 42 jours (6 semaines) se terminant aujourd'hui
+    const today    = new Date();
+    const todayStr = today.toISOString().slice(0, 10);
+    const cells = [];
+    for (let i = 41; i >= 0; i--) {
+        const d   = new Date(today);
+        d.setDate(d.getDate() - i);
+        cells.push(d.toISOString().slice(0, 10));
+    }
+
+    // Padding à gauche pour aligner le premier jour sur son jour de semaine
+    const firstDow = (new Date(cells[0]).getDay() + 6) % 7; // 0=lun
+    const padBefore = firstDow;
+
+    cal.innerHTML = '';
+    // Cases vides de padding
+    for (let p = 0; p < padBefore; p++) {
+        cal.insertAdjacentHTML('beforeend', '<div></div>');
+    }
+
+    cells.forEach(dateStr => {
+        const stat = dailyStats[dateStr] || {};
+        const c    = stat.c || 0;
+        const w    = stat.w || 0;
+        const total = c + w;
+        const isToday = dateStr === todayStr;
+
+        let bg, title;
+        if (total === 0) {
+            bg    = '#1e293b'; // slate-800
+            title = dateStr + ' — aucune activité';
+        } else {
+            const pct = c / total;       // 0→rouge, 1→vert
+            const hue = Math.round(pct * 120);
+            const lightness = 35 + Math.min(total, 30); // plus sombre si peu d'activité
+            bg    = `hsl(${hue},70%,${Math.min(lightness, 50)}%)`;
+            title = `${dateStr} · ✓${c} ✗${w}`;
+        }
+
+        const ring = isToday ? 'outline:2px solid #7c3aed;outline-offset:2px;' : '';
+        cal.insertAdjacentHTML('beforeend',
+            `<div title="${title}" style="aspect-ratio:1;border-radius:4px;background:${bg};${ring}cursor:default"></div>`
+        );
+    });
+}
+
+function renderSuccesQuickStats(correct, wrong, loginDays) {
+    const container = document.getElementById('succ-quick-stats');
+    if (!container) return;
+    const total = correct + wrong;
+    const streak = parseInt(document.getElementById('home-streak')?.textContent) || 0;
+    container.innerHTML = [
+        ['✓', 'Réponses justes',  correct.toLocaleString(), '#10b981'],
+        ['✗', 'Réponses fausses', wrong.toLocaleString(),   '#f43f5e'],
+        ['📅', 'Jours actifs',    loginDays || '—',          '#7c3aed'],
+    ].map(([icon, label, val, color]) => `
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl px-3 py-4 text-center">
+            <p class="text-xl mb-1">${icon}</p>
+            <p class="text-xl font-black" style="color:${color}">${val}</p>
+            <p class="text-[8px] font-black text-slate-600 uppercase tracking-widest mt-1">${label}</p>
+        </div>`).join('');
 }
 
 // =====================================================================
@@ -2515,6 +2711,7 @@ let presRoomCode  = '', presUnsubRoom = null, presDoubleMode = 'none';
 let presTimerInterval = null, presShowAnswer = false;
 let presShowingScores = false;
 let activeSession = false;
+window.addEventListener('beforeunload', () => { stopStudyTimer(); });
 window.addEventListener('beforeunload', e => { if (activeSession) { e.preventDefault(); e.returnValue = ''; } });
 
 // Ouvre le setup présentateur et pré-génère le code immédiatement
@@ -2539,7 +2736,7 @@ function openPresenterSetup() {
     }
     // Init équipes par défaut si vide
     const list = document.getElementById('pres-teams-list');
-    if (!list.children.length) { addPresTeam(); addPresTeam(); }
+    if (!list.children.length) { addPresTeam(); addPresTeam(); } else { pushPresSetupLive(); }
 }
 
 function copyPresSetupCode() {
@@ -2573,6 +2770,33 @@ function togglePresTimer(labelEl) {
         document.getElementById('pres-time-q').disabled = false;
         document.getElementById('pres-time-q').style.opacity = '1';
     }
+    pushPresSetupLive();
+}
+
+// Pousse les équipes en cours de saisie vers Firebase (écran d'attente live)
+let _presSetupPushTimer = null;
+function pushPresSetupLive() {
+    if (!presRoomCode || !fbDb) return;
+    clearTimeout(_presSetupPushTimer);
+    _presSetupPushTimer = setTimeout(() => {
+        const inputs = [...document.querySelectorAll('.pres-team-input')];
+        const liveTeams = inputs.map((inp, i) => ({
+            name: inp.value.trim() || `Équipe ${i + 1}`,
+            color: PRES_COLORS[i],
+            score: 0
+        }));
+        const nbQ  = parseInt(document.getElementById('pres-nb-q')?.value)  || 15;
+        const ptsQ = parseInt(document.getElementById('pres-pts-q')?.value)  || 100;
+        const timeQ= parseInt(document.getElementById('pres-time-q')?.value) || 20;
+        const noTimer = document.getElementById('pres-notimer-toggle')?.classList.contains('active') || false;
+        fbDb.collection('rooms').doc(presRoomCode).update({
+            'settings.teams': liveTeams,
+            'settings.nbQ':   nbQ,
+            'settings.ptsQ':  ptsQ,
+            'settings.timeQ': noTimer ? 0 : timeQ,
+            'settings.noTimer': noTimer,
+        }).catch(() => {});
+    }, 300); // debounce 300ms
 }
 
 function addPresTeam() {
@@ -2583,9 +2807,11 @@ function addPresTeam() {
     div.className = 'flex items-center gap-3 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5';
     div.innerHTML = `
         <div class="w-4 h-4 rounded-full flex-shrink-0" style="background:${PRES_COLORS[i]}"></div>
-        <input type="text" placeholder="Équipe ${i+1}" class="bg-transparent flex-grow text-white font-bold outline-none pres-team-input placeholder-slate-700" maxlength="20">
-        <button onclick="this.parentElement.remove()" class="text-slate-700 hover:text-rose-500 font-black text-sm">✕</button>`;
+        <input type="text" placeholder="Équipe ${i+1}" class="bg-transparent flex-grow text-white font-bold outline-none pres-team-input placeholder-slate-700" maxlength="20"
+               oninput="pushPresSetupLive()">
+        <button onclick="this.parentElement.remove();pushPresSetupLive()" class="text-slate-700 hover:text-rose-500 font-black text-sm">✕</button>`;
     list.appendChild(div);
+    pushPresSetupLive();
 }
 
 function selectDoubleMode(mode, btn) {
