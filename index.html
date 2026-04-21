@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Hub de Révision - BTS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Firebase config (optionnel) -->
@@ -16,6 +16,26 @@
         @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
         .fade-in { animation:fadeIn .5s ease forwards; }
         .progress-bar { transition:width 1s ease; }
+
+        /* DESKTOP RESPONSIVE — agrandissement textes + conteneurs */
+        @media (min-width: 1024px) {
+            .text-\[7px\]   { font-size: 11px !important; }
+            .text-\[9px\]   { font-size: 13px !important; }
+            .text-\[10px\]  { font-size: 14px !important; }
+            .text-\[11px\]  { font-size: 15px !important; }
+            .text-xs   { font-size: 0.95rem !important; line-height: 1.4 !important; }
+            .text-sm   { font-size: 1.1rem !important; line-height: 1.5 !important; }
+            .text-base { font-size: 1.25rem !important; }
+            .text-lg   { font-size: 1.45rem !important; }
+            .text-xl   { font-size: 1.7rem !important; }
+            .text-2xl  { font-size: 2rem !important; }
+            .text-3xl  { font-size: 2.5rem !important; }
+            .text-4xl  { font-size: 3.2rem !important; }
+            .max-w-6xl { max-width: 1400px !important; }
+        }
+        @media (min-width: 1536px) {
+            .max-w-6xl { max-width: 1600px !important; }
+        }
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
@@ -756,9 +776,11 @@ async function loadLeaderboard() {
             const data = d.data();
             const scores = data.scores || {};
             const vals = Object.values(scores);
-            const total = vals.reduce((a,b)=>a+b,0);
-            return { uid: d.id, name: data.name || 'Anonyme', photo: data.photoURL, total, courses: vals.length };
-        }).filter(r => r.courses > 0).sort((a,b) => b.total - a.total);
+            const coursePts = vals.reduce((a,b)=>a+b,0);
+            const kahootPts = data.kahootPoints || 0;
+            const total = coursePts + kahootPts;
+            return { uid: d.id, name: data.name || 'Anonyme', photo: data.photoURL, total, coursePts, kahootPts, courses: vals.length };
+        }).filter(r => r.total > 0).sort((a,b) => b.total - a.total);
 
         const totalEl = document.getElementById('lb-total-users');
         if (totalEl) { totalEl.textContent = allRows.length + ' joueurs'; totalEl.classList.remove('hidden'); }
@@ -796,6 +818,9 @@ async function loadLeaderboard() {
                 ? `<img src="${r.photo}" class="w-8 h-8 rounded-full object-cover flex-shrink-0" referrerpolicy="no-referrer">`
                 : `<div class="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0 text-violet-400 font-black text-xs">${(r.name[0]||'?').toUpperCase()}</div>`;
             const highlight = isMe ? ' border-violet-500/60 bg-violet-500/10' : ' border-slate-800';
+            const breakdown = (r.kahootPts > 0)
+                ? `<span class="text-[10px] text-slate-500 font-bold">Cours ${r.coursePts}·🕹️ ${r.kahootPts}</span>`
+                : '';
             return `<div class="flex items-center gap-3 bg-slate-900/60 border rounded-2xl px-4 py-3${highlight}">
                 <span class="text-lg w-7 text-center flex-shrink-0">${medal}</span>
                 ${avatar}
@@ -804,8 +829,11 @@ async function loadLeaderboard() {
                         <p class="font-bold text-sm truncate ${isMe?'text-violet-300':'text-white'}">${r.name}${isMe?' (toi)':''}</p>
                         <span class="font-black text-sm ml-2 flex-shrink-0" style="color:${barColor}">${r.total} pts</span>
                     </div>
-                    <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                        <div class="h-full rounded-full transition-all" style="width:${barW}%;background:${barColor}"></div>
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex-grow h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full transition-all" style="width:${barW}%;background:${barColor}"></div>
+                        </div>
+                        ${breakdown}
                     </div>
                 </div>
             </div>`;
@@ -857,38 +885,67 @@ async function loadAdminData() {
     }
 
     try {
-        // 1) Leaderboard — toujours accessible par les utilisateurs connectés
-        const lbSnap = await fbDb.collection('leaderboard').get();
-        const users = [];
+        // 1) Source primaire : collection `users` (tous les comptes créés, même sans activité)
+        //    Fallback : leaderboard (si règles Firestore pas déployées pour users collection)
+        const usersMap = new Map();
+        let detailsAvailable = false;
 
+        try {
+            const uSnap = await fbDb.collection('users').get();
+            uSnap.forEach(doc => {
+                const d = doc.data() || {};
+                usersMap.set(doc.id, {
+                    uid: doc.id,
+                    name: d.name || d.displayName || 'Anonyme',
+                    email: d.email || '',
+                    photo: d.photoURL || null,
+                    _usersData: d,
+                    _fromUsers: true
+                });
+            });
+            if (usersMap.size > 0) detailsAvailable = true;
+        } catch { /* règles users list pas autorisées — on passera par leaderboard */ }
+
+        // 2) Leaderboard — ajoute les scores + les users manquants (cas sans doc users/{uid})
+        const lbSnap = await fbDb.collection('leaderboard').get();
         lbSnap.forEach(doc => {
             const d = doc.data();
             const scores = d.scores || {};
             const scoreVals = Object.values(scores);
             const avgScore = scoreVals.length ? Math.round(scoreVals.reduce((a,b)=>a+b,0)/scoreVals.length) : 0;
-            users.push({
-                uid: doc.id,
-                name: d.name || 'Anonyme',
-                email: '',
-                photo: d.photoURL || null,
-                studyMinutes: 0,
-                streak: 0,
-                lastLogin: '',
-                avgScore,
-                coursesCount: scoreVals.length,
-                scores,
-                premium: false,
-            });
+            if (!usersMap.has(doc.id)) {
+                usersMap.set(doc.id, {
+                    uid: doc.id,
+                    name: d.name || 'Anonyme',
+                    email: '',
+                    photo: d.photoURL || null,
+                });
+            }
+            const u = usersMap.get(doc.id);
+            u.scores = scores;
+            u.avgScore = avgScore;
+            u.coursesCount = scoreVals.length;
+            u.kahootPointsLb = d.kahootPoints || 0;
+            if (d.name && (!u.name || u.name === 'Anonyme')) u.name = d.name;
+            if (d.photoURL && !u.photo) u.photo = d.photoURL;
         });
 
-        // 2) Enrichir avec les données users/{uid} — lecture individuelle (admin rule)
-        //    Si les règles Firestore ne sont pas déployées, on ignore silencieusement
-        let detailsAvailable = false;
+        const users = Array.from(usersMap.values()).map(u => ({
+            scores: {},
+            avgScore: 0,
+            coursesCount: 0,
+            studyMinutes: 0,
+            streak: 0,
+            lastLogin: '',
+            premium: false,
+            ...u
+        }));
+
+        // 3) Enrichir avec les données individuelles users/{uid} pour ceux pas encore enrichis
         for (const u of users) {
             try {
-                const snap = await fbDb.collection('users').doc(u.uid).get();
-                if (snap.exists) {
-                    const d = snap.data() || {};
+                const d = u._usersData || ((await fbDb.collection('users').doc(u.uid).get()).data());
+                if (d && Object.keys(d).length) {
                     u.email              = d.email || '';
                     u.studyMinutes       = d.studyMinutes || 0;
                     u.streak             = d.streak || 0;
@@ -905,6 +962,11 @@ async function loadAdminData() {
                     u.presCompleted      = d.presCompleted || 0;
                     u.kahootHosted       = d.kahootHosted || 0;
                     u.kahootHostedPlayers = d.kahootHostedPlayers || 0;
+                    u.kahootPlayed       = d.kahootPlayed || 0;
+                    u.kahootTotalScore   = d.kahootTotalScore || 0;
+                    u.kahootLastScore    = d.kahootLastScore || 0;
+                    u.kahootLastRank     = d.kahootLastRank || 0;
+                    u.kahootLastPlayers  = d.kahootLastPlayers || 0;
                     // Sum all bm_* fields for total bookmarks
                     u.totalBookmarks = Object.entries(d)
                         .filter(([k]) => k.startsWith('bm_'))
@@ -924,7 +986,9 @@ async function loadAdminData() {
         const banner = document.getElementById('adm-rules-banner');
         if (banner) banner.classList.toggle('hidden', detailsAvailable || users.length === 0);
 
-        users.sort((a,b) => b.avgScore - a.avgScore);
+        // Tri : actifs d'abord (par avgScore puis activité), inactifs ensuite
+        const activity = u => (u.avgScore||0) + (u.quizCompleted||0)*5 + (u.flashcardsCompleted||0) + (u.kahootPlayed||0)*10 + (u.presCompleted||0)*5 + (u.multiCompleted||0)*5;
+        users.sort((a,b) => activity(b) - activity(a));
         _adminAllUsers = users;
 
         const totalMinutes = users.reduce((s,u) => s+(u.studyMinutes||0), 0);
@@ -1203,6 +1267,9 @@ async function showUserDetail(uid) {
             ${statBox('🖥️ Présentateur', u.presCompleted || '—')}
             ${statBox('🎮 Kahoot hébergé', u.kahootHosted || '—')}
             ${statBox('👥 Joueurs Kahoot', u.kahootHostedPlayers || '—')}
+            ${statBox('🕹️ Kahoot joué', u.kahootPlayed || '—')}
+            ${statBox('🏅 Pts Kahoot cumulés', u.kahootTotalScore || '—')}
+            ${statBox('🔥 Dernier Kahoot', u.kahootLastScore ? `${u.kahootLastScore} pts (${u.kahootLastRank||'?'}e/${u.kahootLastPlayers||'?'})` : '—')}
         </div>
     </div>
 
