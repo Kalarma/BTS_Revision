@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Révision BTS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Firebase config (optionnel — remplir dans /firebase-config.js) -->
@@ -48,6 +48,36 @@
         .kh-score-bar { animation:growBar .9s cubic-bezier(.4,0,.2,1) forwards; }
         .kh-score-pop { animation:scorePopIn .5s cubic-bezier(.34,1.56,.64,1) forwards; }
         .kh-rank-row { animation:rankSlide .4s ease forwards; opacity:0; }
+
+        /* ================================================================== */
+        /* DESKTOP RESPONSIVE — élargir les conteneurs et agrandir les textes */
+        /* ================================================================== */
+        @media (min-width: 768px) {
+            [style*="max-width:480px"] { max-width: 760px !important; }
+            [style*="max-width:520px"] { max-width: 820px !important; }
+        }
+        @media (min-width: 1024px) {
+            [style*="max-width:480px"] { max-width: 960px !important; }
+            [style*="max-width:520px"] { max-width: 1040px !important; }
+            /* Agrandissement textes pour projecteur / grand écran */
+            .text-\[7px\]   { font-size: 11px !important; }
+            .text-\[9px\]   { font-size: 13px !important; }
+            .text-\[10px\]  { font-size: 14px !important; }
+            .text-\[11px\]  { font-size: 15px !important; }
+            .text-xs   { font-size: 0.95rem !important; line-height: 1.4 !important; }
+            .text-sm   { font-size: 1.1rem !important; line-height: 1.5 !important; }
+            .text-base { font-size: 1.25rem !important; line-height: 1.5 !important; }
+            .text-lg   { font-size: 1.45rem !important; }
+            .text-xl   { font-size: 1.7rem !important; }
+            .text-2xl  { font-size: 2rem !important; }
+            .text-3xl  { font-size: 2.5rem !important; }
+            .text-4xl  { font-size: 3.2rem !important; }
+            .text-5xl  { font-size: 4rem !important; }
+        }
+        @media (min-width: 1536px) {
+            [style*="max-width:480px"] { max-width: 1120px !important; }
+            [style*="max-width:520px"] { max-width: 1200px !important; }
+        }
     </style>
 </head>
 <body>
@@ -364,6 +394,38 @@
     </div>
 </div>
 
+<!-- ==================== DÉTAILS DU TERME (def longue + google + signaler) ==================== -->
+<div id="term-info-modal" data-modal-backdrop class="hidden fixed inset-0 z-50 flex items-end justify-center" style="background:rgba(2,6,23,.85);backdrop-filter:blur(4px)" onclick="if(event.target===this)closeTermInfo()">
+    <div class="w-full bg-slate-900 border-t border-slate-800 rounded-t-3xl p-6 fade-up flex flex-col" style="max-width:520px;max-height:85vh">
+        <div class="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-4 flex-shrink-0"></div>
+        <div class="flex items-start justify-between gap-3 mb-2 flex-shrink-0">
+            <div class="flex-grow min-w-0">
+                <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">Terme</p>
+                <h3 id="ti-term" class="text-xl font-extrabold text-white break-words"></h3>
+            </div>
+            <button onclick="closeTermInfo()" class="w-8 h-8 flex items-center justify-center rounded-xl text-slate-500 hover:text-white font-black text-base flex-shrink-0">✕</button>
+        </div>
+        <div class="flex-grow overflow-y-auto space-y-4 pr-1">
+            <div>
+                <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-2">Définition</p>
+                <p id="ti-def" class="text-violet-300 text-sm leading-relaxed font-medium"></p>
+            </div>
+            <div id="ti-long-wrap" class="hidden">
+                <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-2">📖 Définition complète</p>
+                <p id="ti-def-long" class="text-slate-300 text-sm leading-relaxed"></p>
+            </div>
+        </div>
+        <div class="flex-shrink-0 space-y-2 mt-4 pt-4 border-t border-slate-800">
+            <button id="ti-google-btn" onclick="termInfoGoogle()" class="w-full py-3 bg-sky-500/15 border border-sky-500/30 text-sky-300 font-black text-xs uppercase tracking-widest rounded-2xl active:scale-95 transition-all hover:bg-sky-500/25">
+                🔎 Rechercher sur Google
+            </button>
+            <button onclick="termInfoReport()" class="w-full py-3 bg-rose-500/15 border border-rose-500/30 text-rose-300 font-black text-xs uppercase tracking-widest rounded-2xl active:scale-95 transition-all hover:bg-rose-500/25">
+                ⚠️ Signaler une erreur
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- ==================== RAPPORT DE CARTE ==================== -->
 <div id="report-modal" data-modal-backdrop class="hidden fixed inset-0 z-50 flex items-end justify-center" style="background:rgba(2,6,23,.85);backdrop-filter:blur(4px)">
     <div class="w-full bg-slate-900 border-t border-slate-800 rounded-t-3xl p-6 fade-up" style="max-width:520px">
@@ -410,7 +472,7 @@
             <div id="fc-def-area" class="hidden w-full mt-6 pt-6 border-t border-slate-800 fade-up">
                 <div class="flex items-center justify-between mb-3">
                     <span id="fc-back-label" class="text-[9px] font-black text-slate-600 uppercase tracking-widest">Définition</span>
-                    <button onclick="openReportModal(event)" class="text-slate-700 hover:text-slate-400 font-black text-base leading-none px-1 transition-colors" title="Signaler">···</button>
+                    <button onclick="event.stopPropagation();openTermInfoByIdx(fcDeck[fcIdx])" class="flex items-center gap-1 text-sky-400 hover:text-sky-300 font-black text-[10px] uppercase tracking-wider px-2 py-1 bg-sky-500/10 border border-sky-500/20 rounded-lg transition-colors" title="Voir détails">📖 Détails</button>
                 </div>
                 <p id="fc-def" class="text-violet-400 text-[1.2rem] leading-relaxed font-medium"></p>
             </div>
@@ -561,6 +623,20 @@
                 </div>
                 <input id="pres-inverse-mode" type="checkbox" class="w-4 h-4 accent-violet-500">
             </label>
+            <!-- Mode de jeu : Libre / Ciblée -->
+            <div>
+                <span class="text-[9px] text-slate-500 block mb-2 uppercase">Mode de jeu</span>
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="pres-mode-libre-btn" onclick="selectPresMode('libre',this)" class="pres-mode-btn py-3 px-2 text-[9px] font-black rounded-xl bg-violet-600 text-white leading-tight">
+                        <p class="text-sm mb-0.5">🙋 Équipe Libre</p>
+                        <p class="font-medium text-[8px] opacity-75">1ère main levée répond</p>
+                    </button>
+                    <button id="pres-mode-cible-btn" onclick="selectPresMode('cible',this)" class="pres-mode-btn py-3 px-2 text-[9px] font-black rounded-xl bg-slate-800 text-slate-400 leading-tight">
+                        <p class="text-sm mb-0.5">🎯 Équipe Ciblée</p>
+                        <p class="font-medium text-[8px] opacity-75">L'app désigne l'équipe</p>
+                    </button>
+                </div>
+            </div>
         </div>
 
         <button onclick="launchPresenter()" class="w-full py-5 bg-violet-700 hover:bg-violet-600 text-white font-black uppercase rounded-3xl shadow-2xl active:scale-95 transition-all">
@@ -570,9 +646,9 @@
 </div>
 
 <!-- ==================== PRÉSENTATEUR HOST ==================== -->
-<div id="screen-presenter-host" class="screen">
+<div id="screen-presenter-host" class="screen" style="position:relative">
     <!-- Top bar -->
-    <div class="px-5 pt-5 pb-3 flex items-center justify-between flex-shrink-0">
+    <div class="px-5 pt-5 pb-2 flex items-center justify-between flex-shrink-0">
         <div class="flex items-center gap-2">
             <button onclick="confirmQuitPresenter()" class="quit-btn w-9 h-9 flex items-center justify-center rounded-xl text-slate-600 font-black text-base">✕</button>
             <span id="ph-round" class="text-slate-600 text-[10px] font-black">Q 1/15</span>
@@ -580,30 +656,18 @@
         <div class="flex items-center gap-2">
             <div id="ph-screen-dot" class="w-2 h-2 rounded-full bg-slate-700 flex-shrink-0"></div>
             <span id="ph-screen-label" class="text-[9px] font-bold text-slate-700">Écran non connecté</span>
-            <!-- Code bouton cliquable pour copier -->
             <button id="ph-code-btn" onclick="copyPresCode()" class="flex items-center gap-1.5 bg-violet-600/15 border border-violet-500/30 rounded-xl px-2.5 py-1.5 hover:bg-violet-600/25 transition-all active:scale-95">
                 <span id="ph-code" class="text-sm font-black text-violet-400 tracking-[0.2em]"></span>
                 <svg class="w-3 h-3 text-violet-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
             </button>
         </div>
     </div>
-    <!-- Bandeau "connecte l'écran" si pas encore connecté -->
-    <div id="ph-connect-banner" class="mx-5 mb-3 bg-slate-900 border border-slate-800 rounded-2xl flex-shrink-0 overflow-hidden">
-        <div class="flex items-center justify-between px-4 pt-3 pb-1.5">
-            <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest">🖥️ Connecte l'écran de projection</p>
-            <button onclick="toggleConnectBanner()" id="ph-banner-toggle" class="w-5 h-5 flex items-center justify-center text-slate-700 text-[10px] font-black hover:text-slate-500 transition-colors">▼</button>
-        </div>
-        <div id="ph-connect-banner-body" class="px-4 pb-3">
-            <p class="text-[10px] text-slate-600 font-medium mb-2">Ouvre cette URL sur l'ordi/TV et entre le code :</p>
-            <div class="flex items-center gap-2">
-                <div class="flex-grow bg-slate-950 rounded-xl px-3 py-2 border border-slate-800">
-                    <p class="text-[9px] text-slate-700 font-bold mb-0.5">URL</p>
-                    <p class="text-violet-400 text-[10px] font-black break-all">kalarma.github.io/BTS_Revision/presenter</p>
-                </div>
-                <div class="bg-slate-950 rounded-xl px-3 py-2 border border-violet-500/30 text-center flex-shrink-0">
-                    <p class="text-[9px] text-slate-700 font-bold mb-0.5">Code</p>
-                    <p id="ph-code-big" class="text-violet-400 text-lg font-black tracking-[0.2em]"></p>
-                </div>
+    <!-- État actuel de l'écran (visible depuis le tel en permanence) -->
+    <div class="px-5 mb-2 flex-shrink-0">
+        <div class="bg-slate-900/70 border border-slate-800 rounded-xl px-3 py-2 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 min-w-0">
+                <span class="text-[9px] font-black text-slate-600 uppercase tracking-widest flex-shrink-0">Écran :</span>
+                <span id="ph-state-indicator" class="text-[10px] font-black text-violet-400 uppercase truncate"></span>
             </div>
         </div>
     </div>
@@ -613,6 +677,17 @@
             <div id="ph-timer-bar" class="bg-violet-500 h-full w-full timer-animate rounded-full"></div>
         </div>
     </div>
+    <!-- Targeting overlay (Équipe Ciblée mode + step "Prêt" universel) -->
+    <div id="ph-targeting-overlay" class="hidden absolute inset-0 z-20 flex flex-col items-center justify-center px-8 text-center" style="background:#020617">
+        <p id="ph-target-label" class="text-[9px] font-black text-slate-600 uppercase tracking-[0.25em] mb-5">Prochaine question</p>
+        <div id="ph-target-dot" class="hidden w-20 h-20 rounded-full border-4 border-violet-500 flex items-center justify-center mb-4" style="border-color:#7c3aed"></div>
+        <p id="ph-target-name" class="text-3xl font-black text-white uppercase italic mb-2 leading-tight"></p>
+        <p id="ph-target-desc" class="text-sm text-slate-400 font-medium mb-8 max-w-xs leading-snug"></p>
+        <button onclick="launchPresQuestion()" class="px-10 py-4 bg-violet-600 hover:bg-violet-500 text-white font-black uppercase text-sm rounded-2xl active:scale-95 transition-all shadow-2xl">
+            🚀 Lancer !
+        </button>
+        <p id="ph-next-preview" class="hidden mt-5 text-[10px] text-slate-600 font-bold italic"></p>
+    </div>
     <!-- Question card -->
     <div class="flex-grow flex flex-col px-5 pb-3 gap-3 min-h-0 overflow-hidden">
         <div class="flex-grow bg-slate-900 border-2 border-slate-800 rounded-3xl p-6 flex flex-col justify-center text-center min-h-0">
@@ -620,13 +695,18 @@
             <h2 id="ph-term" class="text-2xl font-black text-white leading-snug mb-4"></h2>
             <div class="mt-2 pt-4 border-t border-slate-800">
                 <p class="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-2">✓ Réponse</p>
-                <p id="ph-def" class="text-emerald-400 text-base leading-relaxed font-medium"></p>
+                <p id="ph-def" class="text-emerald-400 text-base leading-relaxed font-medium" style="overflow-wrap:anywhere"></p>
             </div>
+            <button onclick="openPresTermInfo()" class="mt-4 px-3 py-2 bg-sky-500/15 border border-sky-500/30 text-sky-300 font-black text-[10px] uppercase tracking-wider rounded-xl active:scale-95 transition-all self-center">📖 Détails / Signaler</button>
         </div>
     </div>
     <!-- Score drawer toggle -->
     <div id="ph-scores-drawer" class="hidden flex-shrink-0 px-5 pb-3">
         <div id="ph-scores-list" class="bg-slate-900 border border-slate-800 rounded-2xl p-3 space-y-2 max-h-48 overflow-y-auto"></div>
+        <div id="ph-scores-next-preview" class="hidden mt-2 px-3 py-2 bg-slate-900/60 border border-slate-800/50 rounded-xl">
+            <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-0.5">Prochaine question</p>
+            <p id="ph-scores-next-term" class="text-[10px] font-bold text-slate-400 italic truncate"></p>
+        </div>
     </div>
     <!-- Controls -->
     <div class="px-5 pb-5 space-y-2 flex-shrink-0">
@@ -671,6 +751,10 @@
             <p id="quiz-question" class="text-white font-black text-2xl leading-snug"></p>
         </div>
         <div id="quiz-choices" class="grid grid-cols-2 gap-2.5 flex-shrink-0"></div>
+        <div id="quiz-post" class="hidden flex-shrink-0 grid grid-cols-[auto_1fr] gap-2">
+            <button onclick="openTermInfoByIdx(quizDeck[quizIdx])" class="px-4 py-3 bg-sky-500/15 border border-sky-500/30 text-sky-300 font-black text-xs uppercase tracking-wider rounded-2xl active:scale-95 transition-all">📖</button>
+            <button onclick="quizNext()" class="py-3 bg-violet-600 text-white font-black uppercase text-xs tracking-widest rounded-2xl active:scale-95 transition-all">Continuer →</button>
+        </div>
     </div>
 </div>
 
@@ -918,19 +1002,6 @@
             </div>
         </div>
 
-        <!-- Candy Crush Mode toggle -->
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl px-4 py-3.5 mb-4">
-            <label class="flex items-center gap-3 cursor-pointer" onclick="toggleKahootCandyCrush()">
-                <div class="flex-grow">
-                    <p class="text-[10px] font-black text-slate-300">🍬 Animation Candy Crush</p>
-                    <p class="text-[9px] text-slate-600 font-medium mt-0.5">Classement animé après chaque question</p>
-                </div>
-                <div id="kh-candy-toggle" class="w-10 h-5 rounded-full relative transition-all flex-shrink-0" style="background:#7c3aed">
-                    <div class="w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all" style="right:0.125rem;left:auto"></div>
-                </div>
-            </label>
-        </div>
-
         <!-- Players list -->
         <div class="mb-4">
             <div class="flex items-center justify-between mb-2">
@@ -1087,6 +1158,8 @@ async function initFirebase() {
         if (!firebase.apps.length) firebase.initializeApp(cfg);
         fbAuth = firebase.auth();
         fbDb   = firebase.firestore();
+        fbDb.settings({ cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED });
+        fbDb.enablePersistence({ synchronizeTabs: true }).catch(() => {});
         useFirebase = true;
     } catch(e) { console.warn('Firebase init failed:', e); }
 }
@@ -1248,10 +1321,12 @@ function parseCourse(text) {
         if (!line) continue;
         if (line.startsWith('# ') && !line.startsWith('## ')) { title = line.slice(2).trim(); continue; }
         if (line.startsWith('#')) continue;
-        const sep = line.indexOf('|');
-        if (sep < 0) continue;
-        const term = line.slice(0, sep).trim(), def = line.slice(sep+1).trim();
-        if (term && def) cards.push({ term, def });
+        const parts = line.split('|').map(s => s.trim());
+        if (parts.length < 2) continue;
+        const term = parts[0];
+        const def = parts[1];
+        const defLong = parts[2] || def; // fallback: ancien format
+        if (term && def) cards.push({ term, def, defLong });
     }
     return { title, cards };
 }
@@ -1374,7 +1449,22 @@ function showScreen(id) {
     document.getElementById(id).classList.add('active');
 }
 function showError(msg) { document.getElementById('error-msg').innerHTML = msg; showScreen('screen-error'); }
-function exitToHome()   { activeSession = false; clearTimeout(multiTimerTimeout); updateHome(); showScreen('screen-home'); }
+function exitToHome()   {
+    activeSession = false;
+    clearTimeout(multiTimerTimeout);
+    // Nettoyage complet présentateur (fix bouton Quitter fin de partie)
+    try { clearInterval(presTimerInterval); } catch {}
+    try { clearInterval(window._presScreenCheck); } catch {}
+    if (typeof presUnsubRoom === 'function') { try { presUnsubRoom(); } catch {} presUnsubRoom = null; }
+    if (presRoomCode && typeof fbDb !== 'undefined' && fbDb) {
+        fbDb.collection('rooms').doc(presRoomCode).update({ phase: 'ended' }).catch(()=>{});
+    }
+    presRoomCode = '';
+    presShowingScores = false;
+    presShowAnswer = false;
+    updateHome();
+    showScreen('screen-home');
+}
 
 // =====================================================================
 // HOME
@@ -1591,6 +1681,61 @@ function openReportModal(e) {
         document.getElementById('report-card-term').textContent = card.term;
     }
     document.getElementById('report-modal').classList.remove('hidden');
+}
+
+// ---- Modal "Détails du terme" (réutilisable partout) ----
+let _tiCurrent = { term:'', def:'', defLong:'', idx:-1 };
+function openTermInfo(term, def, defLong, idx) {
+    _tiCurrent = {
+        term: term || '',
+        def: def || '',
+        defLong: (defLong && defLong !== def) ? defLong : '',
+        idx: (typeof idx === 'number') ? idx : -1
+    };
+    document.getElementById('ti-term').textContent = _tiCurrent.term;
+    document.getElementById('ti-def').textContent = _tiCurrent.def || '—';
+    const longWrap = document.getElementById('ti-long-wrap');
+    if (_tiCurrent.defLong) {
+        longWrap.classList.remove('hidden');
+        document.getElementById('ti-def-long').textContent = _tiCurrent.defLong;
+    } else {
+        longWrap.classList.add('hidden');
+    }
+    document.getElementById('term-info-modal').classList.remove('hidden');
+}
+function openTermInfoByIdx(i) {
+    if (!C || !C.cards || !C.cards[i]) return;
+    const c = C.cards[i];
+    openTermInfo(c.term, c.def, c.defLong, i);
+}
+function closeTermInfo() { document.getElementById('term-info-modal').classList.add('hidden'); }
+function termInfoGoogle() {
+    if (!_tiCurrent.term) return;
+    const q = encodeURIComponent(_tiCurrent.term);
+    window.open(`https://www.google.com/search?q=${q}`, '_blank', 'noopener');
+}
+function termInfoReport() {
+    closeTermInfo();
+    if (_tiCurrent.idx >= 0) {
+        reportCardIdx = _tiCurrent.idx;
+        document.getElementById('report-card-term').textContent = _tiCurrent.term;
+        document.getElementById('report-modal').classList.remove('hidden');
+    } else {
+        // Carte externe (ex: Kahoot / présentateur) → envoi direct du rapport
+        if (fbDb) fbDb.collection('reports').add({
+            type: 'from_term_info',
+            term: _tiCurrent.term,
+            def: _tiCurrent.def,
+            course: (typeof courseName !== 'undefined') ? courseName : '',
+            reporter: currentUser?.email || 'anonymous',
+            ts: Date.now()
+        }).catch(()=>{});
+        const toast = document.createElement('div');
+        toast.className = 'fixed top-6 left-1/2 -translate-x-1/2 z-[100] bg-rose-500 text-white font-black text-sm px-5 py-3 rounded-2xl shadow-2xl fade-up';
+        toast.textContent = '⚠️ Erreur signalée, merci !';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2500);
+    }
 }
 function closeReportModal() { document.getElementById('report-modal').classList.add('hidden'); }
 function submitReport(type) {
@@ -1960,6 +2105,7 @@ function startQuiz(mode) {
 function showQuizQuestion() {
     if(quizIdx>=quizDeck.length){ endQuiz(); return; }
     clearTimeout(quizTimer); clearInterval(quizCountInterval);
+    const post = document.getElementById('quiz-post'); if (post) post.classList.add('hidden');
     const idx=quizDeck[quizIdx], card=C.cards[idx];
     document.getElementById('quiz-progress').style.width = Math.round(quizIdx/quizDeck.length*100)+'%';
     document.getElementById('quiz-counter').textContent = `${quizIdx+1}/${quizDeck.length}`;
@@ -2012,7 +2158,15 @@ function selectAnswer(btn, isCorrect) {
     setP(idx, isCorrect, 'quiz');
     if(isCorrect){ quizCorrect++; quizScore+=100; } else quizWrong++;
     document.getElementById('quiz-score-display').innerHTML=`${quizScore} <span class="text-slate-600 text-sm font-bold">pts</span>`;
-    setTimeout(()=>{ quizIdx++; showQuizQuestion(); }, 1200);
+    const post = document.getElementById('quiz-post');
+    if (post) post.classList.remove('hidden');
+}
+
+function quizNext() {
+    const post = document.getElementById('quiz-post');
+    if (post) post.classList.add('hidden');
+    quizIdx++;
+    showQuizQuestion();
 }
 
 function endQuiz() {
@@ -2438,6 +2592,41 @@ function selectDoubleMode(mode, btn) {
     });
 }
 
+let _presGameMode = 'libre'; // 'libre' | 'cible'
+let _presTargetOrder = [], _presTargetIdx = 0, _presCurrentTarget = null;
+
+function selectPresMode(mode, btn) {
+    _presGameMode = mode;
+    document.querySelectorAll('.pres-mode-btn').forEach(b => {
+        b.className = b === btn
+            ? 'pres-mode-btn py-3 px-2 text-[9px] font-black rounded-xl bg-violet-600 text-white leading-tight'
+            : 'pres-mode-btn py-3 px-2 text-[9px] font-black rounded-xl bg-slate-800 text-slate-400 leading-tight';
+    });
+}
+
+function getNextTargetTeam() {
+    if (!presTeams.length) return null;
+    if (!_presTargetOrder.length || _presTargetIdx >= _presTargetOrder.length) {
+        _presTargetOrder = [...presTeams.keys()].sort(() => Math.random() - 0.5);
+        _presTargetIdx = 0;
+    }
+    return presTeams[_presTargetOrder[_presTargetIdx++]];
+}
+
+function autoShrinkPresDefText() {
+    const el = document.getElementById('ph-def');
+    if (!el) return;
+    el.style.fontSize = '';
+    let fs = 16, attempts = 0;
+    el.style.fontSize = fs + 'px';
+    const parent = el.parentElement;
+    if (!parent) return;
+    while (el.scrollHeight > (parent.clientHeight || 200) && fs > 9 && attempts++ < 30) {
+        fs -= 0.5;
+        el.style.fontSize = fs + 'px';
+    }
+}
+
 async function launchPresenter() {
     const inputs = [...document.querySelectorAll('.pres-team-input')];
     presTeams = inputs.map((inp,i) => ({ name: inp.value.trim()||`Équipe ${i+1}`, color: PRES_COLORS[i], score: 0 }));
@@ -2459,13 +2648,15 @@ async function launchPresenter() {
         return {
             term: inverseMode ? cleanText(card.def) : card.term,
             def:  inverseMode ? card.term : cleanText(card.def),
+            defLong: card.defLong || card.def,
+            cardIdx: idx,
             isDouble: Math.random() < rate
         };
     });
 
     const noTimer = document.getElementById('pres-notimer-toggle')?.classList.contains('active') || false;
     if (noTimer) timeQ = 0;  // 0 = pas de timer
-    presSettings = { teams: presTeams, nbQ, ptsQ, timeQ, neg, showQ, inverseMode, doubleMode: presDoubleMode, noTimer };
+    presSettings = { teams: presTeams, nbQ, ptsQ, timeQ, neg, showQ, inverseMode, doubleMode: presDoubleMode, noTimer, gameMode: _presGameMode };
 
     // Utiliser le code pré-généré (affiché sur la page de setup)
     if (!presRoomCode) presRoomCode = generateRoomCode();
@@ -2483,17 +2674,31 @@ async function launchPresenter() {
             showAnswer: false,
             questionStartTime: null,
         });
-        // Listen for screen connection
+        // Listen for screen connection (heartbeat-based)
         presUnsubRoom = fbDb.collection('rooms').doc(presRoomCode).onSnapshot(snap => {
             const data = snap.data() || {};
-            const connected = !!data.screenConnected;
+            const lastSeen = data.screenLastSeen || 0;
+            const recent = (Date.now() - lastSeen) < 10000; // heartbeat frais = 10s
+            const connected = !!data.screenConnected && recent;
             const dot = document.getElementById('ph-screen-dot');
             const label = document.getElementById('ph-screen-label');
-            const banner = document.getElementById('ph-connect-banner');
             if (dot) dot.style.background = connected ? '#10b981' : '#475569';
             if (label) { label.textContent = connected ? 'Écran connecté ✓' : 'Écran non connecté'; label.style.color = connected ? '#10b981' : ''; }
-            if (banner) banner.classList.toggle('hidden', connected);
         });
+        // Re-check toutes les 3s même sans nouveau snapshot (pour détecter timeout)
+        clearInterval(window._presScreenCheck);
+        window._presScreenCheck = setInterval(async () => {
+            try {
+                const s = await fbDb.collection('rooms').doc(presRoomCode).get();
+                const d = s.data() || {};
+                const recent = (Date.now() - (d.screenLastSeen || 0)) < 10000;
+                const connected = !!d.screenConnected && recent;
+                const dot = document.getElementById('ph-screen-dot');
+                const label = document.getElementById('ph-screen-label');
+                if (dot) dot.style.background = connected ? '#10b981' : '#475569';
+                if (label) { label.textContent = connected ? 'Écran connecté ✓' : 'Écran non connecté'; label.style.color = connected ? '#10b981' : ''; }
+            } catch {}
+        }, 3000);
     }
     showPresQuestion();
 }
@@ -2514,6 +2719,52 @@ function showPresQuestion() {
     const nextBtn = document.getElementById('ph-next-btn');
     if (nextBtn) nextBtn.textContent = 'Suivant →';
     activeSession = true;
+    autoShrinkPresDefText();
+
+    // Targeting step (avant de montrer la Q sur TV)
+    const gameMode = presSettings.gameMode || _presGameMode || 'libre';
+    if (gameMode === 'cible') {
+        _presCurrentTarget = getNextTargetTeam();
+    } else {
+        _presCurrentTarget = null;
+    }
+
+    const overlay = document.getElementById('ph-targeting-overlay');
+    const nameEl  = document.getElementById('ph-target-name');
+    const descEl  = document.getElementById('ph-target-desc');
+    const dotEl   = document.getElementById('ph-target-dot');
+    const labelEl = document.getElementById('ph-target-label');
+
+    if (_presCurrentTarget) {
+        if (labelEl) labelEl.textContent = '🎯 C\'est au tour de…';
+        if (nameEl) nameEl.textContent = _presCurrentTarget.name;
+        if (descEl) descEl.textContent = (_presCurrentTarget.score || 0) + ' pts · ' + q.term;
+        if (dotEl) { dotEl.style.borderColor = _presCurrentTarget.color; dotEl.style.background = _presCurrentTarget.color + '30'; dotEl.classList.remove('hidden'); }
+    } else {
+        if (labelEl) labelEl.textContent = 'Prochaine question';
+        if (nameEl) nameEl.textContent = 'Q ' + (presCurrentQ + 1) + ' / ' + presQuestions.length;
+        if (descEl) descEl.textContent = q.term;
+        if (dotEl) dotEl.classList.add('hidden');
+    }
+    if (overlay) overlay.classList.remove('hidden');
+
+    // Push "targeting" à Firebase → TV voit un écran d'attente
+    if (fbDb) fbDb.collection('rooms').doc(presRoomCode).update({
+        phase: 'targeting',
+        currentQ: presCurrentQ,
+        targetTeam: _presCurrentTarget ? { name: _presCurrentTarget.name, color: _presCurrentTarget.color } : null,
+    }).catch(()=>{});
+
+    showScreen('screen-presenter-host');
+    updatePresStateIndicator();
+}
+
+function launchPresQuestion() {
+    const overlay = document.getElementById('ph-targeting-overlay');
+    if (overlay) overlay.classList.add('hidden');
+
+    const q = presQuestions[presCurrentQ];
+    if (!q) return;
 
     // Timer bar
     clearInterval(presTimerInterval);
@@ -2532,7 +2783,7 @@ function showPresQuestion() {
         }));
     }
 
-    // Push to Firebase
+    // Push question à Firebase → TV affiche la question
     if (fbDb) fbDb.collection('rooms').doc(presRoomCode).update({
         phase: 'question',
         currentQ: presCurrentQ,
@@ -2542,13 +2793,32 @@ function showPresQuestion() {
         'settings.noTimer': noTimer,
     }).catch(()=>{});
 
-    showScreen('screen-presenter-host');
+    updatePresStateIndicator();
 }
 
 function togglePresAnswer() {
     presShowAnswer = !presShowAnswer;
     document.getElementById('ph-reveal-btn').textContent = presShowAnswer ? '🙈 Cacher' : '👁 Révéler';
     if (fbDb) fbDb.collection('rooms').doc(presRoomCode).update({ showAnswer: presShowAnswer }).catch(()=>{});
+    updatePresStateIndicator();
+}
+
+function openPresTermInfo() {
+    const q = presQuestions[presCurrentQ];
+    if (!q) return;
+    // presQuestions est construit à partir de C.cards, on essaie de retrouver l'idx
+    let idx = -1;
+    if (C && C.cards) idx = C.cards.findIndex(c => c.term === q.term);
+    openTermInfo(q.term, q.def, q.defLong || (idx >= 0 ? C.cards[idx]?.defLong : ''), idx);
+}
+
+function updatePresStateIndicator() {
+    const el = document.getElementById('ph-state-indicator');
+    if (!el) return;
+    if (presShowingScores) { el.textContent = '📊 Tableau des scores'; return; }
+    const q = presQuestions[presCurrentQ];
+    if (!q) { el.textContent = '—'; return; }
+    el.textContent = presShowAnswer ? `${q.term} (Réponse visible)` : q.term;
 }
 
 function togglePresScores() {
@@ -2560,19 +2830,29 @@ function togglePresScores() {
 function renderPresScoresList() {
     const sorted = [...presTeams].map((t,i)=>({...t,orig:i})).sort((a,b)=>b.score-a.score);
     const pts = presSettings.ptsQ || 100;
-    const neg = presSettings.neg > 0 ? Math.round(pts * presSettings.neg / 100) : pts;
+    const negRate = presSettings.neg > 0 ? (presSettings.neg / 100) : 1;
+    const p1 = pts, p2 = Math.round(pts/2), p4 = Math.round(pts/4);
+    const n1 = Math.round(pts*negRate), n2 = Math.round(pts*negRate/2), n4 = Math.round(pts*negRate/4);
     // Dense ranking
     const ranks = denseRanks(sorted.map(t => t.score));
     const medals = ['🥇','🥈','🥉'];
     document.getElementById('ph-scores-list').innerHTML = sorted.map((t, i) => {
         const rankLabel = medals[ranks[i]-1] || `<span class="text-slate-600 font-black text-[10px]">#${ranks[i]}</span>`;
-        return `<div class="flex items-center gap-1.5">
-            <span class="w-5 text-center text-sm flex-shrink-0">${rankLabel}</span>
-            <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${t.color}"></div>
-            <span class="flex-grow text-white text-[11px] font-bold truncate">${t.name}</span>
-            <button onclick="adjPresScore(${t.orig},-${neg})" class="px-2 py-1 bg-rose-500/20 text-rose-400 rounded-lg text-[10px] font-black active:scale-95 transition-all">✗ −${neg}</button>
-            <span class="font-black text-sm w-10 text-center tabular-nums" style="color:${t.color}">${t.score}</span>
-            <button onclick="adjPresScore(${t.orig},${pts})" class="px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded-lg text-[10px] font-black active:scale-95 transition-all">✓ +${pts}</button>
+        return `<div class="flex flex-col gap-1 py-1.5 border-b border-slate-800/60 last:border-0">
+            <div class="flex items-center gap-1.5">
+                <span class="w-5 text-center text-sm flex-shrink-0">${rankLabel}</span>
+                <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${t.color}"></div>
+                <span class="flex-grow text-white text-[11px] font-bold truncate">${t.name}</span>
+                <span class="font-black text-base tabular-nums" style="color:${t.color}">${t.score}</span>
+            </div>
+            <div class="flex items-center gap-1 pl-7">
+                <button onclick="adjPresScore(${t.orig},-${n1})" class="flex-1 px-1 py-1 bg-rose-500/25 text-rose-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">−${n1}</button>
+                <button onclick="adjPresScore(${t.orig},-${n2})" class="flex-1 px-1 py-1 bg-rose-500/15 text-rose-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">−${n2}</button>
+                <button onclick="adjPresScore(${t.orig},-${n4})" class="flex-1 px-1 py-1 bg-rose-500/10 text-rose-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">−${n4}</button>
+                <button onclick="adjPresScore(${t.orig},${p4})"  class="flex-1 px-1 py-1 bg-emerald-500/10 text-emerald-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">+${p4}</button>
+                <button onclick="adjPresScore(${t.orig},${p2})"  class="flex-1 px-1 py-1 bg-emerald-500/15 text-emerald-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">+${p2}</button>
+                <button onclick="adjPresScore(${t.orig},${p1})"  class="flex-1 px-1 py-1 bg-emerald-500/25 text-emerald-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">+${p1}</button>
+            </div>
         </div>`;
     }).join('');
 }
@@ -2590,16 +2870,32 @@ function showPresScoresScreen() {
 
 function nextPresQuestion() {
     if (!presShowingScores) {
-        // 1re pression : afficher les scores sur TV + ouvrir le drawer
         presShowingScores = true;
         showPresScoresScreen();
         const btn = document.getElementById('ph-next-btn');
         if (btn) btn.textContent = 'Continuer →';
         const drawer = document.getElementById('ph-scores-drawer');
         if (drawer && drawer.classList.contains('hidden')) togglePresScores();
+        // Preview prochaine Q
+        const nextQ = presQuestions[presCurrentQ + 1];
+        const previewWrap = document.getElementById('ph-scores-next-preview');
+        const previewTerm = document.getElementById('ph-scores-next-term');
+        if (previewWrap && previewTerm) {
+            if (nextQ) {
+                previewTerm.textContent = nextQ.term;
+                previewWrap.classList.remove('hidden');
+            } else {
+                previewTerm.textContent = '—';
+                previewWrap.querySelector('p:first-child').textContent = '🏁 Dernière question !';
+                previewWrap.classList.remove('hidden');
+            }
+        }
+        updatePresStateIndicator();
         return;
     }
-    // 2e pression : passer à la question suivante
+    // 2e pression : prochaine question
+    const previewWrap = document.getElementById('ph-scores-next-preview');
+    if (previewWrap) previewWrap.classList.add('hidden');
     presCurrentQ++;
     if (presCurrentQ >= presQuestions.length) { endPresenter(); return; }
     showPresQuestion();
@@ -2780,6 +3076,8 @@ function launchKahootGame() {
     const shuffled = C.cards.map((_,i)=>i).sort(()=>Math.random()-.5).slice(0, kahootSettings.totalQ);
     kahootQuestions = shuffled.map(idx => ({
         term: C.cards[idx].term,
+        def: C.cards[idx].def,
+        defLong: C.cards[idx].defLong || C.cards[idx].def,
         choices: generateChoices(idx)
     }));
     kahootCurrentQ = 0;
