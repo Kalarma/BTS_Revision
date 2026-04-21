@@ -468,13 +468,13 @@
             <!-- Badge historique succès/échecs -->
             <div id="fc-stats-badge" class="hidden absolute top-5 right-5 flex items-center gap-1 bg-slate-800 rounded-xl px-2.5 py-1 text-[10px] font-bold pointer-events-none"></div>
             <span id="fc-front-label" class="text-[9px] font-black text-slate-700 uppercase tracking-widest mb-5">Terme</span>
-            <h2 id="fc-term" class="text-[1.9rem] font-extrabold text-white leading-snug"></h2>
+            <h2 id="fc-term" class="text-4xl font-extrabold text-white leading-snug"></h2>
             <div id="fc-def-area" class="hidden w-full mt-6 pt-6 border-t border-slate-800 fade-up">
                 <div class="flex items-center justify-between mb-3">
                     <span id="fc-back-label" class="text-[9px] font-black text-slate-600 uppercase tracking-widest">Définition</span>
                     <button onclick="event.stopPropagation();openTermInfoByIdx(fcDeck[fcIdx])" class="flex items-center gap-1 text-sky-400 hover:text-sky-300 font-black text-[10px] uppercase tracking-wider px-2 py-1 bg-sky-500/10 border border-sky-500/20 rounded-lg transition-colors" title="Voir détails">📖 Détails</button>
                 </div>
-                <p id="fc-def" class="text-violet-400 text-[1.2rem] leading-relaxed font-medium"></p>
+                <p id="fc-def" class="text-violet-400 text-2xl leading-relaxed font-medium"></p>
             </div>
             <p id="fc-tap-hint" class="text-[10px] text-slate-700 font-bold uppercase tracking-widest mt-6 pulse">Appuyer pour révéler</p>
         </div>
@@ -691,6 +691,10 @@
     <!-- Question card -->
     <div class="flex-grow flex flex-col px-5 pb-3 gap-3 min-h-0 overflow-hidden">
         <div class="flex-grow bg-slate-900 border-2 border-slate-800 rounded-3xl p-6 flex flex-col justify-center text-center min-h-0">
+            <div id="ph-target-label-inline" class="hidden mb-2 flex items-center justify-center gap-2">
+                <div id="ph-target-dot-inline" class="w-3 h-3 rounded-full flex-shrink-0" style="background:#7c3aed"></div>
+                <span id="ph-target-name-inline" class="text-[10px] font-black text-white uppercase tracking-widest"></span>
+            </div>
             <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-3">Question</p>
             <h2 id="ph-term" class="text-2xl font-black text-white leading-snug mb-4"></h2>
             <div class="mt-2 pt-4 border-t border-slate-800">
@@ -734,21 +738,15 @@
         </div>
         <span id="quiz-counter" class="text-slate-600 text-[10px] font-black">0/0</span>
     </div>
-    <!-- Score + visible countdown bar -->
+    <!-- Score -->
     <div class="px-5 pb-4 flex-shrink-0">
-        <div class="flex items-center justify-between mb-2">
-            <span id="quiz-score-display" class="text-2xl font-black text-white">0 <span class="text-slate-600 text-sm font-bold">pts</span></span>
-            <span id="quiz-time-display" class="text-lg font-black text-violet-400 tabular-nums">15</span>
-        </div>
-        <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
-            <div id="quiz-timer-bar" class="bg-violet-500 h-full w-full timer-animate rounded-full"></div>
-        </div>
+        <span id="quiz-score-display" class="text-2xl font-black text-white">0 <span class="text-slate-600 text-sm font-bold">pts</span></span>
     </div>
     <!-- Question card (grows) + choices (fixed bottom) -->
     <div class="flex-grow flex flex-col px-5 pb-5 gap-3 min-h-0">
         <div class="flex-grow bg-slate-900 rounded-3xl border border-slate-800 flex flex-col items-center justify-center text-center px-6 py-4 min-h-0">
             <span class="text-[9px] font-black text-slate-600 uppercase tracking-widest block mb-3">Terme — Quelle est sa définition ?</span>
-            <p id="quiz-question" class="text-white font-black text-2xl leading-snug"></p>
+            <p id="quiz-question" class="text-white font-black text-3xl leading-snug"></p>
         </div>
         <div id="quiz-choices" class="grid grid-cols-2 gap-2.5 flex-shrink-0"></div>
         <div id="quiz-post" class="hidden flex-shrink-0 grid grid-cols-[auto_1fr] gap-2">
@@ -892,7 +890,7 @@
             <div id="mg-intro-dot-big" class="w-16 h-16 rounded-full" style="background:#7c3aed"></div>
         </div>
         <p class="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] mb-2">C'est votre tour !</p>
-        <p id="mg-intro-name" class="text-5xl font-black text-white uppercase italic text-center px-8"></p>
+        <p id="mg-intro-name" class="text-6xl font-black text-white uppercase italic text-center px-8"></p>
         <p id="mg-intro-score" class="text-slate-500 font-bold text-sm mt-3 mb-8"></p>
         <button id="mg-ready-btn" onclick="onTeamReady()" class="px-10 py-4 bg-white text-slate-950 font-black uppercase text-sm rounded-2xl active:scale-95 transition-all shadow-2xl">
             ✅ Équipe prête !
@@ -917,10 +915,10 @@
     <div class="flex-grow flex items-center px-6 py-2 overflow-hidden">
         <div class="w-full max-w-lg mx-auto bg-slate-900 border-2 border-slate-800 rounded-[2.5rem] p-8 text-center">
             <span class="text-[9px] font-black text-slate-700 uppercase tracking-widest block mb-4">Terme</span>
-            <h2 id="mg-term" class="text-2xl font-bold text-white leading-snug"></h2>
+            <h2 id="mg-term" class="text-5xl font-bold text-white leading-snug"></h2>
             <div id="mg-def-area" class="hidden mt-5 pt-5 border-t border-slate-800 fade-up">
                 <span class="text-[9px] font-black text-slate-600 uppercase tracking-widest block mb-2">Définition</span>
-                <p id="mg-def" class="text-violet-400 text-base leading-relaxed font-medium"></p>
+                <p id="mg-def" class="text-violet-400 text-2xl leading-relaxed font-medium"></p>
             </div>
         </div>
     </div>
@@ -2104,7 +2102,7 @@ function startQuiz(mode) {
 
 function showQuizQuestion() {
     if(quizIdx>=quizDeck.length){ endQuiz(); return; }
-    clearTimeout(quizTimer); clearInterval(quizCountInterval);
+    clearTimeout(quizTimer);
     const post = document.getElementById('quiz-post'); if (post) post.classList.add('hidden');
     const idx=quizDeck[quizIdx], card=C.cards[idx];
     document.getElementById('quiz-progress').style.width = Math.round(quizIdx/quizDeck.length*100)+'%';
@@ -2114,26 +2112,12 @@ function showQuizQuestion() {
     document.getElementById('quiz-question').textContent = cleanText(inverse ? card.def : card.term);
     const choices = generateChoices(idx);
     document.getElementById('quiz-choices').innerHTML = choices.map((ch,i)=>`
-        <button class="choice-btn bg-slate-900 border border-slate-800 rounded-2xl p-4 text-left text-sm font-medium text-slate-300 active:scale-95 transition-all leading-snug min-h-[80px] flex flex-col justify-center"
+        <button class="choice-btn bg-slate-900 border border-slate-800 rounded-2xl p-5 text-left text-base font-semibold text-slate-200 active:scale-95 transition-all leading-snug min-h-[100px] flex flex-col justify-center"
                 onclick="selectAnswer(this,${ch.correct})">
             <span class="text-[9px] font-black text-slate-600 block mb-1">${['A','B','C','D'][i]}</span>
             ${ch.text}
         </button>`).join('');
-    const bar=document.getElementById('quiz-timer-bar');
-    const timeEl=document.getElementById('quiz-time-display');
-    bar.style.transition='none'; bar.style.width='100%';
-    if(timeEl) timeEl.textContent = QUIZ_TIME;
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{ bar.style.transition=`width ${QUIZ_TIME}s linear`; bar.style.width='0%'; }));
-    // Countdown display
-    let remaining = QUIZ_TIME;
-    quizCountInterval = setInterval(()=>{
-        remaining--;
-        if(timeEl) timeEl.textContent = Math.max(0, remaining);
-        if(remaining <= 3 && timeEl) timeEl.classList.add('text-rose-400');
-        else if(timeEl) timeEl.classList.remove('text-rose-400');
-        if(remaining <= 0) clearInterval(quizCountInterval);
-    }, 1000);
-    quizTimer=setTimeout(()=>selectAnswer(null,false), QUIZ_TIME*1000);
+    // Pas de timer — l'utilisateur appuie sur Continuer
 }
 
 function cleanText(t) {
@@ -2148,7 +2132,7 @@ function generateChoices(correctIdx) {
 }
 
 function selectAnswer(btn, isCorrect) {
-    clearTimeout(quizTimer); clearInterval(quizCountInterval);
+    clearTimeout(quizTimer);
     document.querySelectorAll('.choice-btn').forEach(b=>{
         b.disabled=true;
         if(b===btn) b.classList.add(isCorrect?'correct':'wrong');
@@ -2325,7 +2309,15 @@ function launchMulti() {
         nb:   parseInt(document.getElementById('multi-nb').value)||15,
         negPct: isNaN(negPct) ? 50 : Math.max(0, Math.min(100, negPct))
     };
-    multiPool=[...C.cards.map((_,i)=>i)].sort(()=>Math.random()-.5).slice(0,Math.min(multiSettings.nb * teams.length, C.cards.length));
+    // Mélange sans doublons : si nb*teams > cartes dispo, on re-mélange le même pool
+    const totalNeeded = multiSettings.nb * teams.length;
+    const allShuffled = [...C.cards.map((_,i)=>i)].sort(()=>Math.random()-.5);
+    multiPool = [];
+    while (multiPool.length < Math.min(totalNeeded, C.cards.length * 3)) {
+        const chunk = [...allShuffled].sort(()=>Math.random()-.5);
+        multiPool.push(...chunk);
+    }
+    multiPool = multiPool.slice(0, Math.min(totalNeeded, C.cards.length));
     multiRound=0; multiTeamIdx=0;
     activeSession = true;
     showScreen('screen-multi-game');
@@ -2444,13 +2436,17 @@ function showMultiScores() {
                 <span class="text-xl w-7 text-center flex-shrink-0">${medal}</span>
                 <div class="w-3 h-3 rounded-full flex-shrink-0" style="background:${scoreColor};box-shadow:0 0 6px ${scoreColor}60"></div>
                 <span class="text-white font-black text-sm flex-grow min-w-0 truncate">${t.name}</span>
-                <div class="flex items-center gap-1.5 flex-shrink-0">
-                    <button onclick="adjustScore(${t.orig},-${multiSettings.pts})" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-600 hover:text-slate-300 hover:bg-slate-800 font-black transition-all">−</button>
-                    <span class="font-black tabular-nums text-base min-w-[64px] text-right">${scoreDisplay}</span>
-                    <button onclick="adjustScore(${t.orig},${multiSettings.pts})" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-600 hover:text-slate-300 hover:bg-slate-800 font-black transition-all">+</button>
-                </div>
+                <span class="font-black tabular-nums text-base min-w-[52px] text-right flex-shrink-0">${scoreDisplay}</span>
             </div>
-            <div class="ml-10 h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div class="ml-10 flex items-center gap-1 mt-2">
+                <button onclick="adjustScore(${t.orig},-50)" class="flex-1 py-1.5 bg-rose-500/20 text-rose-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">−50</button>
+                <button onclick="adjustScore(${t.orig},-25)" class="flex-1 py-1.5 bg-rose-500/10 text-rose-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">−25</button>
+                <button onclick="adjustScore(${t.orig},25)"  class="flex-1 py-1.5 bg-emerald-500/10 text-emerald-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">+25</button>
+                <button onclick="adjustScore(${t.orig},50)"  class="flex-1 py-1.5 bg-emerald-500/15 text-emerald-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">+50</button>
+                <button onclick="adjustScore(${t.orig},100)" class="flex-1 py-1.5 bg-emerald-500/25 text-emerald-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">+100</button>
+                <button onclick="manualAdjustScore(${t.orig})" class="w-8 py-1.5 bg-slate-800 text-slate-400 rounded-lg text-[10px] font-black active:scale-95 transition-all hover:text-white" title="Saisie manuelle">✏️</button>
+            </div>
+            <div class="ml-10 h-2 bg-slate-800 rounded-full overflow-hidden mt-2">
                 <div class="h-full rounded-full" style="width:${pct}%;background:${t.score < 0 ? '#f43f5e' : scoreColor};transition:width .8s cubic-bezier(.4,0,.2,1)"></div>
             </div>
         </div>`;
@@ -2459,6 +2455,15 @@ function showMultiScores() {
 }
 
 function adjustScore(origIdx, delta) { teams[origIdx].score += delta; showMultiScores(); }
+
+function manualAdjustScore(origIdx) {
+    const val = prompt(`Ajustement manuel pour ${teams[origIdx].name} (ex: +50, -30, 200):`);
+    if (!val) return;
+    const n = parseInt(val.replace(/[^-\d]/g,''));
+    if (isNaN(n)) return;
+    teams[origIdx].score += n;
+    showMultiScores();
+}
 
 function nextMultiRound() {
     multiRound++; multiTeamIdx=(multiTeamIdx+1)%teams.length;
@@ -2707,6 +2712,9 @@ function showPresQuestion() {
     const q = presQuestions[presCurrentQ];
     if (!q) { endPresenter(); return; }
 
+    const il = document.getElementById('ph-target-label-inline');
+    if (il) il.classList.add('hidden'); // reset jusquà launchPresQuestion
+
     document.getElementById('ph-term').textContent = q.term;
     document.getElementById('ph-def').textContent  = q.def;
     document.getElementById('ph-round').textContent = `Q ${presCurrentQ+1}/${presQuestions.length}`;
@@ -2783,6 +2791,18 @@ function launchPresQuestion() {
         }));
     }
 
+    // Afficher le nom de l'équipe ciblée au-dessus du terme
+    const inlineLabel = document.getElementById('ph-target-label-inline');
+    const inlineDot   = document.getElementById('ph-target-dot-inline');
+    const inlineName  = document.getElementById('ph-target-name-inline');
+    if (_presCurrentTarget && inlineLabel) {
+        if (inlineDot) inlineDot.style.background = _presCurrentTarget.color;
+        if (inlineName) inlineName.textContent = '🎯 ' + _presCurrentTarget.name;
+        inlineLabel.classList.remove('hidden');
+    } else if (inlineLabel) {
+        inlineLabel.classList.add('hidden');
+    }
+
     // Push question à Firebase → TV affiche la question
     if (fbDb) fbDb.collection('rooms').doc(presRoomCode).update({
         phase: 'question',
@@ -2828,12 +2848,10 @@ function togglePresScores() {
 }
 
 function renderPresScoresList() {
+    const _newHash = JSON.stringify(presTeams.map(t=>t.score));
+    if (renderPresScoresList._lastHash === _newHash) return;
+    renderPresScoresList._lastHash = _newHash;
     const sorted = [...presTeams].map((t,i)=>({...t,orig:i})).sort((a,b)=>b.score-a.score);
-    const pts = presSettings.ptsQ || 100;
-    const negRate = presSettings.neg > 0 ? (presSettings.neg / 100) : 1;
-    const p1 = pts, p2 = Math.round(pts/2), p4 = Math.round(pts/4);
-    const n1 = Math.round(pts*negRate), n2 = Math.round(pts*negRate/2), n4 = Math.round(pts*negRate/4);
-    // Dense ranking
     const ranks = denseRanks(sorted.map(t => t.score));
     const medals = ['🥇','🥈','🥉'];
     document.getElementById('ph-scores-list').innerHTML = sorted.map((t, i) => {
@@ -2846,12 +2864,12 @@ function renderPresScoresList() {
                 <span class="font-black text-base tabular-nums" style="color:${t.color}">${t.score}</span>
             </div>
             <div class="flex items-center gap-1 pl-7">
-                <button onclick="adjPresScore(${t.orig},-${n1})" class="flex-1 px-1 py-1 bg-rose-500/25 text-rose-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">−${n1}</button>
-                <button onclick="adjPresScore(${t.orig},-${n2})" class="flex-1 px-1 py-1 bg-rose-500/15 text-rose-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">−${n2}</button>
-                <button onclick="adjPresScore(${t.orig},-${n4})" class="flex-1 px-1 py-1 bg-rose-500/10 text-rose-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">−${n4}</button>
-                <button onclick="adjPresScore(${t.orig},${p4})"  class="flex-1 px-1 py-1 bg-emerald-500/10 text-emerald-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">+${p4}</button>
-                <button onclick="adjPresScore(${t.orig},${p2})"  class="flex-1 px-1 py-1 bg-emerald-500/15 text-emerald-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">+${p2}</button>
-                <button onclick="adjPresScore(${t.orig},${p1})"  class="flex-1 px-1 py-1 bg-emerald-500/25 text-emerald-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">+${p1}</button>
+                <button onclick="adjPresScore(${t.orig},-50)"  class="flex-1 px-1 py-1 bg-rose-500/25 text-rose-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">≐50</button>
+                <button onclick="adjPresScore(${t.orig},-25)"  class="flex-1 px-1 py-1 bg-rose-500/15 text-rose-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">≐25</button>
+                <button onclick="adjPresScore(${t.orig},25)"   class="flex-1 px-1 py-1 bg-emerald-500/10 text-emerald-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">+25</button>
+                <button onclick="adjPresScore(${t.orig},50)"   class="flex-1 px-1 py-1 bg-emerald-500/15 text-emerald-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">+50</button>
+                <button onclick="adjPresScore(${t.orig},100)"  class="flex-1 px-1 py-1 bg-emerald-500/25 text-emerald-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">+100</button>
+                <button onclick="presManualScore(${t.orig})"   class="w-8 px-1 py-1 bg-slate-800 text-slate-400 rounded-lg text-[10px] font-black active:scale-95 transition-all hover:text-white">✏️</button>
             </div>
         </div>`;
     }).join('');
@@ -2861,7 +2879,16 @@ function adjPresScore(idx, delta) {
     presTeams[idx].score = presTeams[idx].score + delta;
     presSettings.teams = presTeams;
     if (fbDb) fbDb.collection('rooms').doc(presRoomCode).update({ 'settings.teams': presTeams }).catch(()=>{});
+    renderPresScoresList._lastHash = null; // force re-render
     renderPresScoresList();
+}
+
+function presManualScore(idx) {
+    const val = prompt(`Ajustement manuel pour ${presTeams[idx].name} (ex: +50, -30, 200):`);
+    if (!val) return;
+    const n = parseInt(val.replace(/[^-\d]/g, ''));
+    if (isNaN(n)) return;
+    adjPresScore(idx, n);
 }
 
 function showPresScoresScreen() {
@@ -2952,7 +2979,16 @@ function showPresPodium() {
 }
 
 function confirmQuitPresenter() {
-    if (confirm('Terminer la partie présentateur ?')) endPresenter();
+    const choice = confirm('Terminer la partie présentateur ?\n\n(OK = Quitter, Annuler = Rester)');
+    if (choice) {
+        endPresenter();
+        // Après endPresenter, proposer retour cours
+        setTimeout(() => {
+            if (confirm('Revenir au cours ?')) {
+                showScreen('screen-home');
+            }
+        }, 150);
+    }
 }
 
 function copyPresCode() {
