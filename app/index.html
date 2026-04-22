@@ -885,13 +885,13 @@
                        class="w-full bg-slate-950 px-2 py-2.5 rounded-xl text-white font-black text-sm border border-slate-800 text-center focus:border-violet-500 outline-none transition-colors">
             </div>
 
-            <!-- Nb Q / équipe + total -->
+            <!-- Nb Q total -->
             <div class="mb-3">
                 <div class="flex items-center justify-between mb-1.5">
-                    <span class="text-[9px] text-slate-500 font-black uppercase">Nb Q / équipe</span>
-                    <span id="multi-nb-total" class="text-[9px] text-slate-600 font-bold uppercase"></span>
+                    <span class="text-[9px] text-slate-500 font-black uppercase">Nb de questions (total)</span>
+                    <span id="multi-nb-perteam" class="text-[9px] text-slate-600 font-bold uppercase"></span>
                 </div>
-                <input id="multi-nb" type="number" value="15" min="1" max="50" oninput="updateMultiTotal()"
+                <input id="multi-nb" type="number" value="16" min="2" max="200" oninput="updateMultiTotal()"
                        class="w-full bg-slate-950 px-2 py-2.5 rounded-xl text-white font-black text-sm border border-slate-800 text-center focus:border-violet-500 outline-none transition-colors">
             </div>
 
@@ -911,9 +911,9 @@
                 <div>
                     <span class="text-[9px] text-slate-500 font-black block mb-1.5 uppercase">Pénalité faux</span>
                     <select id="multi-neg" class="w-full bg-slate-950 px-2 py-2.5 rounded-xl text-white font-black text-sm border border-slate-800 text-center focus:border-violet-500 outline-none transition-colors">
-                        <option value="0">Aucune</option>
+                        <option value="0" selected>Aucune</option>
                         <option value="25">−25%</option>
-                        <option value="50" selected>−50%</option>
+                        <option value="50">−50%</option>
                         <option value="75">−75%</option>
                         <option value="100">−100%</option>
                     </select>
@@ -2468,13 +2468,21 @@ function updateTeamCountLabel() {
     const n = document.getElementById('teams-list')?.children.length || 0;
     const el = document.getElementById('team-count-label');
     if (el) el.textContent = `${n} équipe${n>1?'s':''}`;
+    // Ajuster le total pour rester proche de la dernière valeur mais divisible par n
+    const input = document.getElementById('multi-nb');
+    if (input && n >= 2) {
+        const cur = parseInt(input.value) || 16;
+        const rounded = Math.max(n, Math.round(cur / n) * n);
+        input.value = rounded;
+    }
     updateMultiTotal();
 }
 function updateMultiTotal() {
-    const nb = parseInt(document.getElementById('multi-nb')?.value) || 15;
-    const nTeams = document.getElementById('teams-list')?.children.length || 2;
-    const el = document.getElementById('multi-nb-total');
-    if (el) el.textContent = `Total : ${nb * nTeams} Q`;
+    const total   = parseInt(document.getElementById('multi-nb')?.value) || 16;
+    const nTeams  = document.getElementById('teams-list')?.children.length || 2;
+    const perTeam = nTeams > 0 ? Math.ceil(total / nTeams) : total;
+    const el = document.getElementById('multi-nb-perteam');
+    if (el) el.textContent = `≈ ${perTeam} / équipe`;
 }
 function toggleMultiUnlimitedTime() {
     const toggle = document.getElementById('multi-unlimited-toggle');
@@ -2496,17 +2504,20 @@ function launchMulti() {
     const inputs=[...document.querySelectorAll('.team-input')];
     teams=inputs.map((inp,i)=>({name:inp.value.trim()||`Équipe ${i+1}`,score:0,color:TEAM_COLORS[i]}));
     if(teams.length<2){ alert('Ajoute au moins 2 équipes !'); return; }
-    const negPct = parseInt(document.getElementById('multi-neg')?.value || '50');
+    const negPct  = parseInt(document.getElementById('multi-neg')?.value || '0');
     const unlimited = document.getElementById('multi-unlimited-toggle')?.classList.contains('bg-violet-600') || false;
+    const totalQ    = parseInt(document.getElementById('multi-nb').value) || 16;
+    const nbPerTeam = Math.max(1, Math.ceil(totalQ / teams.length));
     multiSettings={
-        time: unlimited ? 0 : (parseInt(document.getElementById('multi-time').value)||20),
+        time:   unlimited ? 0 : (parseInt(document.getElementById('multi-time').value)||20),
         unlimited,
-        pts:  parseInt(document.getElementById('multi-pts').value)||100,
-        nb:   parseInt(document.getElementById('multi-nb').value)||15,
-        negPct: isNaN(negPct) ? 50 : Math.max(0, Math.min(100, negPct))
+        pts:    parseInt(document.getElementById('multi-pts').value)||100,
+        nb:     nbPerTeam,
+        totalQ: nbPerTeam * teams.length,
+        negPct: isNaN(negPct) ? 0 : Math.max(0, Math.min(100, negPct))
     };
     // Mélange sans doublons : si nb*teams > cartes dispo, on re-mélange le même pool
-    const totalNeeded = multiSettings.nb * teams.length;
+    const totalNeeded = multiSettings.totalQ;
     const allShuffled = [...C.cards.map((_,i)=>i)].sort(()=>Math.random()-.5);
     multiPool = [];
     while (multiPool.length < Math.min(totalNeeded, C.cards.length * 3)) {
@@ -2624,25 +2635,37 @@ function showMultiScores() {
     document.getElementById('ms-list').innerHTML = sorted.map((t, i) => {
         const pct = Math.max(5, Math.round((t.score - minScore) / range * 100));
         const rankPos = ranks[i];
-        const medal = medals[rankPos-1] || `<span class="w-7 text-center text-slate-500 font-black text-sm flex-shrink-0">#${rankPos}</span>`;
+        const medal = medals[rankPos-1] || `<span class="w-7 text-center text-slate-500 font-black text-sm">#${rankPos}</span>`;
         const scoreColor = t.color || '#7c3aed';
-        const scoreDisplay = t.score < 0 ? `<span style="color:#f43f5e">${t.score} pts</span>` : `<span style="color:${scoreColor}">${t.score} pts</span>`;
-        return `<div class="bg-slate-900 border border-slate-800 rounded-2xl px-4 py-3.5 hover:border-slate-700 transition-colors fade-up" style="animation-delay:${i*0.06}s">
-            <div class="flex items-center gap-3 mb-2.5">
+        const scoreCol   = t.score < 0 ? '#f43f5e' : scoreColor;
+        return `
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl px-4 py-3.5 transition-colors fade-up"
+             style="animation-delay:${i*0.06}s"
+             onmouseleave="closeAllScorePopups()">
+            <div class="flex items-center gap-3">
                 <span class="text-xl w-7 text-center flex-shrink-0">${medal}</span>
                 <div class="w-3 h-3 rounded-full flex-shrink-0" style="background:${scoreColor};box-shadow:0 0 6px ${scoreColor}60"></div>
                 <span class="text-white font-black text-sm flex-grow min-w-0 truncate">${t.name}</span>
-                <span class="font-black tabular-nums text-base min-w-[52px] text-right flex-shrink-0">${scoreDisplay}</span>
+                <!-- Score cliquable / survol → popup -->
+                <button class="flex items-center gap-1 font-black tabular-nums text-base flex-shrink-0 rounded-xl px-2 py-0.5 hover:bg-slate-800 transition-colors active:scale-95"
+                        style="color:${scoreCol}"
+                        onclick="toggleScorePopup(${t.orig}, event)"
+                        onmouseenter="openScorePopup(${t.orig})">
+                    <span>${t.score}&nbsp;pts</span>
+                    <span class="text-slate-600 text-xs" id="score-arrow-${t.orig}">▾</span>
+                </button>
             </div>
-            <div class="ml-10 flex items-center gap-1 mt-2">
-                <button onclick="adjustScore(${t.orig},-50)" class="flex-1 py-1.5 bg-rose-500/20 text-rose-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">−50</button>
-                <button onclick="adjustScore(${t.orig},-25)" class="flex-1 py-1.5 bg-rose-500/10 text-rose-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">−25</button>
-                <button onclick="adjustScore(${t.orig},25)"  class="flex-1 py-1.5 bg-emerald-500/10 text-emerald-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">+25</button>
-                <button onclick="adjustScore(${t.orig},50)"  class="flex-1 py-1.5 bg-emerald-500/15 text-emerald-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">+50</button>
-                <button onclick="adjustScore(${t.orig},100)" class="flex-1 py-1.5 bg-emerald-500/25 text-emerald-300 rounded-lg text-[10px] font-black active:scale-95 transition-all">+100</button>
-                <button onclick="manualAdjustScore(${t.orig})" class="w-8 py-1.5 bg-slate-800 text-slate-400 rounded-lg text-[10px] font-black active:scale-95 transition-all hover:text-white" title="Saisie manuelle">✏️</button>
+            <!-- Popup déroulant (caché par défaut) -->
+            <div id="score-popup-${t.orig}" class="hidden ml-10 mt-2 flex items-center gap-1 fade-up" style="animation-duration:.15s">
+                <button onclick="adjustScore(${t.orig},-50)" class="flex-1 py-2 bg-rose-500/20 text-rose-300 rounded-xl text-[10px] font-black active:scale-95 transition-all hover:bg-rose-500/30">−50</button>
+                <button onclick="adjustScore(${t.orig},-25)" class="flex-1 py-2 bg-rose-500/10 text-rose-300 rounded-xl text-[10px] font-black active:scale-95 transition-all hover:bg-rose-500/20">−25</button>
+                <button onclick="adjustScore(${t.orig},25)"  class="flex-1 py-2 bg-emerald-500/10 text-emerald-300 rounded-xl text-[10px] font-black active:scale-95 transition-all hover:bg-emerald-500/20">+25</button>
+                <button onclick="adjustScore(${t.orig},50)"  class="flex-1 py-2 bg-emerald-500/20 text-emerald-300 rounded-xl text-[10px] font-black active:scale-95 transition-all hover:bg-emerald-500/30">+50</button>
+                <button onclick="adjustScore(${t.orig},100)" class="flex-1 py-2 bg-emerald-500/30 text-emerald-300 rounded-xl text-[10px] font-black active:scale-95 transition-all hover:bg-emerald-500/40">+100</button>
+                <button onclick="manualAdjustScore(${t.orig})" class="w-9 py-2 bg-slate-800 text-slate-400 rounded-xl text-[11px] font-black active:scale-95 transition-all hover:text-white" title="Saisie manuelle">✏️</button>
             </div>
-            <div class="ml-10 h-2 bg-slate-800 rounded-full overflow-hidden mt-2">
+            <!-- Barre de progression -->
+            <div class="ml-10 h-2 bg-slate-800 rounded-full overflow-hidden mt-2.5">
                 <div class="h-full rounded-full" style="width:${pct}%;background:${t.score < 0 ? '#f43f5e' : scoreColor};transition:width .8s cubic-bezier(.4,0,.2,1)"></div>
             </div>
         </div>`;
@@ -2650,14 +2673,46 @@ function showMultiScores() {
     showScreen('screen-multi-scores');
 }
 
-function adjustScore(origIdx, delta) { teams[origIdx].score += delta; showMultiScores(); }
+let _openScorePopupIdx = -1;
+
+function openScorePopup(orig) {
+    if (_openScorePopupIdx === orig) return;
+    closeAllScorePopups();
+    _openScorePopupIdx = orig;
+    const popup = document.getElementById(`score-popup-${orig}`);
+    const arrow = document.getElementById(`score-arrow-${orig}`);
+    if (popup) popup.classList.remove('hidden');
+    if (arrow) arrow.textContent = '▴';
+}
+
+function toggleScorePopup(orig, evt) {
+    evt.stopPropagation();
+    if (_openScorePopupIdx === orig) { closeAllScorePopups(); return; }
+    openScorePopup(orig);
+}
+
+function closeAllScorePopups() {
+    if (_openScorePopupIdx < 0) return;
+    const popup = document.getElementById(`score-popup-${_openScorePopupIdx}`);
+    const arrow = document.getElementById(`score-arrow-${_openScorePopupIdx}`);
+    if (popup) popup.classList.add('hidden');
+    if (arrow) arrow.textContent = '▾';
+    _openScorePopupIdx = -1;
+}
+
+function adjustScore(origIdx, delta) {
+    teams[origIdx].score += delta;
+    closeAllScorePopups();
+    showMultiScores();
+}
 
 function manualAdjustScore(origIdx) {
-    const val = prompt(`Ajustement manuel pour ${teams[origIdx].name} (ex: +50, -30, 200):`);
+    const val = prompt(`Ajustement manuel pour ${teams[origIdx].name}\n(ex: +50, -30, 200) :`);
     if (!val) return;
     const n = parseInt(val.replace(/[^-\d]/g,''));
     if (isNaN(n)) return;
     teams[origIdx].score += n;
+    closeAllScorePopups();
     showMultiScores();
 }
 
@@ -3636,6 +3691,8 @@ function initExitButtons() {
     document.querySelectorAll('[data-modal-backdrop]').forEach(el => {
         el.addEventListener('click', (e) => { if (e.target === el) closeAllModals(); });
     });
+    // Close score popups on outside click
+    document.addEventListener('click', () => closeAllScorePopups());
 }
 
 document.addEventListener('DOMContentLoaded', () => {
