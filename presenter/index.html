@@ -108,6 +108,12 @@
         <div id="q-timer-bar-wrap" class="h-1.5 bg-slate-800 rounded-full overflow-hidden mb-4 flex-shrink-0">
             <div id="q-timer-bar" class="h-full bg-violet-500 w-full"></div>
         </div>
+        <!-- Équipe en cours (ciblée) -->
+        <div id="q-current-team-bar" class="hidden mb-3 flex-shrink-0 flex items-center gap-3 px-5 py-3 rounded-2xl border" style="border-color:#7c3aed30;background:rgba(124,58,237,.08)">
+            <div id="q-current-team-dot" class="w-4 h-4 rounded-full flex-shrink-0"></div>
+            <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest flex-shrink-0">C'est au tour de</span>
+            <span id="q-current-team-name" class="font-black text-white text-xl uppercase italic truncate"></span>
+        </div>
         <!-- Question card -->
         <div id="q-card" class="flex-grow bg-slate-900/60 border-2 border-slate-800 rounded-[2.5rem] p-10 flex flex-col justify-center text-center fade-in" style="position:relative">
             <p class="text-[11px] font-black text-slate-600 uppercase tracking-widest mb-6" id="q-label">Terme</p>
@@ -134,12 +140,15 @@
 </div>
 
 <!-- ================ SCORES ================ -->
-<div id="screen-scores" class="screen items-center justify-center p-12">
-    <div class="w-full fade-in" style="max-width:800px">
-        <div class="text-center mb-10">
+<div id="screen-scores" class="screen overflow-y-auto p-12">
+    <div class="w-full fade-in mx-auto" style="max-width:900px">
+        <div class="text-center mb-8">
             <p class="text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">Classement intermédiaire</p>
             <h2 class="text-5xl font-black text-white uppercase italic">🏆 Scores</h2>
         </div>
+        <!-- Podium visuel (top 3) -->
+        <div id="sc-podium" class="flex items-end justify-center gap-6 mb-10"></div>
+        <!-- Liste complète -->
         <div id="sc-list" class="space-y-4"></div>
     </div>
 </div>
@@ -373,8 +382,23 @@ function handleRoomState(room) {
             ansArea.classList.add('hidden');
         }
 
+        // Équipe en cours (mode ciblée)
+        const target = room.targetTeam;
+        const teamBar  = document.getElementById('q-current-team-bar');
+        const teamDot  = document.getElementById('q-current-team-dot');
+        const teamName = document.getElementById('q-current-team-name');
+        if (target && target.name && teamBar) {
+            if (teamDot)  teamDot.style.background = target.color || '#7c3aed';
+            if (teamName) teamName.textContent = target.name;
+            teamBar.style.borderColor = (target.color || '#7c3aed') + '40';
+            teamBar.style.background  = (target.color || '#7c3aed') + '12';
+            teamBar.classList.remove('hidden');
+        } else if (teamBar) {
+            teamBar.classList.add('hidden');
+        }
+
         // Scores live (toujours mis à jour)
-        renderTeamsBar(room.settings?.teams || []);
+        renderTeamsBar(room.settings?.teams || [], target?.name);
     }
 
     if (phase === 'scores') {
@@ -406,12 +430,20 @@ function renderWaitTeams(teams, settings) {
             </div>`).join('');
     }
 
+    const chip = (icon, text, cls='') =>
+        `<span class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-slate-400 text-sm font-bold ${cls}">${icon} ${text}</span>`;
     const parts = [];
-    if (settings.nbQ)                      parts.push(`<span class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-slate-400 text-sm font-bold">📋 ${settings.nbQ} questions</span>`);
-    if (settings.ptsQ)                     parts.push(`<span class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-slate-400 text-sm font-bold">⭐ ${settings.ptsQ} pts/Q</span>`);
-    if (settings.timeQ && !settings.noTimer) parts.push(`<span class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-slate-400 text-sm font-bold">⏱ ${settings.timeQ}s</span>`);
-    if (settings.neg)                       parts.push(`<span class="bg-rose-500/10 border border-rose-500/20 rounded-xl px-3 py-1.5 text-rose-400 text-sm font-bold">⚠️ −${settings.neg}% si faux</span>`);
-    if (settings.noTimer)                   parts.push(`<span class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-slate-400 text-sm font-bold">⏸ Sans timer</span>`);
+    if (settings.nbQ)                        parts.push(chip('📋', `${settings.nbQ} questions`));
+    if (settings.ptsQ)                       parts.push(chip('⭐', `${settings.ptsQ} pts/Q`));
+    if (settings.timeQ && !settings.noTimer) parts.push(chip('⏱', `${settings.timeQ}s / Q`));
+    if (settings.noTimer)                    parts.push(chip('⏸', 'Sans timer'));
+    if (settings.neg)                        parts.push(`<span class="bg-rose-500/10 border border-rose-500/20 rounded-xl px-3 py-1.5 text-rose-400 text-sm font-bold">⚠️ −${settings.neg}% si faux</span>`);
+    if (settings.showQ === false)            parts.push(chip('🙈', 'Questions masquées'));
+    else                                     parts.push(chip('👁', 'Questions visibles'));
+    if (settings.inverseMode)               parts.push(chip('🔄', 'Mode inversé'));
+    else                                    parts.push(chip('📖', 'Mode classique'));
+    if (settings.gameMode === 'cible')      parts.push(chip('🎯', 'Équipe Ciblée', 'border-violet-500/30 text-violet-400'));
+    else                                    parts.push(chip('🙋', 'Équipe Libre'));
     paramsEl.innerHTML = parts.join('');
 }
 
@@ -500,7 +532,7 @@ function renderQuestion(room, q) {
 }
 
 // Scores live dans la colonne droite — appelé à chaque update Firestore
-function renderTeamsBar(teams) {
+function renderTeamsBar(teams, currentTeamName) {
     const panel = document.getElementById('q-teams-live');
     if (!panel) return;
     const sorted = [...teams].sort((a,b) => (b.score||0) - (a.score||0));
@@ -508,15 +540,19 @@ function renderTeamsBar(teams) {
     const medals = ['🥇','🥈','🥉'];
 
     panel.innerHTML = sorted.map((t, i) => {
-        const pct = Math.round((t.score||0) / maxScore * 100);
-        const medal = medals[i] || `${i+1}`;
+        const pct      = Math.round((t.score||0) / maxScore * 100);
+        const medal    = medals[i] || `${i+1}`;
+        const isCurrent = currentTeamName && t.name === currentTeamName;
+        const ring     = isCurrent ? `border border-2 rounded-xl px-2 py-1 -mx-2` : '';
+        const ringStyle = isCurrent ? `border-color:${t.color}60;background:${t.color}10;` : '';
         return `
-        <div class="group" style="animation:fadeIn .4s ${i*0.08}s ease both">
+        <div class="${ring}" style="${ringStyle}animation:fadeIn .4s ${i*0.08}s ease both">
+            ${isCurrent ? `<p class="text-[9px] font-black uppercase tracking-widest mb-1" style="color:${t.color}">🎯 En cours</p>` : ''}
             <div class="flex items-center justify-between mb-1.5">
                 <div class="flex items-center gap-2 min-w-0">
                     <span class="text-base flex-shrink-0">${medal}</span>
                     <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${t.color}"></div>
-                    <span class="font-black text-white text-sm truncate">${t.name}</span>
+                    <span class="font-black text-sm truncate" style="color:${isCurrent ? t.color : 'white'}">${t.name}</span>
                 </div>
                 <span class="score-val font-black text-sm flex-shrink-0 ml-2" style="color:${t.color}">${t.score||0}</span>
             </div>
@@ -531,6 +567,26 @@ function renderScores(teams) {
     const sorted = [...teams].sort((a,b) => (b.score||0) - (a.score||0));
     const maxScore = Math.max(...sorted.map(t => t.score||0), 1);
     const medals = ['🥇','🥈','🥉'];
+
+    // Podium visuel (top 3)
+    const podiumEl = document.getElementById('sc-podium');
+    if (podiumEl) {
+        const top3    = sorted.slice(0, Math.min(3, sorted.length));
+        const heights = [180, 130, 100];
+        const orders  = ['order-2','order-1','order-3'];
+        podiumEl.innerHTML = top3.map((t, i) => `
+            <div class="flex flex-col items-center ${orders[i]} fade-in" style="animation-delay:${i*0.12}s">
+                ${i === 0 ? '<span class="text-4xl mb-2">👑</span>' : ''}
+                <p class="font-black text-white text-lg uppercase italic text-center max-w-[120px] truncate mb-2">${t.name}</p>
+                <div class="w-28 rounded-t-2xl flex flex-col items-end justify-end pb-4 border-t-4 px-3"
+                     style="height:${heights[i]}px;background:${t.color}18;border-color:${t.color}">
+                    <span class="font-black text-3xl" style="color:${t.color}">${t.score||0}</span>
+                    <span class="text-slate-500 font-bold text-xs uppercase">pts</span>
+                </div>
+            </div>`).join('');
+    }
+
+    // Liste complète
     document.getElementById('sc-list').innerHTML = sorted.map((t,i) => {
         const pct = Math.round((t.score||0) / maxScore * 100);
         return `
