@@ -722,12 +722,17 @@
             </button>
         </div>
     </div>
-    <!-- État actuel de l'écran (visible depuis le tel en permanence) -->
+    <!-- État actuel de l'écran + équipe en cours -->
     <div class="px-5 mb-2 flex-shrink-0">
         <div class="bg-slate-900/70 border border-slate-800 rounded-xl px-3 py-2 flex items-center justify-between gap-2">
             <div class="flex items-center gap-2 min-w-0">
                 <span class="text-[9px] font-black text-slate-600 uppercase tracking-widest flex-shrink-0">Écran :</span>
                 <span id="ph-state-indicator" class="text-[10px] font-black text-violet-400 uppercase truncate"></span>
+            </div>
+            <!-- Badge équipe en cours (visible dès qu'une équipe est ciblée) -->
+            <div id="ph-current-team-badge" class="hidden flex-shrink-0 flex items-center gap-1.5 bg-slate-800 rounded-lg px-2 py-1">
+                <div id="ph-current-team-dot" class="w-2.5 h-2.5 rounded-full flex-shrink-0"></div>
+                <span id="ph-current-team-name" class="text-[10px] font-black text-white uppercase tracking-wide max-w-[90px] truncate"></span>
             </div>
         </div>
     </div>
@@ -784,6 +789,9 @@
         </div>
         <button id="ph-next-btn" onclick="nextPresQuestion()" class="w-full py-4 bg-emerald-600 text-white font-black text-sm uppercase rounded-2xl active:scale-95 transition-all shadow-lg">
             Suivant →
+        </button>
+        <button onclick="restartPresenter()" class="w-full py-2 text-slate-600 hover:text-slate-400 font-black text-[10px] uppercase tracking-widest transition-colors">
+            🔄 Recommencer (pré-partie)
         </button>
     </div>
 </div>
@@ -2844,12 +2852,19 @@ function pushPresSetupLive() {
         const ptsQ = parseInt(document.getElementById('pres-pts-q')?.value)  || 100;
         const timeQ= parseInt(document.getElementById('pres-time-q')?.value) || 20;
         const noTimer = document.getElementById('pres-notimer-toggle')?.classList.contains('active') || false;
+        const showQ       = document.getElementById('pres-show-q')?.checked ?? true;
+        const inverseMode = document.getElementById('pres-inverse-mode')?.checked || false;
+        const neg         = parseInt(document.getElementById('pres-neg')?.value) || 0;
         fbDb.collection('rooms').doc(presRoomCode).update({
-            'settings.teams': liveTeams,
-            'settings.nbQ':   nbQ,
-            'settings.ptsQ':  ptsQ,
-            'settings.timeQ': noTimer ? 0 : timeQ,
-            'settings.noTimer': noTimer,
+            'settings.teams':      liveTeams,
+            'settings.nbQ':        nbQ,
+            'settings.ptsQ':       ptsQ,
+            'settings.timeQ':      noTimer ? 0 : timeQ,
+            'settings.noTimer':    noTimer,
+            'settings.showQ':      showQ,
+            'settings.inverseMode':inverseMode,
+            'settings.neg':        neg,
+            'settings.gameMode':   _presGameMode,
         }).catch(() => {});
     }, 300); // debounce 300ms
 }
@@ -2892,8 +2907,9 @@ function selectPresMode(mode, btn) {
 
 function getNextTargetTeam() {
     if (!presTeams.length) return null;
+    // Rotation stricte dans l'ordre (pas de mélange) pour garantir l'équité
     if (!_presTargetOrder.length || _presTargetIdx >= _presTargetOrder.length) {
-        _presTargetOrder = [...presTeams.keys()].sort(() => Math.random() - 0.5);
+        _presTargetOrder = presTeams.map((_, i) => i); // [0, 1, 2, ...]
         _presTargetIdx = 0;
     }
     return presTeams[_presTargetOrder[_presTargetIdx++]];
@@ -2918,7 +2934,11 @@ async function launchPresenter() {
     presTeams = inputs.map((inp,i) => ({ name: inp.value.trim()||`Équipe ${i+1}`, color: PRES_COLORS[i], score: 0 }));
     if (presTeams.length < 2) { alert('Ajoute au moins 2 équipes !'); return; }
 
-    const nbQ   = parseInt(document.getElementById('pres-nb-q').value)  || 15;
+    // En mode ciblée : nbQ doit être un multiple exact du nombre d'équipes
+    const rawNbQ = parseInt(document.getElementById('pres-nb-q').value) || 15;
+    const nbQ    = _presGameMode === 'cible'
+        ? Math.max(presTeams.length, Math.round(rawNbQ / presTeams.length) * presTeams.length)
+        : rawNbQ;
     const ptsQ  = parseInt(document.getElementById('pres-pts-q').value)  || 100;
     let   timeQ = parseInt(document.getElementById('pres-time-q').value) || 20;
     const neg   = parseInt(document.getElementById('pres-neg').value)    || 0;
@@ -3036,6 +3056,7 @@ function showPresQuestion() {
         if (dotEl) dotEl.classList.add('hidden');
     }
     if (overlay) overlay.classList.remove('hidden');
+    updatePresCurrentTeamBadge(_presCurrentTarget);
 
     // Push "targeting" à Firebase → TV voit un écran d'attente
     if (fbDb) fbDb.collection('rooms').doc(presRoomCode).update({
@@ -3111,6 +3132,49 @@ function openPresTermInfo() {
     let idx = -1;
     if (C && C.cards) idx = C.cards.findIndex(c => c.term === q.term);
     openTermInfo(q.term, q.def, q.defLong || (idx >= 0 ? C.cards[idx]?.defLong : ''), idx);
+}
+
+function updatePresCurrentTeamBadge(team) {
+    const badge = document.getElementById('ph-current-team-badge');
+    const dot   = document.getElementById('ph-current-team-dot');
+    const name  = document.getElementById('ph-current-team-name');
+    if (!badge) return;
+    if (team) {
+        if (dot)  dot.style.background = team.color || '#7c3aed';
+        if (name) name.textContent = team.name;
+        badge.classList.remove('hidden');
+    } else {
+        badge.classList.add('hidden');
+    }
+}
+
+function restartPresenter() {
+    if (!confirm('Recommencer la partie ? Les scores seront remis à zéro et tu reviendras à la pré-partie.')) return;
+    clearInterval(presTimerInterval);
+    clearInterval(window._presScreenCheck);
+    if (presUnsubRoom) { try { presUnsubRoom(); } catch {} presUnsubRoom = null; }
+    // Remettre les scores à zéro mais conserver les équipes
+    presTeams.forEach(t => { t.score = 0; });
+    presShowAnswer = false;
+    presShowingScores = false;
+    activeSession = false;
+    renderPresScoresList._lastHash = null;
+    // Fermer la salle courante (nouveau code généré dans openPresenterSetup)
+    if (presRoomCode && fbDb) fbDb.collection('rooms').doc(presRoomCode).delete().catch(()=>{});
+    presRoomCode = '';
+    _presTargetOrder = []; _presTargetIdx = 0; _presCurrentTarget = null;
+    openPresenterSetup();
+    // Re-remplir les champs avec les équipes existantes
+    setTimeout(() => {
+        const list = document.getElementById('pres-teams-list');
+        list.innerHTML = '';
+        presTeams.forEach((t, i) => {
+            addPresTeam();
+            const inputs = list.querySelectorAll('.pres-team-input');
+            if (inputs[i]) inputs[i].value = t.name;
+        });
+        pushPresSetupLive();
+    }, 50);
 }
 
 function updatePresStateIndicator() {
